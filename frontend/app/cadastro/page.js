@@ -1,0 +1,197 @@
+"use client";
+
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AppShell } from "../../components/shell";
+import { encryptedPath } from "../../lib/routes";
+import { Card } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Button } from "../../components/ui/button";
+import { getApiBase } from "../../lib/api";
+import { FuturisticIcon } from "../../components/icons/futuristic-icons";
+
+var API_BASE = getApiBase();
+
+var ROLES = [
+  {
+    id: "user",
+    iconName: "medal",
+    label: "Estudante",
+    desc: "Acesso ao chat e educação pública anônima (tutor, labs, concursos)",
+    color: "border-blue-500/40 hover:border-blue-400",
+    accent: "text-blue-400",
+  },
+  {
+    id: "teacher",
+    iconName: "userTie",
+    label: "Professor / Pesquisador",
+    desc: "Ferramentas acadêmicas avançadas: correção, geração de provas, pesquisa científica",
+    color: "border-purple-500/40 hover:border-purple-400",
+    accent: "text-purple-400",
+  },
+  {
+    id: "enterprise",
+    iconName: "building",
+    label: "Empresa / Profissional",
+    desc: "Planos business, integrações e suporte dedicado",
+    color: "border-amber-500/40 hover:border-amber-400",
+    accent: "text-amber-400",
+  },
+  {
+    id: "researcher",
+    iconName: "microscope",
+    label: "Cientista / Engenheiro",
+    desc: "Motor de cálculo exato, laboratórios científicos e assistente de pesquisa",
+    color: "border-emerald-500/40 hover:border-emerald-400",
+    accent: "text-emerald-400",
+  },
+];
+
+export default function CadastroPage() {
+  // Step 1 = role selector, Step 2 = form
+  var [step, setStep] = useState(1);
+  var [role, setRole] = useState(null);
+  var [name, setName] = useState("");
+  var [email, setEmail] = useState("");
+  var [password, setPassword] = useState("");
+  var [confirmPassword, setConfirmPassword] = useState("");
+  var [documentId, setDocumentId] = useState("");
+  var [cep, setCep] = useState("");
+  var [state, setState] = useState("");
+  var [city, setCity] = useState("");
+  var [addressLine, setAddressLine] = useState("");
+  var [addressNumber, setAddressNumber] = useState("");
+  var [addressComplement, setAddressComplement] = useState("");
+  var [loading, setLoading] = useState(false);
+  var [error, setError] = useState(null);
+  var [success, setSuccess] = useState(null);
+
+  function selectRole(r) {
+    setRole(r);
+    setStep(2);
+  }
+
+  async function handleSubmit(ev) {
+    ev.preventDefault();
+    setError(null);
+    setSuccess(null);
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem.");
+      return;
+    }
+    setLoading(true);
+    try {
+      var resp = await fetch(API_BASE + "/v1/auth/public-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          full_name: name,
+          password,
+          role: role || "user",
+          document: documentId,
+          cep,
+          state,
+          city,
+          address_line: addressLine,
+          address_number: addressNumber,
+          address_complement: addressComplement || null,
+        }),
+      });
+      if (!resp.ok) {
+        var txt = await resp.text();
+        throw new Error(txt || "Falha ao criar conta.");
+      }
+      try { window.localStorage.setItem("syntexa_pending_email", email); } catch {}
+      setSuccess("Conta criada! Enviamos um código de verificação para seu e-mail.");
+      setTimeout(function () { window.location.href = encryptedPath("activate-signup"); }, 1200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro inesperado ao criar conta.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  var selectedRoleInfo = ROLES.find(function(r) { return r.id === role; });
+
+  return React.createElement(
+    AppShell,
+    null,
+    React.createElement("div", { className: "flex min-h-[calc(100vh-5rem)] items-center justify-center py-8 px-4" },
+      React.createElement(AnimatePresence, { mode: "wait" },
+        step === 1
+          ? React.createElement(motion.div, {
+              key: "step1",
+              className: "w-full max-w-xl",
+              initial: { opacity: 0, y: 16 },
+              animate: { opacity: 1, y: 0 },
+              exit: { opacity: 0, y: -12 },
+              transition: { duration: 0.25 },
+            },
+            React.createElement("div", { className: "mb-8 text-center" },
+              React.createElement("h1", { className: "text-2xl font-bold text-zinc-100 mb-2" }, "Criar conta"),
+              React.createElement("p", { className: "text-zinc-400 text-sm" }, "Escolha seu perfil para personalizar sua experiência")),
+            React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-4" },
+              ROLES.map(function(r) {
+                return React.createElement("button", {
+                  key: r.id,
+                  onClick: function() { selectRole(r.id); },
+                  className: "syntexa-card text-left p-5 border rounded-xl transition-all duration-200 " + r.color + " bg-zinc-900 hover:bg-zinc-800",
+                },
+                  React.createElement("div", { className: "mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5" },
+                    React.createElement(FuturisticIcon, { name: r.iconName, className: "h-7 w-7 " + r.accent })),
+                  React.createElement("div", { className: "font-semibold text-zinc-100 mb-1 " + r.accent }, r.label),
+                  React.createElement("div", { className: "text-xs text-zinc-400 leading-relaxed" }, r.desc));
+              })),
+            React.createElement("div", { className: "mt-6 text-center text-xs text-zinc-500" },
+              "Já tem conta? ",
+              React.createElement("button", {
+                type: "button",
+                onClick: function() { window.location.href = encryptedPath("login"); },
+                className: "text-zinc-300 hover:underline",
+              }, "Fazer login")))
+
+          : React.createElement(motion.div, {
+              key: "step2",
+              className: "w-full max-w-md",
+              initial: { opacity: 0, y: 16 },
+              animate: { opacity: 1, y: 0 },
+              exit: { opacity: 0, y: -12 },
+              transition: { duration: 0.25 },
+            },
+            selectedRoleInfo && React.createElement("div", {
+              className: "flex items-center gap-3 mb-5 p-3 rounded-lg bg-zinc-800/60 border border-zinc-700",
+            },
+              React.createElement(FuturisticIcon, { name: selectedRoleInfo.iconName, className: "h-8 w-8 shrink-0 " + selectedRoleInfo.accent }),
+              React.createElement("div", null,
+                React.createElement("div", { className: "text-sm font-medium text-zinc-200" }, selectedRoleInfo.label),
+                React.createElement("button", {
+                  type: "button",
+                  onClick: function() { setStep(1); },
+                  className: "text-xs text-zinc-500 hover:text-zinc-300 underline",
+                }, "Alterar perfil"))),
+            React.createElement(Card, { title: "Dados da conta", description: "Preencha suas informações para continuar." },
+              React.createElement("form", { onSubmit: handleSubmit, className: "space-y-5" },
+                React.createElement("div", { className: "space-y-3" },
+                  React.createElement(Input, { label: "Nome completo", value: name, onChange: function(e) { setName(e.target.value); }, required: true }),
+                  React.createElement(Input, { label: "E-mail", type: "email", autoComplete: "email", value: email, onChange: function(e) { setEmail(e.target.value); }, required: true }),
+                  React.createElement(Input, { label: "CPF/CNPJ", value: documentId, onChange: function(e) { setDocumentId(e.target.value); }, required: true }),
+                  React.createElement(Input, { label: "CEP", value: cep, onChange: function(e) { setCep(e.target.value); }, required: true }),
+                  React.createElement(Input, { label: "Estado (UF)", value: state, onChange: function(e) { setState(e.target.value); }, required: true }),
+                  React.createElement(Input, { label: "Cidade", value: city, onChange: function(e) { setCity(e.target.value); }, required: true }),
+                  React.createElement(Input, { label: "Endereço (rua/avenida)", value: addressLine, onChange: function(e) { setAddressLine(e.target.value); }, required: true }),
+                  React.createElement(Input, { label: "Número", value: addressNumber, onChange: function(e) { setAddressNumber(e.target.value); }, required: true }),
+                  React.createElement(Input, { label: "Complemento", value: addressComplement, onChange: function(e) { setAddressComplement(e.target.value); } }),
+                  React.createElement(Input, { label: "Senha", type: "password", autoComplete: "new-password", value: password, onChange: function(e) { setPassword(e.target.value); }, required: true }),
+                  React.createElement(Input, { label: "Confirmar senha", type: "password", autoComplete: "new-password", value: confirmPassword, onChange: function(e) { setConfirmPassword(e.target.value); }, required: true })),
+                error ? React.createElement("p", { className: "text-sm text-rose-400" }, error) : null,
+                success ? React.createElement("p", { className: "text-sm text-emerald-400" }, success) : null,
+                React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? "Criando conta..." : "Criar conta"),
+                React.createElement("div", { className: "mt-2 text-center text-xs text-zinc-500" },
+                  "Já tem conta? ",
+                  React.createElement("button", {
+                    type: "button",
+                    onClick: function() { window.location.href = encryptedPath("login"); },
+                    className: "text-zinc-200 underline-offset-2 hover:underline",
+                  }, "Voltar para login"))))))));
+}

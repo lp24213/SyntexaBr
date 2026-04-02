@@ -1,0 +1,16 @@
+[Unit]
+Description=Syntexa FastAPI Backend (uvicorn)
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/syntexa
+EnvironmentFile=-/opt/syntexa/.env
+Environment=PYTHONPATH=/opt/syntexa
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/syntexa/.venv/bin/python -m uvicorn vereda_backend.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

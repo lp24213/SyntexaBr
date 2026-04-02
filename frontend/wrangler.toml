@@ -1,0 +1,4 @@
+# Usado por `wrangler pages deploy` a partir da pasta frontend (evita pegar wrangler.toml da raiz do repo).
+name = "syntexa-frontend"
+pages_build_output_dir = "out"
+compatibility_date = "2024-11-01"

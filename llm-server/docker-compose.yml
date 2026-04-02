@@ -1,0 +1,18 @@
+# Ollama + Mistral 7B (substitui vLLM; roda bem em VPS com 8GB+ RAM)
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: syntexa-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    # Primeira vez no servidor: docker exec -it syntexa-ollama ollama pull mistral
+
+networks:
+  default:
+    name: syntexa-llm-net
+
+volumes:
+  ollama_data: {}

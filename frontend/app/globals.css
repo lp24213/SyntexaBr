@@ -1,0 +1,257 @@
+@import "tailwindcss";
+
+/* ========== DESIGN SYSTEM — SyntexaBR (preto + prata corporativo) ========== */
+:root {
+  color-scheme: dark;
+  /* Superfícies (mantém fundo preto existente) */
+  --bg-root: #020617;
+  --bg-elevated: #020617;
+  --bg-surface: #020617;
+  --bg-card: rgba(15, 23, 42, 0.96);
+  --bg-input: rgba(15, 23, 42, 0.92);
+  /* Bordas em prata */
+  --border-subtle: rgba(148, 163, 184, 0.45);
+  --border-default: rgba(192, 192, 192, 0.7);
+  --border-strong: rgba(229, 229, 229, 0.95);
+  /* Texto em prata */
+  --text-primary: #e5e5e5;
+  --text-secondary: #b0b0b0;
+  --text-muted: #6b7280;
+  /* Accent cinza/prata (sem neon) */
+  --accent: #d4d4d4;
+  --accent-hover: #e5e5e5;
+  --accent-soft: rgba(148, 163, 184, 0.22);
+  /* Radius (iOS-like) */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-2xl: 28px;
+  /* Sombras suaves */
+  --shadow-card: 0 26px 80px rgba(2, 6, 23, 0.9), 0 0 0 1px rgba(148, 163, 184, 0.4);
+  --shadow-header: 0 1px 0 rgba(148, 163, 184, 0.35);
+}
+
+@theme {
+  --color-background: #020617;
+  --color-surface: #020617;
+  --color-surfaceMuted: #020617;
+  --color-borderStrong: rgba(148,163,184,0.4);
+}
+
+html {
+  height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+@supports (min-height: 100dvh) {
+  html, body {
+    min-height: 100dvh;
+    height: auto;
+  }
+}
+
+body {
+  background-color: var(--bg-root);
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(148, 163, 184, 0.16), transparent 52%),
+    radial-gradient(circle at 100% 0%, rgba(100, 116, 139, 0.16), transparent 52%),
+    radial-gradient(circle at 50% 120%, rgba(15, 23, 42, 1), #020617 58%, #000000 100%),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(148, 163, 184, 0.08),
+      rgba(148, 163, 184, 0.08) 1px,
+      transparent 1px,
+      transparent 6px
+    );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", "Helvetica Neue", sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+/* Headings */
+h1, h2, h3 {
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+/* Cards — glass + shadow */
+.syntexa-card,
+[data-syntexa-card] {
+  position: relative;
+  background: linear-gradient(165deg, rgba(30, 41, 59, 0.78) 0%, rgba(2, 6, 23, 0.92) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+.syntexa-card::before,
+[data-syntexa-card]::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(203, 213, 225, 0.14),
+    rgba(148, 163, 184, 0.05)
+  );
+  opacity: 0.32;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* Inputs — modern focus */
+.syntexa-input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.syntexa-input:focus,
+input:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: var(--border-strong) !important;
+  box-shadow: 0 0 0 3px rgba(229, 229, 229, 0.25) !important;
+}
+
+/* Buttons — primary */
+.syntexa-btn-primary {
+  background: linear-gradient(135deg, #f5f5f5, #d4d4d4);
+  color: #020617;
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.7);
+  transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
+}
+.syntexa-btn-primary:hover {
+  opacity: 0.96;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
+}
+.syntexa-btn-primary:active {
+  transform: scale(0.97);
+}
+
+/* Buttons — outline */
+.syntexa-btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.15s;
+}
+.syntexa-btn-outline:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+/* Header / nav bar */
+.syntexa-header {
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0.98), rgba(3, 7, 18, 0.98));
+  border-bottom: 1px solid rgba(209, 213, 219, 0.35);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  box-shadow: var(--shadow-header);
+}
+
+/* Sidebar */
+.syntexa-sidebar {
+  position: relative;
+  background: radial-gradient(circle at 0% 0%, rgba(148, 163, 184, 0.08), transparent 55%),
+    linear-gradient(180deg, rgba(3, 7, 18, 0.98), rgba(2, 6, 23, 0.99));
+  border-right: 1px solid rgba(229, 229, 229, 0.85);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+}
+.syntexa-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 0% 0%, rgba(226, 232, 240, 0.3), transparent 55%);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* Chat bubbles */
+.syntexa-bubble-user {
+  background: radial-gradient(circle at 0% 0%, rgba(148, 163, 184, 0.22), transparent 55%),
+    rgba(10, 10, 10, 0.96);
+  border: 1px solid rgba(229, 229, 229, 0.85);
+  border-radius: var(--radius-xl);
+}
+.syntexa-bubble-assistant {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.98));
+  border: 1px solid rgba(192, 192, 192, 0.9);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.9);
+}
+
+/* Spinner prateado */
+.syntexa-spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  border: 2px solid rgba(226, 232, 240, 0.22);
+  border-top-color: rgba(226, 232, 240, 0.9);
+  border-right-color: rgba(203, 213, 225, 0.78);
+  animation: syntexa-spin 0.9s linear infinite;
+}
+@keyframes syntexa-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Scrollbar — minimal */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Selection */
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+/* Mobile: safe area para notch e barra de gestos */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}

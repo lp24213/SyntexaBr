@@ -1,0 +1,16 @@
+# Optional dependencies for Research Lab extensions.
+# Install with: pip install -r requirements-research.txt
+# Core app runs without these; features degrade gracefully if missing.
+
+# Vector RAG with FAISS (CPU)
+faiss-cpu>=1.7.4
+
+# PDF document ingestion
+pypdf>=3.0.0
+
+# RSA / ECC cryptography
+cryptography>=41.0.0
+
+# Quantum simulation (Qiskit)
+qiskit>=1.0.0
+qiskit-aer>=0.13.0

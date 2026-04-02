@@ -1,0 +1,41 @@
+{
+  "name": "syntexa-desktop",
+  "version": "1.0.0",
+  "description": "Syntexa AI - app desktop",
+  "main": "main.js",
+  "author": "SyntexaBR",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win && node copy-exe.js",
+    "build:portable": "electron-builder --win portable",
+    "pack": "electron-builder --win dir",
+    "copy-exe": "node copy-exe.js"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "br.com.syntexabr.desktop",
+    "productName": "Syntexa AI",
+    "directories": { "output": "dist" },
+    "files": ["main.js"],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "artifactName": "SyntexaAI-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Syntexa AI",
+      "installerLanguages": ["pt-BR"],
+      "language": "1046"
+    }
+  }
+}

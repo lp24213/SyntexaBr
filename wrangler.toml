@@ -1,0 +1,23 @@
+name = "syntexa-gateway"
+main = "gateway_worker.js"
+compatibility_date = "2024-11-01"
+
+routes = [
+  { pattern = "syntexabr.com.br/*", zone_name = "syntexabr.com.br" },
+  { pattern = "www.syntexabr.com.br/*", zone_name = "syntexabr.com.br" }
+]
+
+[vars]
+BACKEND_BASE_URL = "https://api.syntexabr.com.br"
+FRONTEND_BASE_URL = "https://syntexa-frontend.pages.dev"
+
+
+
+
+
+
+
+
+
+
+
