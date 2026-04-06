@@ -18,27 +18,32 @@ mv .env.tmp .env
 echo 'FRONTEND_ORIGIN=https://syntexabr.com.br,https://www.syntexabr.com.br' >> .env
 grep -v '^OLLAMA_ENDPOINT\|^OLLAMA_MODEL\|^DEFAULT_LLM' .env > .env.tmp 2>/dev/null || true
 mv .env.tmp .env 2>/dev/null || true
-echo 'OLLAMA_ENDPOINT=http://127.0.0.1:11434' >> .env
+echo 'OLLAMA_ENDPOINT=http://172.17.0.1:11434' >> .env
 echo 'OLLAMA_MODEL=llama3.2:1b' >> .env
 echo 'DEFAULT_LLM=ollama' >> .env
 cd llm-server
 docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null || true
 cd ..
 python3 scripts/patch_vereda_ai_config.py
-pkill -9 -f uvicorn 2>/dev/null || true
-sleep 4
-rm -f backend.log
+install -m 644 "$REMOTE_BASE/scripts/syntexa-backend.service" /etc/systemd/system/syntexa-backend.service
+systemctl daemon-reload
+systemctl enable syntexa-backend
+command -v pm2 >/dev/null 2>&1 && pm2 delete syntexa-backend 2>/dev/null || true
+pkill -9 -f 'uvicorn vereda_backend.main:app' 2>/dev/null || true
+sleep 2
 export PYTHONPATH="$REMOTE_BASE" PYTHONDONTWRITEBYTECODE=1 SYNTEXA_USE_AI_ENV=1
-unset FRONTEND_ORIGIN
-nohup .venv/bin/python -m uvicorn vereda_backend.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
-echo "Aguardando API (15s)..."
-sleep 15
-if curl -sf --connect-timeout 5 http://127.0.0.1:8000/health >/dev/null; then
-  echo "[OK] API no ar"
-  curl -s http://127.0.0.1:8000/health
+systemctl restart syntexa-backend
+systemctl start nginx 2>/dev/null || true
+sleep 6
+if ! curl -sf --connect-timeout 5 "http://127.0.0.1:8000/health" >/dev/null; then
+  echo "[ERRO] uvicorn não responde — journal:"
+  journalctl -u syntexa-backend -n 80 --no-pager
+  exit 1
+fi
+if curl -sf --connect-timeout 15 "https://api.syntexabr.com.br/health" >/dev/null; then
+  echo "[OK] API HTTPS pública"
+  curl -s "https://api.syntexabr.com.br/health"
   echo ""
 else
-  echo "[ERRO] API nao respondeu"
-  tail -80 backend.log || true
-  exit 1
+  echo "[AVISO] HTTPS público falhou — confirme nginx/DNS (fix-proxy)"
 fi

@@ -1,17 +1,117 @@
-export function getApiBase() {
-  if (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_BASE) {
-    return process.env.NEXT_PUBLIC_API_BASE;
+/** API pública Hetzner — única origem permitida no browser/build. */
+const PRODUCTION_API_BASE = "https://api.syntexabr.com.br";
+
+function isForbiddenApiHost(url) {
+  try {
+    const u = new URL(url);
+    const h = (u.hostname || "").toLowerCase();
+    return (
+      h === "localhost" ||
+      h === "127.0.0.1" ||
+      h === "::1" ||
+      h === "0.0.0.0" ||
+      /^127\.\d+\.\d+\.\d+$/.test(h)
+    );
+  } catch {
+    return true;
   }
-  // Producao: API dedicada (sem localhost / same-origin).
-  return "https://api.syntexabr.com.br";
 }
+
+export function getApiBase() {
+  let base = PRODUCTION_API_BASE;
+  if (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_BASE) {
+    const raw = String(process.env.NEXT_PUBLIC_API_BASE).trim();
+    if (raw) {
+      const normalized = raw.replace(/\/$/, "");
+      if (isForbiddenApiHost(normalized.startsWith("http") ? normalized : `https://${normalized}`)) {
+        throw new Error(
+          "NEXT_PUBLIC_API_BASE não pode apontar para loopback. Use https://api.syntexabr.com.br (produção)."
+        );
+      }
+      base = normalized.startsWith("http") ? normalized : `https://${normalized}`;
+    }
+  }
+  if (isForbiddenApiHost(base)) {
+    throw new Error("API base inválida: apenas produção (https://api.syntexabr.com.br).");
+  }
+  return base.replace(/\/$/, "");
+}
+
 const API_BASE = getApiBase();
+
+function getBackupApiBase() {
+  if (typeof process === "undefined" || !process.env || !process.env.NEXT_PUBLIC_API_BACKUP_BASE) {
+    return null;
+  }
+  const raw = String(process.env.NEXT_PUBLIC_API_BACKUP_BASE).trim();
+  if (!raw) return null;
+  const normalized = raw.replace(/\/$/, "");
+  const withScheme = normalized.startsWith("http") ? normalized : `https://${normalized}`;
+  if (isForbiddenApiHost(withScheme)) return null;
+  return withScheme.replace(/\/$/, "");
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Fetch com retry (5xx / rede) e fallback opcional para NEXT_PUBLIC_API_BACKUP_BASE.
+ * Preserva o contrato das rotas; não altera URL primária.
+ */
+export async function fetchWithResilience(path, options = {}) {
+  const bases = [API_BASE];
+  const backup = getBackupApiBase();
+  if (backup && backup !== API_BASE) bases.push(backup);
+
+  const retries = typeof options.__retries === "number" ? options.__retries : 2;
+  const { __retries, ...fetchOpts } = options;
+  const pathStr = typeof path === "string" ? path : String(path);
+  const urlPath = pathStr.startsWith("/") ? pathStr : "/" + pathStr;
+
+  let lastErr = null;
+  for (const base of bases) {
+    const url = base.replace(/\/$/, "") + urlPath;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const resp = await fetch(url, fetchOpts);
+        if (resp.ok) return resp;
+        if (resp.status >= 500 && resp.status < 600 && attempt < retries) {
+          await sleep(350 * (attempt + 1));
+          continue;
+        }
+        if (resp.status >= 400 && resp.status < 500) return resp;
+        if (attempt < retries) {
+          await sleep(350 * (attempt + 1));
+          continue;
+        }
+        return resp;
+      } catch (e) {
+        lastErr = e;
+        if (attempt < retries) {
+          await sleep(350 * (attempt + 1));
+          continue;
+        }
+      }
+    }
+  }
+  const msg =
+    lastErr && lastErr.message
+      ? "Serviço temporariamente indisponível. " + lastErr.message
+      : "Serviço temporariamente indisponível. Tente novamente em instantes.";
+  throw new Error(msg);
+}
 
 async function readErrorMessage(resp, fallbackMessage) {
   try {
     const data = await resp.json();
     if (data && typeof data.detail === "string" && data.detail.trim()) {
       return data.detail;
+    }
+    if (data && Array.isArray(data.detail) && data.detail.length) {
+      const first = data.detail[0];
+      if (typeof first === "string") return first;
+      if (first && typeof first.msg === "string") return first.msg;
     }
     return fallbackMessage;
   } catch (_) {
@@ -37,7 +137,7 @@ export async function login(email, password) {
   body.set("username", email);
   body.set("password", password);
   body.set("grant_type", "password");
-  const resp = await fetch(API_BASE + "/v1/auth/login", {
+  const resp = await fetchWithResilience( "/v1/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
@@ -48,7 +148,7 @@ export async function login(email, password) {
 }
 
 export async function getMe(token) {
-  const resp = await fetch(API_BASE + "/v1/auth/me", {
+  const resp = await fetchWithResilience( "/v1/auth/me", {
     headers: { Authorization: "Bearer " + token },
   });
   if (!resp.ok) return null;
@@ -58,7 +158,7 @@ export async function getMe(token) {
 export async function chatCompletion(token, history) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/chat/completions", {
+  const resp = await fetchWithResilience( "/v1/chat/completions", {
     method: "POST",
     headers,
     body: JSON.stringify({ model: "syntexa-large", messages: history, max_tokens: 1024 }),
@@ -74,7 +174,7 @@ export async function chatCompletion(token, history) {
 export async function chatCompletionStream(token, history, onChunk, signal) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/chat/completions/stream", {
+  const resp = await fetchWithResilience( "/v1/chat/completions/stream", {
     method: "POST",
     headers,
     body: JSON.stringify({ model: "syntexa-large", messages: history, max_tokens: 1024 }),
@@ -123,7 +223,7 @@ export async function chatCompletionWithMedia(token, history, files) {
   }
   const headers = {};
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/chat/completions", {
+  const resp = await fetchWithResilience( "/v1/chat/completions", {
     method: "POST",
     headers,
     body: form,
@@ -137,7 +237,7 @@ export async function chatCompletionWithMedia(token, history, files) {
 }
 
 export async function publicChat(history) {
-  const resp = await fetch(API_BASE + "/public-chat", {
+  const resp = await fetchWithResilience( "/public-chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -159,7 +259,7 @@ export async function publicChat(history) {
  * onChunk(content) é chamado a cada pedaço; retorna o texto completo ao terminar.
  */
 export async function publicChatStream(history, onChunk, signal) {
-  const resp = await fetch(API_BASE + "/public-chat/stream", {
+  const resp = await fetchWithResilience( "/public-chat/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -210,7 +310,7 @@ export async function publicChatWithMedia(history, files) {
   for (const file of files) {
     form.append("files", file);
   }
-  const resp = await fetch(API_BASE + "/public-chat", {
+  const resp = await fetchWithResilience( "/public-chat", {
     method: "POST",
     body: form,
   });
@@ -227,16 +327,35 @@ export async function publicChatWithMedia(history, files) {
  */
 export async function getProfile(token) {
   if (!token) return null;
-  const resp = await fetch(API_BASE + "/v1/auth/me", {
+  const resp = await fetchWithResilience( "/v1/auth/me", {
     headers: { Authorization: "Bearer " + token },
   });
   if (!resp.ok) return null;
   return resp.json();
 }
 
+/** Lista de IPs cadastrados pelo admin (referência para rede institucional). */
+export async function getAdminAllowedIps(token) {
+  const resp = await fetchWithResilience( "/v1/admin/network/allowed-ips", {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!resp.ok) throw new Error("Não foi possível carregar IPs.");
+  return resp.json();
+}
+
+export async function putAdminAllowedIps(token, ips) {
+  const resp = await fetchWithResilience( "/v1/admin/network/allowed-ips", {
+    method: "PUT",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ ips: Array.isArray(ips) ? ips : [] }),
+  });
+  if (!resp.ok) throw new Error("Não foi possível salvar IPs.");
+  return resp.json();
+}
+
 export async function listChatSessions(token) {
   if (!token) return [];
-  const resp = await fetch(API_BASE + "/v1/chat/sessions", {
+  const resp = await fetchWithResilience( "/v1/chat/sessions", {
     headers: { Authorization: "Bearer " + token },
   });
   if (!resp.ok) return [];
@@ -245,7 +364,7 @@ export async function listChatSessions(token) {
 
 export async function getChatSessionMessages(sessionId, token) {
   if (!token) return [];
-  const resp = await fetch(API_BASE + "/v1/chat/sessions/" + sessionId + "/messages", {
+  const resp = await fetchWithResilience( "/v1/chat/sessions/" + sessionId + "/messages", {
     headers: { Authorization: "Bearer " + token },
   });
   if (!resp.ok) return [];
@@ -255,7 +374,7 @@ export async function getChatSessionMessages(sessionId, token) {
 export async function createStripeCheckout(plan, token) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/payments/stripe/checkout", {
+  const resp = await fetchWithResilience( "/v1/payments/stripe/checkout", {
     method: "POST",
     headers,
     body: JSON.stringify({ plan }),
@@ -277,7 +396,7 @@ async function mergeImageBase64FromWhitelistedUrl(data, token) {
   const h = {};
   if (token) h.Authorization = "Bearer " + token;
   try {
-    const r2 = await fetch(API_BASE + "/v1/media/images/fetch-url", {
+    const r2 = await fetchWithResilience( "/v1/media/images/fetch-url", {
       method: "POST",
       headers: h,
       body: fd,
@@ -297,7 +416,7 @@ export async function generateImage(prompt, token) {
   form.append("prompt", prompt);
   const headers = {};
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/media/images/generate", {
+  const resp = await fetchWithResilience( "/v1/media/images/generate", {
     method: "POST",
     headers,
     body: form,
@@ -315,7 +434,7 @@ export async function generateVideo(prompt, token) {
   form.append("prompt", prompt);
   const headers = {};
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/media/videos/generate", {
+  const resp = await fetchWithResilience( "/v1/media/videos/generate", {
     method: "POST",
     headers,
     body: form,
@@ -332,7 +451,7 @@ export async function generateMusic(prompt, token) {
   form.append("prompt", prompt);
   const headers = {};
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/media/music/generate", {
+  const resp = await fetchWithResilience( "/v1/media/music/generate", {
     method: "POST",
     headers,
     body: form,
@@ -350,7 +469,7 @@ export async function generateMusic(prompt, token) {
 
 /** Tutor de IA para alunos — público. Suporta discipline, level, language, mode. */
 export async function educationTutor(discipline, question, mode, history, level, language, feedback) {
-  const resp = await fetch(API_BASE + "/v1/education/tutor", {
+  const resp = await fetchWithResilience( "/v1/education/tutor", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -368,7 +487,7 @@ export async function educationTutor(discipline, question, mode, history, level,
 
 /** Tutor streaming para alunos — onChunk(text) chamado a cada fragmento. */
 export async function educationTutorStream(discipline, question, mode, history, onChunk, signal, level, language, feedback) {
-  const resp = await fetch(API_BASE + "/v1/education/tutor/stream", {
+  const resp = await fetchWithResilience( "/v1/education/tutor/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -410,7 +529,7 @@ export async function educationTutorStream(discipline, question, mode, history, 
 export async function teacherChat(token, task, content, context, level, language) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/education/teacher/chat", {
+  const resp = await fetchWithResilience( "/v1/education/teacher/chat", {
     method: "POST",
     headers,
     body: JSON.stringify({ task, content, context: context || null, level: level || "avancado", language: language || "pt" }),
@@ -423,7 +542,7 @@ export async function teacherChat(token, task, content, context, level, language
 export async function teacherChatStream(token, task, content, context, level, language, onChunk, signal) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/education/teacher/chat/stream", {
+  const resp = await fetchWithResilience( "/v1/education/teacher/chat/stream", {
     method: "POST",
     headers,
     body: JSON.stringify({ task, content, context: context || null, level: level || "avancado", language: language || "pt" }),
@@ -456,7 +575,7 @@ export async function teacherChatStream(token, task, content, context, level, la
 
 /** Motor de cálculo simbólico/numérico — público. */
 export async function educationCompute(expression, computeType, variable) {
-  const resp = await fetch(API_BASE + "/v1/education/compute", {
+  const resp = await fetchWithResilience( "/v1/education/compute", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ expression, compute_type: computeType || "auto", variable: variable || "x" }),
@@ -467,7 +586,7 @@ export async function educationCompute(expression, computeType, variable) {
 
 /** Sandbox de código Python/JS — público. */
 export async function educationCodeSandbox(code, language, timeout) {
-  const resp = await fetch(API_BASE + "/v1/education/compute/code", {
+  const resp = await fetchWithResilience( "/v1/education/compute/code", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code, language: language || "python", timeout: timeout || 10 }),
@@ -480,7 +599,7 @@ export async function educationCodeSandbox(code, language, timeout) {
 export async function teacherResearch(token, task, content, extra, language) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/education/teacher/research", {
+  const resp = await fetchWithResilience( "/v1/education/teacher/research", {
     method: "POST",
     headers,
     body: JSON.stringify({ task: task || "analisar", content, extra: extra || null, language: language || "pt" }),
@@ -493,7 +612,7 @@ export async function teacherResearch(token, task, content, extra, language) {
 export async function teacherResearchStream(token, task, content, extra, language, onChunk, signal) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/education/teacher/research/stream", {
+  const resp = await fetchWithResilience( "/v1/education/teacher/research/stream", {
     method: "POST",
     headers,
     body: JSON.stringify({ task: task || "analisar", content, extra: extra || null, language: language || "pt" }),
@@ -523,7 +642,7 @@ export async function teacherResearchStream(token, task, content, extra, languag
 
 /** Estatísticas para o painel governamental — requer token de admin. */
 export async function govStats(token) {
-  const resp = await fetch(API_BASE + "/v1/education/gov/stats", {
+  const resp = await fetchWithResilience( "/v1/education/gov/stats", {
     headers: { Authorization: "Bearer " + token },
   });
   if (!resp.ok) throw new Error("Acesso negado ou erro ao buscar estatísticas");
@@ -532,7 +651,7 @@ export async function govStats(token) {
 
 /** Gera relatório educacional via IA — requer token de admin. */
 export async function govGenerateReport(token, type, period, region) {
-  const resp = await fetch(API_BASE + "/v1/education/gov/report", {
+  const resp = await fetchWithResilience( "/v1/education/gov/report", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
     body: JSON.stringify({ type: type || "geral", period: period || "mensal", region: region || "nacional" }),
@@ -543,7 +662,7 @@ export async function govGenerateReport(token, type, period, region) {
 
 /** Previsão educacional com IA — requer token de admin. */
 export async function govPredict(token, scenario, context) {
-  const resp = await fetch(API_BASE + "/v1/education/gov/predict", {
+  const resp = await fetchWithResilience( "/v1/education/gov/predict", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
     body: JSON.stringify({ scenario, context: context || null }),
@@ -554,7 +673,7 @@ export async function govPredict(token, scenario, context) {
 
 /** Geração de política pública — requer token de admin. */
 export async function govPolicy(token, challenge, region, budget) {
-  const resp = await fetch(API_BASE + "/v1/education/gov/policy", {
+  const resp = await fetchWithResilience( "/v1/education/gov/policy", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
     body: JSON.stringify({ challenge, region: region || null, budget: budget || null }),
@@ -565,7 +684,7 @@ export async function govPolicy(token, challenge, region, budget) {
 
 /** Corrige redação no formato ENEM (5 competências, 0-1000) — anônimo. */
 export async function gradeEnemEssay(essay, theme, language) {
-  const resp = await fetch(API_BASE + "/v1/education/essay/grade", {
+  const resp = await fetchWithResilience( "/v1/education/essay/grade", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ essay, theme: theme || null, language: language || "pt" }),
@@ -576,7 +695,7 @@ export async function gradeEnemEssay(essay, theme, language) {
 
 /** Correção de redação ENEM em streaming — anônimo. */
 export async function gradeEnemEssayStream(essay, theme, language, onChunk, signal) {
-  const resp = await fetch(API_BASE + "/v1/education/essay/grade/stream", {
+  const resp = await fetchWithResilience( "/v1/education/essay/grade/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ essay, theme: theme || null, language: language || "pt" }),
@@ -606,7 +725,7 @@ export async function gradeEnemEssayStream(essay, theme, language, onChunk, sign
 
 /** Tutor de concursos públicos e vestibulares — anônimo. */
 export async function concursosTutor(exam, subject, question, level, language, history) {
-  const resp = await fetch(API_BASE + "/v1/education/concursos/tutor", {
+  const resp = await fetchWithResilience( "/v1/education/concursos/tutor", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ exam: exam || "enem", subject: subject || "geral", question, level: level || "avancado", language: language || "pt", history: history || [] }),
@@ -617,7 +736,7 @@ export async function concursosTutor(exam, subject, question, level, language, h
 
 /** Tutor de concursos em streaming — anônimo. */
 export async function concursosTutorStream(exam, subject, question, level, language, history, onChunk, signal) {
-  const resp = await fetch(API_BASE + "/v1/education/concursos/tutor/stream", {
+  const resp = await fetchWithResilience( "/v1/education/concursos/tutor/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ exam: exam || "enem", subject: subject || "geral", question, level: level || "avancado", language: language || "pt", history: history || [] }),
@@ -647,14 +766,14 @@ export async function concursosTutorStream(exam, subject, question, level, langu
 
 /** Política de privacidade do módulo educacional — confirma anonimato. */
 export async function educationPrivacy() {
-  const resp = await fetch(API_BASE + "/v1/education/privacy");
+  const resp = await fetchWithResilience( "/v1/education/privacy");
   if (!resp.ok) return null;
   return resp.json();
 }
 
 /** Tutor científico especializado — público, anônimo. */
 export async function educationScience(area, question, level, language, history) {
-  const resp = await fetch(API_BASE + "/v1/education/science", {
+  const resp = await fetchWithResilience( "/v1/education/science", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -671,7 +790,7 @@ export async function educationScience(area, question, level, language, history)
 
 /** Tutor científico em streaming — público, anônimo. */
 export async function educationScienceStream(area, question, level, language, history, onChunk, signal) {
-  const resp = await fetch(API_BASE + "/v1/education/science/stream", {
+  const resp = await fetchWithResilience( "/v1/education/science/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -712,7 +831,7 @@ export async function generateSpeech(text, token, voice) {
   if (voice) form.append("voice", voice);
   const headers = {};
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetch(API_BASE + "/v1/media/tts/generate", {
+  const resp = await fetchWithResilience( "/v1/media/tts/generate", {
     method: "POST",
     headers,
     body: form,
@@ -735,13 +854,13 @@ function _adminHeaders() {
 
 export async function institutionalListClients({ activeOnly = false } = {}) {
   const qs = activeOnly ? "?active_only=true" : "";
-  const resp = await fetch(API_BASE + "/v1/institutional/clients" + qs, { headers: _adminHeaders() });
+  const resp = await fetchWithResilience( "/v1/institutional/clients" + qs, { headers: _adminHeaders() });
   if (!resp.ok) { const msg = await readErrorMessage(resp, "Erro ao listar clientes."); throw new Error(msg); }
   return resp.json();
 }
 
 export async function institutionalCreateClient(data) {
-  const resp = await fetch(API_BASE + "/v1/institutional/clients", {
+  const resp = await fetchWithResilience( "/v1/institutional/clients", {
     method: "POST",
     headers: _adminHeaders(),
     body: JSON.stringify(data),
@@ -751,7 +870,7 @@ export async function institutionalCreateClient(data) {
 }
 
 export async function institutionalUpdateClient(id, data) {
-  const resp = await fetch(API_BASE + "/v1/institutional/clients/" + id, {
+  const resp = await fetchWithResilience( "/v1/institutional/clients/" + id, {
     method: "PATCH",
     headers: _adminHeaders(),
     body: JSON.stringify(data),
@@ -761,7 +880,7 @@ export async function institutionalUpdateClient(id, data) {
 }
 
 export async function institutionalDeactivateClient(id) {
-  const resp = await fetch(API_BASE + "/v1/institutional/clients/" + id, {
+  const resp = await fetchWithResilience( "/v1/institutional/clients/" + id, {
     method: "DELETE",
     headers: _adminHeaders(),
   });
@@ -770,8 +889,8 @@ export async function institutionalDeactivateClient(id) {
 }
 
 export async function institutionalRenewClient(id, expiresDays = 365) {
-  const resp = await fetch(
-    API_BASE + "/v1/institutional/clients/" + id + "/renew?expires_days=" + expiresDays,
+  const resp = await fetchWithResilience(
+    "/v1/institutional/clients/" + id + "/renew?expires_days=" + expiresDays,
     { method: "POST", headers: _adminHeaders() }
   );
   if (!resp.ok) { const msg = await readErrorMessage(resp, "Erro ao renovar licença."); throw new Error(msg); }
@@ -779,8 +898,8 @@ export async function institutionalRenewClient(id, expiresDays = 365) {
 }
 
 export async function institutionalRegenerateKey(id) {
-  const resp = await fetch(
-    API_BASE + "/v1/institutional/clients/" + id + "/regenerate-key",
+  const resp = await fetchWithResilience(
+    "/v1/institutional/clients/" + id + "/regenerate-key",
     { method: "POST", headers: _adminHeaders() }
   );
   if (!resp.ok) { const msg = await readErrorMessage(resp, "Erro ao regenerar chave."); throw new Error(msg); }

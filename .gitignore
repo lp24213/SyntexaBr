@@ -49,6 +49,9 @@ yarn-error.log*
 dist/
 *.tsbuildinfo
 
+# IPs cadastrados pelo admin no servidor (não versionar)
+vereda_backend/data/admin_allowed_ips.json
+
 # Banco de dados local
 *.db
 *.sqlite

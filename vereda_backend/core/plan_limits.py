@@ -12,8 +12,8 @@ from vereda_backend.db import models
 
 # Limite de mensagens do usuário (role=user) no mês atual. None = ilimitado.
 PLAN_MESSAGE_LIMIT: dict[str, Optional[int]] = {
-    "anon": 10,
-    "free": 50,
+    "anon": 120,
+    "free": 200,
     "basic": 500,
     "medium": None,
     "master": None,
@@ -21,8 +21,8 @@ PLAN_MESSAGE_LIMIT: dict[str, Optional[int]] = {
 
 # Limites por tipo de mídia no mês (por usuário autenticado; anônimo por IP).
 PLAN_MEDIA_LIMIT: dict[str, dict[str, Optional[int]]] = {
-    "anon": {"image": 3, "video": 2, "music": 3, "tts": 10},
-    "free": {"image": 10, "video": 5, "music": 10, "tts": 40},
+    "anon": {"image": 25, "video": 8, "music": 15, "tts": 40},
+    "free": {"image": 35, "video": 15, "music": 25, "tts": 80},
     "basic": {"image": 80, "video": 40, "music": 80, "tts": 300},
     "medium": {"image": None, "video": None, "music": None, "tts": None},
     "master": {"image": None, "video": None, "music": None, "tts": None},
@@ -32,7 +32,7 @@ PLAN_MEDIA_LIMIT: dict[str, dict[str, Optional[int]]] = {
 def get_message_limit(plan: Optional[str]) -> Optional[int]:
     """Retorna o limite de mensagens do plano (None = ilimitado)."""
     if not plan:
-        return PLAN_MESSAGE_LIMIT.get("free", 50)
+        return PLAN_MESSAGE_LIMIT.get("free", 200)
     key = (plan or "").lower().strip()
     return PLAN_MESSAGE_LIMIT.get(key, PLAN_MESSAGE_LIMIT["free"])
 

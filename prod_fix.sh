@@ -1,4 +1,5 @@
-﻿set -euo pipefail
+#!/usr/bin/env bash
+set -euo pipefail
 
 APP_DIR="/opt/syntexa"
 cd "$APP_DIR"
@@ -14,8 +15,9 @@ upsert() {
 }
 
 upsert DEFAULT_LLM ollama
-upsert OLLAMA_ENDPOINT http://127.0.0.1:11434
-upsert OLLAMA_MODEL qupsert LLM_CHAT_TIMEOUT 25
+upsert OLLAMA_ENDPOINT http://172.17.0.1:11434
+upsert OLLAMA_MODEL qwen2.5:3b
+upsert LLM_CHAT_TIMEOUT 25
 upsert LLM_CONNECT_TIMEOUT 5
 upsert LLM_READ_TIMEOUT 25
 upsert LLM_RETRY_COUNT 1
@@ -40,4 +42,3 @@ python3 -m py_compile \
 
 sudo systemctl restart syntexa-backend.service
 sudo systemctl status syntexa-backend.service --no-pager -n 80
-

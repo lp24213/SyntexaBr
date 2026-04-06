@@ -21,7 +21,7 @@
 
 Para o backend usar o Ollama (e não o dummy), o `.env` em `/opt/syntexa` deve ter:
 
-- `OLLAMA_ENDPOINT=http://127.0.0.1:11434`
+- `OLLAMA_ENDPOINT=http://172.17.0.1:11434` (bridge Docker típica no Linux; ajuste ao seu layout no Hetzner)
 - `OLLAMA_MODEL=llama3.2:1b` (ou o modelo que couber na RAM)
 - `DEFAULT_LLM=ollama`
 

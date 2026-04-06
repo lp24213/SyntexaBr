@@ -61,6 +61,13 @@ function Check-Wrangler {
     }
 }
 
+# Here-strings no Windows usam CRLF; bash remoto precisa de LF (senao: tar.gz\r, true\r, paths quebrados).
+function ConvertTo-BashScriptLf {
+    param([string]$Script)
+    if ([string]::IsNullOrEmpty($Script)) { return $Script }
+    return ($Script -replace "`r`n", "`n") -replace "`r", "`n"
+}
+
 # ======================================================================
 # DEV - Frontend + Backend em paralelo
 # ======================================================================
@@ -164,7 +171,7 @@ if ($Cmd -eq "ssh") {
     Write-Host "ATENCAO: isto e so SSH (shell no servidor). NAO e deploy." -ForegroundColor Yellow
     Write-Host "  Para publicar backend: .\deploy-syntexa.ps1 deploy-back" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "SSH -> $RemoteUser@$RemoteHost" -ForegroundColor Cyan
+    Write-Host "SSH -> ${RemoteUser}@${RemoteHost}" -ForegroundColor Cyan
     Write-Host "  (exit para sair)" -ForegroundColor Yellow
     ssh -i $SshKeyPath -o ServerAliveInterval=30 -t "${RemoteUser}@${RemoteHost}" "cd $RemoteBase && exec bash --login"
     exit 0
@@ -236,6 +243,7 @@ else
   tail -30 backend.log
 fi
 "@
+    $script = ConvertTo-BashScriptLf $script
     ssh -i $SshKeyPath -o ServerAliveInterval=30 "${RemoteUser}@${RemoteHost}" $script
     exit 0
 }
@@ -307,45 +315,13 @@ if ($Cmd -eq "deploy-back") {
     scp -i $SshKeyPath -o ServerAliveInterval=30 "$Root\$TarName" "${RemoteUser}@${RemoteHost}:$RemoteBase/"
     if ($LASTEXITCODE -ne 0) { throw "SCP falhou" }
 
-    $deployScript = @"
-set -e
-cd $RemoteBase
-tar -xzf $TarName
-apt-get install -y python3-pip python3-venv docker.io docker-compose-v2 -q 2>/dev/null || true
-python3 -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip -q
-pip install -r requirements.txt -q
-grep -v '^FRONTEND_ORIGIN' .env > .env.tmp 2>/dev/null || cp .env .env.tmp 2>/dev/null || touch .env.tmp
-mv .env.tmp .env
-echo 'FRONTEND_ORIGIN=https://syntexabr.com.br,https://www.syntexabr.com.br' >> .env
-grep -v '^OLLAMA_ENDPOINT\|^OLLAMA_MODEL\|^DEFAULT_LLM' .env > .env.tmp 2>/dev/null || true
-mv .env.tmp .env 2>/dev/null || true
-echo 'OLLAMA_ENDPOINT=http://127.0.0.1:11434' >> .env
-echo 'OLLAMA_MODEL=llama3.2:1b' >> .env
-echo 'DEFAULT_LLM=ollama' >> .env
-cd llm-server
-docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null || true
-cd ..
-python3 scripts/patch_vereda_ai_config.py
-pkill -9 -f uvicorn 2>/dev/null || true
-sleep 4
-rm -f backend.log
-export PYTHONPATH=$RemoteBase PYTHONDONTWRITEBYTECODE=1 SYNTEXA_USE_AI_ENV=1
-unset FRONTEND_ORIGIN
-nohup .venv/bin/python -m uvicorn vereda_backend.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
-echo 'Aguardando API (15s)...'
-sleep 15
-if curl -sf --connect-timeout 5 http://127.0.0.1:8000/health >/dev/null; then
-  echo '[OK] API no ar'
-  curl -s http://127.0.0.1:8000/health
-else
-  echo '[ERRO] API nao respondeu'
-  cat backend.log
-  exit 1
-fi
-"@
-    ssh -i $SshKeyPath -o ServerAliveInterval=30 "${RemoteUser}@${RemoteHost}" $deployScript
+    # Sem script bash embutido no PS (here-string/pipe corrompe no Windows). O tar ja inclui scripts/ — executa o .sh no servidor.
+    $remoteCmd = "cd $RemoteBase && tar -xzf $TarName && bash scripts/remote_deploy_back.sh"
+    & ssh.exe -i $SshKeyPath -o ServerAliveInterval=120 "${RemoteUser}@${RemoteHost}" $remoteCmd
+    $sshExit = $LASTEXITCODE
+    if ($sshExit -ne 0) {
+        throw "Deploy remoto falhou (SSH codigo $sshExit). No servidor: cd $RemoteBase && tar -xzf $TarName && bash scripts/remote_deploy_back.sh"
+    }
     Remove-Item "$Root\$TarName" -ErrorAction SilentlyContinue
     Write-Host "[OK] Backend Hetzner atualizado." -ForegroundColor Green
     exit 0

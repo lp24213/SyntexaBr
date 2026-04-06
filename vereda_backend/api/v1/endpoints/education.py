@@ -20,6 +20,7 @@ Endpoints administrativos (governo):
   POST /v1/education/gov/policy          — geração de políticas públicas
 """
 
+import hashlib
 import json
 import logging
 import re
@@ -44,6 +45,14 @@ from vereda_backend.core.security import (
     get_current_user_optional,
     get_current_admin,
 )
+from vereda_backend.core.cache_redis import (
+    compute_cache_get,
+    compute_cache_set,
+    edu_public_cache_get,
+    edu_public_cache_set,
+)
+from vereda_backend.core.config import settings
+from vereda_backend.core.job_queue import job_queue_enabled, run_gov_report_sync
 from vereda_backend.core.rate_limit import RateLimiter, get_client_ip
 from vereda_backend.schemas.chat import ChatMessage, ChatRequest
 from vereda_backend.services.chat_engine import create_chat_completion, stream_chat_completion
@@ -52,12 +61,28 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/education")
 
 # Rate limiters para endpoints públicos de educação
-# Tutor anônimo: 60 msgs/hora por IP (generoso, mas previne abuso)
-_edu_tutor_limiter = RateLimiter(max_calls=60, window_seconds=3600, max_keys=10_000)
+# Tutor: tiers por IP — logados e gov com mais folga (mesmo servidor)
+_edu_tutor_anon = RateLimiter(max_calls=60, window_seconds=3600, max_keys=10_000)
+_edu_tutor_auth = RateLimiter(max_calls=120, window_seconds=3600, max_keys=15_000)
+_edu_tutor_gov = RateLimiter(max_calls=400, window_seconds=3600, max_keys=5_000)
 # Cálculo simbólico: 30/hora por IP (operação mais pesada)
 _edu_compute_limiter = RateLimiter(max_calls=30, window_seconds=3600, max_keys=5_000)
 # Concursos / ciência: 40/hora por IP
 _edu_concursos_limiter = RateLimiter(max_calls=40, window_seconds=3600, max_keys=5_000)
+
+
+def _edu_tutor_rate_check(request: _Request, user: Optional[models.User]) -> None:
+    ip = get_client_ip(request)
+    detail = "Limite de uso do tutor atingido. Tente mais tarde ou crie uma conta."
+    if user:
+        plan = (getattr(user, "subscription_plan", "") or "").lower()
+        if plan in ("gov", "government") or getattr(user, "is_admin", False):
+            _edu_tutor_gov.check(ip, detail=detail)
+        else:
+            _edu_tutor_auth.check(ip, detail=detail)
+    else:
+        _edu_tutor_anon.check(ip, detail=detail)
+
 
 # ============================================================
 # Schemas
@@ -842,12 +867,7 @@ def education_tutor(
     user: Optional[models.User] = Depends(get_current_user_optional),
 ):
     """Tutor multi-disciplina com níveis de profundidade, suporte multilíngue e IA adaptativa."""
-    # Aplica rate limit apenas para não-autenticados
-    if not user:
-        _edu_tutor_limiter.check(
-            get_client_ip(request),
-            detail="Limite de uso do tutor atingido. Crie uma conta para uso ilimitado.",
-        )
+    _edu_tutor_rate_check(request, user)
     discipline = (body.discipline or "geral").lower()
     level = (body.level or "intermediario").lower()
     lang = (body.language or "pt").lower()
@@ -864,9 +884,47 @@ def education_tutor(
 
     req = _build_chat_request(messages_data, max_tokens=2048)
     try:
+        if not user:
+            cache_payload = json.dumps(
+                {
+                    "d": discipline,
+                    "l": level,
+                    "lang": lang,
+                    "m": mode,
+                    "f": feedback,
+                    "q": (body.question or "").strip(),
+                    "h": (body.history or [])[-6:],
+                },
+                sort_keys=True,
+                ensure_ascii=False,
+            )
+            digest = hashlib.sha256(cache_payload.encode("utf-8")).hexdigest()
+            hit = edu_public_cache_get(digest)
+            if hit is not None:
+                return {
+                    "content": hit,
+                    "discipline": discipline,
+                    "level": level,
+                    "language": lang,
+                    "mode": mode,
+                    "cached": True,
+                }
         resp = create_chat_completion(db, req, user=user)
         content = resp.choices[0].message.content if resp.choices else ""
-        return {"content": content, "discipline": discipline, "level": level, "language": lang, "mode": mode}
+        if not user and content:
+            edu_public_cache_set(
+                digest,
+                content,
+                ttl_sec=int(getattr(settings, "redis_chat_cache_ttl_sec", 180) or 180),
+            )
+        return {
+            "content": content,
+            "discipline": discipline,
+            "level": level,
+            "language": lang,
+            "mode": mode,
+            "cached": False,
+        }
     except Exception as exc:
         logger.error("Tutor error: %s", exc)
         raise HTTPException(status_code=500, detail="Erro ao processar pergunta do tutor")
@@ -880,11 +938,7 @@ def education_tutor_stream(
     user: Optional[models.User] = Depends(get_current_user_optional),
 ):
     """Tutor em streaming com IA adaptativa."""
-    if not user:
-        _edu_tutor_limiter.check(
-            get_client_ip(request),
-            detail="Limite de uso do tutor atingido. Crie uma conta para uso ilimitado.",
-        )
+    _edu_tutor_rate_check(request, user)
     discipline = (body.discipline or "geral").lower()
     level = (body.level or "intermediario").lower()
     lang = (body.language or "pt").lower()
@@ -916,6 +970,20 @@ def education_tutor_stream(
 # Motor de Cálculo — público
 # ============================================================
 
+def _compute_request_cache_key(body: ComputeRequest) -> str:
+    raw = json.dumps(
+        {
+            "e": (body.expression or "").strip(),
+            "t": (body.compute_type or "auto").lower(),
+            "v": (body.variable or "x").strip(),
+            "x": body.extra or {},
+        },
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
 @router.post("/compute")
 def education_compute(
     request: _Request,
@@ -932,6 +1000,14 @@ def education_compute(
             get_client_ip(request),
             detail="Limite do motor de cálculo atingido. Crie uma conta para uso ilimitado.",
         )
+    ck = _compute_request_cache_key(body)
+    cached_raw = compute_cache_get(ck)
+    if cached_raw:
+        try:
+            return json.loads(cached_raw)
+        except json.JSONDecodeError:
+            pass
+
     sympy_result = _sympy_compute(body.expression, body.compute_type, body.variable, body.extra)
 
     if sympy_result["error"] is None and sympy_result["result"]:
@@ -954,6 +1030,10 @@ def education_compute(
             sympy_result["explanation"] = resp.choices[0].message.content if resp.choices else ""
         except Exception:
             sympy_result["explanation"] = ""
+        try:
+            compute_cache_set(ck, json.dumps(sympy_result, default=str), ttl_sec=900)
+        except (TypeError, ValueError):
+            pass
         return sympy_result
 
     # SymPy falhou — usar IA para resolução completa
@@ -978,7 +1058,7 @@ def education_compute(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Erro no motor de cálculo: {exc}")
 
-    return {
+    out = {
         "result": None,
         "steps": [],
         "latex": "",
@@ -988,6 +1068,11 @@ def education_compute(
         "ai_solution": ai_content,
         "explanation": "",
     }
+    try:
+        compute_cache_set(ck, json.dumps(out, default=str), ttl_sec=600)
+    except (TypeError, ValueError):
+        pass
+    return out
 
 
 @router.post("/compute/code")
@@ -1211,23 +1296,23 @@ def gov_stats(
     for plan_name in ("free", "basic", "medium", "master"):
         plans[plan_name] = db.query(models.User).filter(models.User.subscription_plan == plan_name).count()
 
+    # Agregados reais (usuários/sessões no banco). Não inventamos divisão regional —
+    # isso exige integração com dados geográficos ou institucionais.
     return {
         "total_users": total_users,
         "active_users": active_users,
         "total_sessions": total_sessions,
         "plan_distribution": plans,
+        "disclaimer": (
+            "Indicadores regionais e mapas nacionais ainda não estão conectados a bases oficiais. "
+            "Os números abaixo refletem apenas usuários e sessões desta instalação."
+        ),
         "indicators": {
             "engagement_rate": round((active_users / total_users * 100) if total_users else 0, 1),
             "avg_sessions_per_user": round(total_sessions / active_users if active_users else 0, 1),
             "dropout_risk_estimate": round(((total_users - active_users) / total_users * 100) if total_users else 0, 1),
         },
-        "regions": [
-            {"name": "Sudeste", "users": int(total_users * 0.42), "sessions": int(total_sessions * 0.45), "engagement": 72},
-            {"name": "Nordeste", "users": int(total_users * 0.27), "sessions": int(total_sessions * 0.25), "engagement": 61},
-            {"name": "Sul", "users": int(total_users * 0.15), "sessions": int(total_sessions * 0.15), "engagement": 78},
-            {"name": "Centro-Oeste", "users": int(total_users * 0.09), "sessions": int(total_sessions * 0.09), "engagement": 65},
-            {"name": "Norte", "users": int(total_users * 0.07), "sessions": int(total_sessions * 0.06), "engagement": 54},
-        ],
+        "regions": [],
     }
 
 
@@ -1266,8 +1351,15 @@ def gov_generate_report(
         max_tokens=3000,
     )
     try:
-        resp = create_chat_completion(db, req, user=user)
-        content = resp.choices[0].message.content if resp.choices else ""
+        content = None
+        if job_queue_enabled():
+            try:
+                content = run_gov_report_sync(req.model_dump_json(), user.id)
+            except Exception as exc:
+                logger.warning("Relatório gov: fila indisponível, síncrono: %s", exc)
+        if content is None:
+            resp = create_chat_completion(db, req, user=user)
+            content = resp.choices[0].message.content if resp.choices else ""
         return {"report": content, "type": report_type, "period": period, "region": region}
     except Exception as exc:
         logger.error("Gov report error: %s", exc)

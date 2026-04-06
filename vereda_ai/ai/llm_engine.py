@@ -135,7 +135,8 @@ class OllamaLLMProvider:
             payload["options"] = {"temperature": kwargs["temperature"]}
         if "max_tokens" in kwargs:
             payload.setdefault("options", {})["num_predict"] = kwargs["max_tokens"]
-        payload.setdefault("options", {})["num_ctx"] = 4096
+        num_ctx = int(getattr(settings, "ollama_num_ctx", 2048) or 2048)
+        payload.setdefault("options", {})["num_ctx"] = max(512, min(32768, num_ctx))
 
         req_timeout = kwargs.get("timeout", getattr(settings, "llm_chat_timeout", 10))
         resp = self._post_with_retry(
@@ -162,6 +163,8 @@ class OllamaLLMProvider:
             payload.setdefault("options", {})["temperature"] = kwargs["temperature"]
         if "max_tokens" in kwargs:
             payload.setdefault("options", {})["num_predict"] = kwargs["max_tokens"]
+        num_ctx = int(getattr(settings, "ollama_num_ctx", 2048) or 2048)
+        payload.setdefault("options", {})["num_ctx"] = max(512, min(32768, num_ctx))
         req_timeout = kwargs.get("timeout", getattr(settings, "llm_chat_timeout", 10))
         resp = self._post_with_retry(
             f"{self.base_url}/api/generate",

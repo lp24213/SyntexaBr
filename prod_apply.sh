@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 APP_DIR="/opt/syntexa"
 cd "$APP_DIR"
@@ -14,7 +14,7 @@ set_kv () {
 
 touch .env
 set_kv DEFAULT_LLM ollama
-set_kv OLLAMA_ENDPOINT http://127.0.0.1:11434
+set_kv OLLAMA_ENDPOINT http://172.17.0.1:11434
 set_kv OLLAMA_MODEL qwen2.5:3b
 set_kv LLM_CHAT_TIMEOUT 25
 set_kv LLM_CONNECT_TIMEOUT 5
@@ -25,7 +25,8 @@ set_kv LLM_MAX_CONCURRENCY 4
 set_kv CHAT_CACHE_TTL_SEC 60
 set_kv CHAT_SINGLEFLIGHT_WAIT_SEC 8
 
-if !  curl -fsSL https://ollama.com/install.sh | sh
+if ! command -v ollama >/dev/null 2>&1; then
+  curl -fsSL https://ollama.com/install.sh | sh
 fi
 sudo systemctl enable ollama >/dev/null 2>&1 || true
 sudo systemctl restart ollama
@@ -40,4 +41,3 @@ python3 -m py_compile \
 
 sudo systemctl restart syntexa-backend.service
 sudo systemctl status syntexa-backend.service --no-pager -n 80
-

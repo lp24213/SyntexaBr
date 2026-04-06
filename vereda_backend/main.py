@@ -1,8 +1,9 @@
+import time
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import inspect, text
 
 from vereda_backend.core.config import settings
@@ -37,6 +38,9 @@ def _migrate_db() -> None:
                 "address_line":      "ALTER TABLE users ADD COLUMN address_line VARCHAR(255)",
                 "address_number":    "ALTER TABLE users ADD COLUMN address_number VARCHAR(32)",
                 "address_complement":"ALTER TABLE users ADD COLUMN address_complement VARCHAR(255)",
+                "totp_secret":       "ALTER TABLE users ADD COLUMN totp_secret VARCHAR(64)",
+                "totp_enabled":      "ALTER TABLE users ADD COLUMN totp_enabled BOOLEAN NOT NULL DEFAULT 0",
+                "backup_codes_json": "ALTER TABLE users ADD COLUMN backup_codes_json TEXT",
             }
             for col, sql in pending.items():
                 if col not in existing_cols:
@@ -63,6 +67,28 @@ def create_app() -> FastAPI:
     is_production = (settings.environment or "").strip().lower() in {"prod", "production"}
 
     @app.middleware("http")
+    async def timing_middleware(request, call_next):
+        t0 = time.perf_counter()
+        response = await call_next(request)
+        dt_ms = (time.perf_counter() - t0) * 1000.0
+        response.headers["X-Process-Time-Ms"] = f"{dt_ms:.1f}"
+        return response
+
+    @app.middleware("http")
+    async def cloudflare_origin_guard(request, call_next):
+        """Opcional: exige presença de CF-Connecting-IP (tráfego via Cloudflare)."""
+        if getattr(settings, "require_cloudflare", False):
+            path = request.url.path
+            if path in ("/health", "/docs", "/openapi.json", "/redoc") or path.startswith("/static"):
+                pass
+            elif not (request.headers.get("cf-connecting-ip") or request.headers.get("CF-Connecting-IP")):
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "Acesso direto ao origin não permitido. Use o domínio protegido por Cloudflare."},
+                )
+        return await call_next(request)
+
+    @app.middleware("http")
     async def security_headers_middleware(request, call_next):
         response = await call_next(request)
 
@@ -83,7 +109,8 @@ def create_app() -> FastAPI:
             "https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
             "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; "
             "img-src 'self' data: blob: https:; "
-            "connect-src 'self' https://syntexabr.com.br wss://syntexabr.com.br; "
+            "connect-src 'self' https://syntexabr.com.br https://api.syntexabr.com.br "
+            "wss://syntexabr.com.br wss://api.syntexabr.com.br; "
             "frame-ancestors 'none'; "
             "base-uri 'self'; "
             "form-action 'self';"

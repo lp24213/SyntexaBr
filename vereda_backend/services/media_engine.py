@@ -21,6 +21,21 @@ from vereda_backend.core.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _sniff_image_mime(data: bytes) -> Optional[str]:
+    """Detecta PNG/JPEG/GIF/WebP pelos magic bytes (evita HTML/JSON da API como 'imagem')."""
+    if not data or len(data) < 12:
+        return None
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:6] in (b"GIF87a", b"GIF89a"):
+        return "image/gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
 def _allowed_image_fetch_host(hostname: str) -> bool:
     if not hostname:
         return False
@@ -49,10 +64,11 @@ def fetch_whitelisted_image_url_to_base64(url: str) -> Dict[str, Any]:
         headers={"User-Agent": "SyntexaMedia/1.0"},
     )
     resp.raise_for_status()
-    mime = (resp.headers.get("content-type") or "image/jpeg").split(";")[0].strip() or "image/jpeg"
-    if not mime.startswith("image/"):
-        mime = "image/jpeg"
-    b64 = base64.b64encode(resp.content).decode("ascii")
+    raw_bytes = resp.content
+    mime = _sniff_image_mime(raw_bytes)
+    if not mime:
+        raise ValueError("A URL não retornou uma imagem válida (PNG/JPEG/GIF/WebP).")
+    b64 = base64.b64encode(raw_bytes).decode("ascii")
     return {
         "ok": True,
         "image_base64": b64,
@@ -77,10 +93,15 @@ def _pollinations_download_b64(prompt: str) -> Optional[Dict[str, Any]]:
                 headers={"User-Agent": "SyntexaMedia/1.0"},
             )
             resp.raise_for_status()
-            mime = (resp.headers.get("content-type") or "image/jpeg").split(";")[0].strip() or "image/jpeg"
-            if not mime.startswith("image/"):
-                mime = "image/jpeg"
-            b64 = base64.b64encode(resp.content).decode("ascii")
+            raw_bytes = resp.content
+            mime = _sniff_image_mime(raw_bytes)
+            if not mime:
+                logger.warning(
+                    "Pollinations retornou payload não-imagem (%s bytes), tentando próxima URL.",
+                    len(raw_bytes or b""),
+                )
+                continue
+            b64 = base64.b64encode(raw_bytes).decode("ascii")
             return {
                 "ok": True,
                 "id": f"img-pollinations-{uuid.uuid4()}",

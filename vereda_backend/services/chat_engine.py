@@ -38,12 +38,72 @@ from vereda_backend.services import events
 from vereda_backend.services.search_architecture import web_search
 from vereda_backend.core.access_control import audit_log
 from vereda_backend.core.config import settings
+from vereda_backend.core.cache_redis import (
+    cache_get as redis_cache_get,
+    cache_set as redis_cache_set,
+    shared_question_cache_get,
+    shared_question_cache_set,
+)
 
 
 _CHAT_CACHE_LOCK = threading.Lock()
 _CHAT_CACHE: dict[str, tuple[float, str]] = {}
 _INFLIGHT: dict[str, threading.Event] = {}
 logger = logging.getLogger(__name__)
+
+
+def _normalize_for_dedup(text: str) -> str:
+    s = (text or "").strip().lower()
+    s = "".join(
+        ch for ch in unicodedata.normalize("NFKD", s) if not unicodedata.combining(ch)
+    )
+    return " ".join(s.split())
+
+
+def _trim_messages(
+    messages: List[ChatMessage], *, max_messages: int, max_chars: int
+) -> List[ChatMessage]:
+    max_messages = max(2, max_messages)
+    slice_msgs = messages[-max_messages:] if len(messages) > max_messages else messages
+    out: List[ChatMessage] = []
+    for m in slice_msgs:
+        c = m.content or ""
+        if len(c) > max_chars:
+            c = c[:max_chars] + "\n…"
+        out.append(ChatMessage(role=m.role, content=c))
+    return out
+
+
+def prepare_chat_request(req: ChatRequest, stress_scale: float = 1.0) -> ChatRequest:
+    """
+    Orçamento fixo de contexto/saída: menos tokens por requisição = mais throughput no mesmo hardware.
+    stress_scale < 1 encurta respostas sob carga (Fase 3).
+    """
+    stress_scale = max(
+        float(getattr(settings, "load_degrade_scale_min", 0.52) or 0.52),
+        min(1.0, float(stress_scale)),
+    )
+    max_msg = max(4, int(getattr(settings, "chat_max_messages", 12) or 12))
+    max_msg = max(3, int(max_msg * (0.72 + 0.28 * stress_scale)))
+    max_chars = max(500, int(getattr(settings, "chat_max_message_chars", 6000) or 6000))
+    max_chars = int(max(400, max_chars * (0.78 + 0.22 * stress_scale)))
+    cap_def = int(getattr(settings, "chat_max_output_tokens_default", 768) or 768)
+    cap_long = int(getattr(settings, "chat_max_output_tokens_long", 3072) or 3072)
+    incoming = max(1, int(req.max_tokens))
+    if incoming <= 1024:
+        mt = min(incoming, cap_def)
+    else:
+        mt = min(incoming, cap_long)
+    mt = max(64, int(mt * stress_scale))
+    trimmed = _trim_messages(req.messages, max_messages=max_msg, max_chars=max_chars)
+    return req.model_copy(update={"messages": trimmed, "max_tokens": mt})
+
+
+def _shared_question_digest(content: str, model: str, temperature: float) -> str:
+    n = _normalize_for_dedup(content)
+    raw = f"{n}|{model}|{round(float(temperature), 2)}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
 
 _WEB_CACHE_LOCK = threading.Lock()
 _WEB_CACHE: dict[str, tuple[float, str]] = {}
@@ -264,13 +324,18 @@ def _cache_get(key: str) -> Optional[str]:
     now = time.time()
     with _CHAT_CACHE_LOCK:
         item = _CHAT_CACHE.get(key)
-        if not item:
-            return None
-        exp, value = item
-        if exp < now:
+        if item:
+            exp, value = item
+            if exp >= now:
+                return value
             _CHAT_CACHE.pop(key, None)
-            return None
-        return value
+    rv = redis_cache_get(key)
+    if rv is not None:
+        ttl = max(1, int(getattr(settings, "redis_chat_cache_ttl_sec", 120) or 120))
+        exp = time.time() + ttl
+        with _CHAT_CACHE_LOCK:
+            _CHAT_CACHE[key] = (exp, rv)
+    return rv
 
 
 def _cache_set(key: str, value: str) -> None:
@@ -284,6 +349,8 @@ def _cache_set(key: str, value: str) -> None:
             stale = [k for k, (e, _) in _CHAT_CACHE.items() if e < now]
             for k in stale[:128]:
                 _CHAT_CACHE.pop(k, None)
+    redis_ttl = int(getattr(settings, "redis_chat_cache_ttl_sec", 120) or 120)
+    redis_cache_set(key, value, ttl_sec=redis_ttl)
 
 
 def _singleflight_enter(key: str) -> tuple[threading.Event, bool]:
@@ -351,8 +418,23 @@ def _local_engine_reply(user_text: str) -> str:
 
 
 def create_chat_completion(
-    db: Session, req: ChatRequest, user: Optional[models.User]
+    db: Session,
+    req: ChatRequest,
+    user: Optional[models.User],
+    client_ip: Optional[str] = None,
 ) -> ChatResponse:
+    from vereda_backend.core import load_monitor
+    from vereda_backend.core.concurrency_control import SlotTimeoutError, llm_execution_slot
+    from vereda_backend.core.priority import TrafficPriority, priority_for_user
+
+    stress = load_monitor.stress_level()
+    scale = load_monitor.stress_to_output_scale(stress)
+    if priority_for_user(user) == TrafficPriority.GOV:
+        scale = min(
+            1.0,
+            scale + float(getattr(settings, "load_gov_boost_scale", 0.12) or 0.12),
+        )
+    req = prepare_chat_request(req, stress_scale=scale)
     reply_text = ""
     # Localiza última mensagem do usuário
     last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
@@ -363,37 +445,99 @@ def create_chat_completion(
         if not content:
             reply_text = "Recebi sua mensagem vazia. Pode repetir?"
         else:
-            cache_key = _make_cache_key(req, user)
-            cached = _cache_get(cache_key)
-            if cached is not None:
-                reply_text = cached
+            shared_hit = None
+            if user is None:
+                _sd = _shared_question_digest(content, req.model, req.temperature)
+                shared_hit = shared_question_cache_get(_sd)
+            if shared_hit is not None:
+                reply_text = shared_hit
             else:
-                event, owns_singleflight = _singleflight_enter(cache_key)
-                if not owns_singleflight:
-                    wait_sec = float(getattr(settings, "chat_singleflight_wait_sec", 8.0))
-                    event.wait(timeout=max(0.2, wait_sec))
-                    cached_after_wait = _cache_get(cache_key)
-                    if cached_after_wait is not None:
-                        reply_text = cached_after_wait
-                    else:
-                        # Se não houver cache após espera, segue processamento normal
-                        # sem mexer no single-flight do request original.
-                        try:
-                            reply_text = _compute_chat_reply(db, req, user, content)
-                            _cache_set(cache_key, reply_text)
-                        except Exception as exc:
-                            logger.exception("Falha ao gerar resposta do chat: %s", exc)
-                            reply_text = _local_engine_reply(content)
+                cache_key = _make_cache_key(req, user)
+                cached = _cache_get(cache_key)
+                if cached is not None:
+                    reply_text = cached
                 else:
-                    try:
+                    from vereda_backend.core.job_queue import job_queue_enabled, run_long_chat_sync
+
+                    threshold = int(getattr(settings, "chat_long_job_threshold_tokens", 2500) or 2500)
+                    queued = False
+                    if job_queue_enabled() and req.max_tokens >= threshold:
                         try:
-                            reply_text = _compute_chat_reply(db, req, user, content)
-                            _cache_set(cache_key, reply_text)
+                            remote = run_long_chat_sync(
+                                req.model_dump_json(), user.id if user else None
+                            )
+                            if remote:
+                                reply_text = remote
+                                _cache_set(cache_key, reply_text)
+                                queued = True
                         except Exception as exc:
-                            logger.exception("Falha ao gerar resposta do chat: %s", exc)
-                            reply_text = _local_engine_reply(content)
-                    finally:
-                        _singleflight_leave(cache_key, event)
+                            logger.warning("Fila chat longo indisponível, síncrono: %s", exc)
+                    if (
+                        not queued
+                        and user is None
+                        and job_queue_enabled()
+                        and load_monitor.should_offload_public_to_queue(stress)
+                        and req.max_tokens < threshold
+                    ):
+                        try:
+                            remote = run_long_chat_sync(
+                                req.model_dump_json(), user.id if user else None
+                            )
+                            if remote:
+                                reply_text = remote
+                                _cache_set(cache_key, reply_text)
+                                queued = True
+                        except Exception as exc:
+                            logger.warning("Fila sob carga (público) indisponível: %s", exc)
+                    if not queued:
+
+                        def _run_llm() -> str:
+                            with llm_execution_slot(user, client_ip or "unknown"):
+                                return _compute_chat_reply(db, req, user, content)
+
+                        event, owns_singleflight = _singleflight_enter(cache_key)
+                        if not owns_singleflight:
+                            wait_sec = float(getattr(settings, "chat_singleflight_wait_sec", 8.0))
+                            event.wait(timeout=max(0.2, wait_sec))
+                            cached_after_wait = _cache_get(cache_key)
+                            if cached_after_wait is not None:
+                                reply_text = cached_after_wait
+                            else:
+                                try:
+                                    reply_text = _run_llm()
+                                    _cache_set(cache_key, reply_text)
+                                except SlotTimeoutError:
+                                    reply_text = (
+                                        "O sistema está com alta demanda. "
+                                        "Aguarde um instante ou faça login para obter prioridade."
+                                    )
+                                except Exception as exc:
+                                    logger.exception("Falha ao gerar resposta do chat: %s", exc)
+                                    reply_text = _local_engine_reply(content)
+                        else:
+                            try:
+                                try:
+                                    reply_text = _run_llm()
+                                    _cache_set(cache_key, reply_text)
+                                except SlotTimeoutError:
+                                    reply_text = (
+                                        "O sistema está com alta demanda. "
+                                        "Aguarde um instante ou faça login para obter prioridade."
+                                    )
+                                except Exception as exc:
+                                    logger.exception("Falha ao gerar resposta do chat: %s", exc)
+                                    reply_text = _local_engine_reply(content)
+                            finally:
+                                _singleflight_leave(cache_key, event)
+            if (
+                reply_text
+                and user is None
+                and content
+                and shared_hit is None
+            ):
+                _sd = _shared_question_digest(content, req.model, req.temperature)
+                ttl = int(getattr(settings, "chat_shared_cache_ttl_sec", 300) or 300)
+                shared_question_cache_set(_sd, reply_text, ttl_sec=ttl)
             if not reply_text:
                 reply_text = _local_engine_reply(content)
     if not reply_text:
@@ -533,9 +677,11 @@ def _compute_chat_reply(
         kb_text = ""
         if knowledge_items:
             kb_text = f"- {knowledge_items[0].title}: {knowledge_items[0].answer}"
-        memory_docs = memory_system.retrieve_context(content, top_k=2)
+        mem_k = max(1, int(getattr(settings, "chat_memory_top_k", 1) or 1))
+        rag_k = max(1, int(getattr(settings, "chat_rag_top_k", 1) or 1))
+        memory_docs = memory_system.retrieve_context(content, top_k=mem_k)
         rag_context = rag_engine.db.similarity_search(
-            namespace="global", query=content, top_k=2
+            namespace="global", query=content, top_k=rag_k
         )
         web_context = ""
         lower = content.lower()
@@ -602,9 +748,24 @@ def _compute_chat_reply(
 
 
 def stream_chat_completion(
-    db: Session, req: ChatRequest, user: Optional[models.User]
+    db: Session,
+    req: ChatRequest,
+    user: Optional[models.User],
+    client_ip: Optional[str] = None,
 ) -> Iterator[str]:
     """Gera chunks de texto para resposta imediata (streaming). Mesma lógica do create_chat_completion."""
+    from vereda_backend.core import load_monitor
+    from vereda_backend.core.concurrency_control import SlotTimeoutError, llm_execution_slot
+    from vereda_backend.core.priority import TrafficPriority, priority_for_user
+
+    stress = load_monitor.stress_level()
+    scale = load_monitor.stress_to_output_scale(stress)
+    if priority_for_user(user) == TrafficPriority.GOV:
+        scale = min(
+            1.0,
+            scale + float(getattr(settings, "load_gov_boost_scale", 0.12) or 0.12),
+        )
+    req = prepare_chat_request(req, stress_scale=scale)
     last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
     if not last_user:
         yield "Olá, sou a IA da Syntexa. Me envie uma mensagem."
@@ -644,80 +805,88 @@ def stream_chat_completion(
             yield f"Não consegui avaliar: {result.get('error')}"
         return
     mode = detect_mode(content)
-    if mode == "copiloto":
-        history = [{"role": m.role, "content": m.content} for m in req.messages[:-1]]
-        reply = run_copiloto(content, llm_engine, history=history, max_tokens=req.max_tokens)
-        yield reply
-        return
-    if mode == "lab":
-        history = [{"role": m.role, "content": m.content} for m in req.messages[:-1]]
-        reply = run_lab(content, llm_engine, history=history, max_tokens=req.max_tokens)
-        yield reply
-        return
-    if mode == "cientifico":
-        history = [{"role": m.role, "content": m.content} for m in req.messages[:-1]]
-        reply = run_cientifico(content, llm_engine, history=history, max_tokens=req.max_tokens)
-        yield reply
-        return
-    if mode == "juridico":
-        history = [{"role": m.role, "content": m.content} for m in req.messages[:-1]]
-        reply = run_juridico(content, llm_engine, history=history, max_tokens=req.max_tokens)
-        yield reply
-        return
-    if mode == "estrategico":
-        history = [{"role": m.role, "content": m.content} for m in req.messages[:-1]]
-        reply = run_estrategico(content, llm_engine, history=history, max_tokens=req.max_tokens)
-        yield reply
-        return
-    knowledge_items = _find_relevant_knowledge(db, content, limit=1)
-    kb_text = f"- {knowledge_items[0].title}: {knowledge_items[0].answer}" if knowledge_items else ""
-    memory_docs = memory_system.retrieve_context(content, top_k=2)
-    rag_context = rag_engine.db.similarity_search(namespace="global", query=content, top_k=2)
-    web_context = ""
-    lower = content.lower()
-    is_definition = any(
-        lower.startswith(p) or p in lower
-        for p in (
-            "o que é",
-            "qual o",
-            "o que e ",
-            "quem é",
-            "como se chama",
-            "o que é chamado",
-            "nome do ",
-            "nome da ",
-            "o que significa",
+    try:
+        with llm_execution_slot(user, client_ip or "unknown"):
+            if mode == "copiloto":
+                history = [{"role": m.role, "content": m.content} for m in req.messages[:-1]]
+                reply = run_copiloto(content, llm_engine, history=history, max_tokens=req.max_tokens)
+                yield reply
+                return
+            if mode == "lab":
+                history = [{"role": m.role, "content": m.content} for m in req.messages[:-1]]
+                reply = run_lab(content, llm_engine, history=history, max_tokens=req.max_tokens)
+                yield reply
+                return
+            if mode == "cientifico":
+                history = [{"role": m.role, "content": m.content} for m in req.messages[:-1]]
+                reply = run_cientifico(content, llm_engine, history=history, max_tokens=req.max_tokens)
+                yield reply
+                return
+            if mode == "juridico":
+                history = [{"role": m.role, "content": m.content} for m in req.messages[:-1]]
+                reply = run_juridico(content, llm_engine, history=history, max_tokens=req.max_tokens)
+                yield reply
+                return
+            if mode == "estrategico":
+                history = [{"role": m.role, "content": m.content} for m in req.messages[:-1]]
+                reply = run_estrategico(content, llm_engine, history=history, max_tokens=req.max_tokens)
+                yield reply
+                return
+            knowledge_items = _find_relevant_knowledge(db, content, limit=1)
+            kb_text = f"- {knowledge_items[0].title}: {knowledge_items[0].answer}" if knowledge_items else ""
+            mem_k = max(1, int(getattr(settings, "chat_memory_top_k", 1) or 1))
+            rag_k = max(1, int(getattr(settings, "chat_rag_top_k", 1) or 1))
+            memory_docs = memory_system.retrieve_context(content, top_k=mem_k)
+            rag_context = rag_engine.db.similarity_search(namespace="global", query=content, top_k=rag_k)
+            web_context = ""
+            lower = content.lower()
+            is_definition = any(
+                lower.startswith(p) or p in lower
+                for p in (
+                    "o que é",
+                    "qual o",
+                    "o que e ",
+                    "quem é",
+                    "como se chama",
+                    "o que é chamado",
+                    "nome do ",
+                    "nome da ",
+                    "o que significa",
+                )
+            )
+            try:
+                if is_definition:
+                    web_context = _maybe_get_web_context(
+                        content, web_max=3, timeout_sec=0.35, ttl_sec=1800
+                    )
+                else:
+                    web_context = _maybe_get_web_context(
+                        content, web_max=3, timeout_sec=0.6, ttl_sec=1800
+                    )
+            except Exception:
+                web_context = ""
+            system_prompt = _build_system_prompt(
+                user, kb_text, memory_docs + rag_context, user_text=content, web_context=web_context
+            )
+            messages = [
+                {"role": "system", "content": system_prompt},
+                *[m.model_dump() for m in req.messages],
+            ]
+            _max_tokens = min(req.max_tokens, 1024)
+            try:
+                yielded = False
+                for chunk in llm_engine.chat_stream(
+                    messages, temperature=req.temperature, max_tokens=_max_tokens
+                ):
+                    yielded = True
+                    yield chunk
+                if not yielded:
+                    yield _local_engine_reply(content)
+            except Exception:
+                yield _local_engine_reply(content)
+    except SlotTimeoutError:
+        yield (
+            "O sistema está com alta demanda no momento. "
+            "Aguarde um instante ou faça login para prioridade maior."
         )
-    )
-    # Mesma lógica do modo não-stream: cache + timeout curto para web.
-    try:
-        if is_definition:
-            web_context = _maybe_get_web_context(
-                content, web_max=3, timeout_sec=0.35, ttl_sec=1800
-            )
-        else:
-            web_context = _maybe_get_web_context(
-                content, web_max=3, timeout_sec=0.6, ttl_sec=1800
-            )
-    except Exception:
-        web_context = ""
-    system_prompt = _build_system_prompt(
-        user, kb_text, memory_docs + rag_context, user_text=content, web_context=web_context
-    )
-    messages = [
-        {"role": "system", "content": system_prompt},
-        *[m.model_dump() for m in req.messages],
-    ]
-    _max_tokens = min(req.max_tokens, 1024)
-    try:
-        yielded = False
-        for chunk in llm_engine.chat_stream(
-            messages, temperature=req.temperature, max_tokens=_max_tokens
-        ):
-            yielded = True
-            yield chunk
-        if not yielded:
-            yield _local_engine_reply(content)
-    except Exception:
-        yield _local_engine_reply(content)
 

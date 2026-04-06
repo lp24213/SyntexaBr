@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node ./scripts/no-local-dev.cjs",
     "build": "next build",
-    "start": "next start",
+    "start": "node ./scripts/no-local-dev.cjs",
     "lint": "next lint"
   },
   "dependencies": {

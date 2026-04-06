@@ -282,7 +282,7 @@ export function ChatLayout(props) {
             : React.createElement(
                 React.Fragment,
                 null,
-                React.createElement("span", { className: "hidden sm:inline text-xs font-medium text-white/55" }, "Modo público gratuito (com limites)"),
+                React.createElement("span", { className: "hidden sm:inline text-xs font-medium text-white/55" }, "Modo público gratuito"),
                 React.createElement("button", {
                   type: "button",
                   onClick: function () { window.location.href = encryptedPath("login"); },

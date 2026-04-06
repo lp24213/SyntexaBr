@@ -16,7 +16,7 @@ Uso:
 import threading
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from fastapi import HTTPException, Request, status
 
@@ -29,6 +29,9 @@ def get_client_ip(request: Request) -> str:
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
     if request.client:
         return request.client.host
     return "unknown"
@@ -102,3 +105,25 @@ password_reset_limiter = RateLimiter(max_calls=5, window_seconds=3600)
 
 # Verificação de e-mail: 10 tentativas por 5 minutos — previne força bruta de código
 verify_email_limiter = RateLimiter(max_calls=10, window_seconds=300)
+
+# Chat público (24h / IP): tiers — anônimos mais restritos; logados e gov mais folga (mesmo hardware)
+_public_chat_anon = RateLimiter(max_calls=200, window_seconds=86400, max_keys=20_000)
+_public_chat_auth = RateLimiter(max_calls=800, window_seconds=86400, max_keys=30_000)
+_public_chat_gov = RateLimiter(max_calls=3000, window_seconds=86400, max_keys=5_000)
+
+
+def check_public_chat_tier(ip: str, user: Optional[object], *, detail: Optional[str] = None) -> None:
+    """
+    Prioriza contas logadas e plano governo sem exigir hardware novo (apenas limites distintos).
+    """
+    msg = detail or (
+        "Limite diário de mensagens atingido. Crie uma conta ou aguarde para continuar."
+    )
+    if user is not None:
+        plan = (getattr(user, "subscription_plan", "") or "").lower()
+        if plan in ("gov", "government") or getattr(user, "is_admin", False):
+            _public_chat_gov.check(ip, detail=msg)
+        else:
+            _public_chat_auth.check(ip, detail=msg)
+    else:
+        _public_chat_anon.check(ip, detail=msg)

@@ -1,0 +1,13 @@
+# Redis — cache + fila ARQ (executar apenas no servidor Hetzner / CI remoto).
+# Não use esta stack como “servidor de desenvolvimento” na máquina local.
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - syntexa_redis_data:/data
+
+volumes:
+  syntexa_redis_data: {}

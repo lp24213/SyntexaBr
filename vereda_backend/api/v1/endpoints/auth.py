@@ -1,14 +1,25 @@
 from datetime import datetime, timedelta
 from secrets import randbelow
 
+from jose import JWTError, jwt
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+import pyotp
+
 from vereda_backend.core.security import (
+    ALGORITHM,
     create_access_token,
+    create_pre_2fa_token,
     get_current_admin,
     get_current_user,
+    get_secret_key,
+    get_user_from_refresh_token,
+    issue_refresh_token,
+    revoke_refresh_token_string,
+    user_may_enable_2fa,
+    user_requires_2fa_flow,
     get_password_hash,
     verify_password,
 )
@@ -22,7 +33,12 @@ from vereda_backend.core.rate_limit import (
 from vereda_backend.db import models
 from vereda_backend.db.session import get_db
 from vereda_backend.schemas.auth import (
-    Token,
+    LoginNeeds2FA,
+    LoginResponse,
+    LoginSuccess,
+    RefreshRequest,
+    TwoFactorEnable,
+    TwoFactorVerify,
     UserCreate,
     UserCreatePublic,
     UserPublic,
@@ -66,12 +82,12 @@ def _send_code_or_500(email: str, code: str, purpose: str) -> None:
         ) from exc
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=LoginResponse)
 def login(
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
-) -> Token:
+) -> LoginResponse:
     login_limiter.check(
         get_client_ip(request),
         detail="Muitas tentativas de login. Aguarde 1 minuto.",
@@ -85,11 +101,97 @@ def login(
             detail="E-mail ou senha inválidos",
         )
     user_role = getattr(user, "role", "user") or "user"
+
+    if user_requires_2fa_flow(user):
+        pre = create_pre_2fa_token(user.email)
+        return LoginNeeds2FA(two_factor_token=pre)
+
     access_token = create_access_token(subject=user.email, is_admin=user.is_admin, role=user_role)
+    refresh_token = issue_refresh_token(db, user)
 
     # Webhook de login bem-sucedido
     events.notify_login_success(user)
-    return Token(access_token=access_token)
+    return LoginSuccess(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/refresh", response_model=LoginSuccess)
+def refresh_token_endpoint(payload: RefreshRequest, db: Session = Depends(get_db)) -> LoginSuccess:
+    user = get_user_from_refresh_token(db, payload.refresh_token)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token inválido ou expirado.")
+    revoke_refresh_token_string(db, payload.refresh_token)
+    user_role = getattr(user, "role", "user") or "user"
+    access_token = create_access_token(subject=user.email, is_admin=user.is_admin, role=user_role)
+    new_refresh = issue_refresh_token(db, user)
+    return LoginSuccess(access_token=access_token, refresh_token=new_refresh)
+
+
+@router.post("/2fa/verify", response_model=LoginSuccess)
+def verify_two_factor(payload: TwoFactorVerify, db: Session = Depends(get_db)) -> LoginSuccess:
+    try:
+        decoded = jwt.decode(payload.two_factor_token, get_secret_key(), algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token 2FA inválido ou expirado.")
+    if decoded.get("typ") != "pre_2fa":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token não é de segundo fator.")
+    email = decoded.get("sub")
+    if not email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token inválido.")
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário inválido.")
+    secret = getattr(user, "totp_secret", None) or ""
+    if not secret:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="2FA não configurado para esta conta.")
+    totp = pyotp.TOTP(secret)
+    if not totp.verify(payload.code.strip().replace(" ", ""), valid_window=1):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Código TOTP inválido.")
+    user_role = getattr(user, "role", "user") or "user"
+    access_token = create_access_token(subject=user.email, is_admin=user.is_admin, role=user_role)
+    refresh_token = issue_refresh_token(db, user)
+    events.notify_login_success(user)
+    return LoginSuccess(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/2fa/setup")
+def setup_two_factor(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> dict:
+    if not user_may_enable_2fa(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="2FA disponível apenas para administradores ou contas governo.",
+        )
+    secret = pyotp.random_base32()
+    current_user.totp_secret = secret
+    current_user.totp_enabled = False
+    db.add(current_user)
+    db.commit()
+    uri = pyotp.TOTP(secret).provisioning_uri(
+        name=current_user.email, issuer_name="Syntexa"
+    )
+    return {"secret": secret, "otpauth_uri": uri}
+
+
+@router.post("/2fa/enable")
+def enable_two_factor(
+    payload: TwoFactorEnable,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> dict:
+    if not user_may_enable_2fa(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Sem permissão.")
+    secret = getattr(current_user, "totp_secret", None) or ""
+    if not secret:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Execute /auth/2fa/setup antes.")
+    totp = pyotp.TOTP(secret)
+    if not totp.verify(payload.code.strip().replace(" ", ""), valid_window=1):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Código inválido.")
+    current_user.totp_enabled = True
+    db.add(current_user)
+    db.commit()
+    return {"detail": "2FA ativado. Próximo login exigirá o código do autenticador."}
 
 
 @router.get("/me")

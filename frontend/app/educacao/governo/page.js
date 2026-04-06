@@ -85,7 +85,7 @@ function StatCard({ label, value, sub, color, trend }) {
     React.createElement("p", { className: "text-3xl font-bold text-white" }, value ?? "—"),
     React.createElement("div", { className: "mt-1 flex items-center gap-2" },
       sub && React.createElement("p", { className: "text-xs text-white/40" }, sub),
-      trend && React.createElement("span", { className: `text-xs ${trend > 0 ? "text-emerald-400" : "text-red-400"}` }, trend > 0 ? "▲" : "▼", " ", Math.abs(trend), "%")
+      trend != null && trend !== "" && React.createElement("span", { className: `text-xs ${trend > 0 ? "text-emerald-400" : "text-red-400"}` }, trend > 0 ? "▲" : "▼", " ", Math.abs(trend), "%")
     )
   );
 }
@@ -248,8 +248,8 @@ function GovernoPageInner() {
               React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" }),
               "Painel Governamental · Acesso Admin"
             ),
-            React.createElement("h1", { className: "text-3xl font-bold text-white" }, "Inteligência Educacional Nacional"),
-            React.createElement("p", { className: "mt-1 text-sm text-white/50" }, "Monitoramento, previsões e políticas públicas educacionais")
+            React.createElement("h1", { className: "text-3xl font-bold text-white" }, "Painel institucional"),
+            React.createElement("p", { className: "mt-1 text-sm text-white/50" }, "Relatórios e previsões via IA. Indicadores nacionais regionais dependem de integração com bases oficiais — sem dados inventados.")
           ),
           React.createElement("div", { className: "text-right text-xs text-white/30" },
             React.createElement("p", null, "Admin: ", React.createElement("span", { className: "text-white/60" }, profile?.email || ""))
@@ -276,15 +276,20 @@ function GovernoPageInner() {
         ),
         statsError && React.createElement("p", { className: "text-sm text-red-400" }, statsError),
         stats && React.createElement(React.Fragment, null,
-          // KPI cards
+          stats.disclaimer &&
+            React.createElement("div", { className: "rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-100/90 leading-relaxed" },
+              stats.disclaimer
+            ),
+          // KPI cards (agregados reais da instalação)
           React.createElement("div", { className: "grid grid-cols-2 gap-4 sm:grid-cols-4" },
-            React.createElement(StatCard, { label: "Total de Usuários", value: stats.total_users?.toLocaleString("pt-BR"), sub: "Cadastrados", color: "border-amber-500/20", trend: 12 }),
-            React.createElement(StatCard, { label: "Usuários Ativos", value: stats.active_users?.toLocaleString("pt-BR"), sub: "Conta ativa", color: "border-amber-500/15", trend: 8 }),
-            React.createElement(StatCard, { label: "Sessões de IA", value: stats.total_sessions?.toLocaleString("pt-BR"), sub: "Total histórico", color: "border-white/8", trend: 25 }),
-            React.createElement(StatCard, { label: "Engajamento", value: (stats.indicators?.engagement_rate ?? 0) + "%", sub: "Ativos / total", color: stats.indicators?.engagement_rate >= 70 ? "border-emerald-500/20" : "border-amber-500/10", trend: 3 })
+            React.createElement(StatCard, { label: "Total de Usuários", value: stats.total_users?.toLocaleString("pt-BR"), sub: "Cadastrados nesta instalação", color: "border-amber-500/20" }),
+            React.createElement(StatCard, { label: "Usuários Ativos", value: stats.active_users?.toLocaleString("pt-BR"), sub: "Conta ativa", color: "border-amber-500/15" }),
+            React.createElement(StatCard, { label: "Sessões de IA", value: stats.total_sessions?.toLocaleString("pt-BR"), sub: "Total histórico", color: "border-white/8" }),
+            React.createElement(StatCard, { label: "Engajamento", value: (stats.indicators?.engagement_rate ?? 0) + "%", sub: "Ativos / total", color: stats.indicators?.engagement_rate >= 70 ? "border-emerald-500/20" : "border-amber-500/10" })
           ),
 
-          // Regional + pie
+          // Regional — só quando houver dados reais
+          (stats.regions || []).length > 0 &&
           React.createElement("div", { className: "grid gap-4 lg:grid-cols-3" },
             React.createElement(motion.div, { className: "lg:col-span-2 rounded-2xl border border-white/8 bg-[rgba(15,23,42,0.9)] p-6", initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.2 } },
               React.createElement("h2", { className: "mb-4 text-sm font-semibold text-white" }, "Distribuição Regional — Engajamento"),
@@ -299,6 +304,10 @@ function GovernoPageInner() {
               React.createElement(CanvasChart, { regions: stats.regions || [] }),
             )
           ),
+          (stats.regions || []).length === 0 &&
+            React.createElement("div", { className: "rounded-2xl border border-white/10 bg-[rgba(15,23,42,0.6)] p-6 text-sm text-white/55" },
+              "Não há mapa regional nesta versão: os totais acima vêm apenas desta base de usuários. Quando houver integração com dados geográficos ou institucionais, os gráficos regionais aparecerão aqui."
+            ),
 
           // Plan distribution
           React.createElement(motion.div, { className: "grid gap-4 sm:grid-cols-2", initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.3 } },

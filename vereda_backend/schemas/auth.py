@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, EmailStr
 
@@ -38,12 +38,41 @@ class UserPublic(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    refresh_token: Optional[str] = None
+
+
+class LoginSuccess(BaseModel):
+    access_token: str
+    refresh_token: Optional[str] = None
+    token_type: str = "bearer"
+
+
+class LoginNeeds2FA(BaseModel):
+    requires_2fa: Literal[True] = True
+    two_factor_token: str
+    token_type: str = "bearer"
+
+
+LoginResponse = Union[LoginSuccess, LoginNeeds2FA]
 
 
 class TokenPayload(BaseModel):
     sub: str
     is_admin: bool = False
     role: str = "user"
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class TwoFactorVerify(BaseModel):
+    two_factor_token: str
+    code: str
+
+
+class TwoFactorEnable(BaseModel):
+    code: str
 
 
 class VerificationRequest(BaseModel):

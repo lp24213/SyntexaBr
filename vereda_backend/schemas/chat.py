@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Literal, List, Optional
 
 
@@ -12,7 +12,7 @@ class ChatRequest(BaseModel):
     model: str = "vereda-small-echo"
     messages: List[ChatMessage]
     temperature: float = 0.7
-    max_tokens: int = 1024
+    max_tokens: int = Field(default=1024, ge=16, le=8192)
     stream: bool = False
     session_id: Optional[int] = None
 

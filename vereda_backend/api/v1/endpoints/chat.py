@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import List, Optional, Tuple
 
@@ -5,10 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from vereda_backend.core.config import settings
 from vereda_backend.core.plan_limits import (
     count_user_messages_this_month,
     get_message_limit,
 )
+from vereda_backend.core.rate_limit import RateLimiter, get_client_ip
 from vereda_backend.core.security import get_current_user
 from vereda_backend.db import models
 from vereda_backend.db.session import get_db
@@ -29,6 +32,12 @@ from vereda_backend.services.chat_engine import create_chat_completion, stream_c
 
 
 router = APIRouter()
+
+_session_create_limiter = RateLimiter(
+    max_calls=max(5, int(getattr(settings, "session_create_per_ip_hour", 40) or 40)),
+    window_seconds=3600,
+    max_keys=15_000,
+)
 
 
 def _attachments_context(file_list: List) -> str:
@@ -104,11 +113,21 @@ async def _parse_chat_body(request: Request) -> Tuple[ChatRequest, List]:
     return ChatRequest.model_validate(body), []
 
 
-def _get_or_create_session(db: Session, user_id: Optional[int], session_id: Optional[int]) -> Optional[models.ChatSession]:
+def _get_or_create_session(
+    db: Session,
+    user_id: Optional[int],
+    session_id: Optional[int],
+    http_request: Optional[Request] = None,
+) -> Optional[models.ChatSession]:
     if session_id:
         s = db.query(models.ChatSession).filter(models.ChatSession.id == session_id).first()
         if s:
             return s
+    if http_request is not None:
+        _session_create_limiter.check(
+            get_client_ip(http_request),
+            detail="Muitas conversas novas deste IP nesta hora. Aguarde ou continue uma sessão existente.",
+        )
     session = models.ChatSession(user_id=user_id, title="Nova conversa")
     db.add(session)
     db.commit()
@@ -197,10 +216,13 @@ def _stream_events(
     request: ChatRequest,
     sid: Optional[int],
     current_user: Optional[models.User],
+    client_ip: str,
 ):
     full_content: list[str] = []
     try:
-        for chunk in stream_chat_completion(db, request, user=current_user):
+        for chunk in stream_chat_completion(
+            db, request, user=current_user, client_ip=client_ip
+        ):
             full_content.append(chunk)
             yield f"data: {json.dumps({'content': chunk})}\n\n"
     finally:
@@ -245,6 +267,7 @@ async def chat_completions(
         db,
         current_user.id if current_user else None,
         getattr(request, "session_id", None),
+        http_request,
     )
     sid = session.id if session else None
 
@@ -259,7 +282,13 @@ async def chat_completions(
         )
     db.commit()
 
-    response = create_chat_completion(db=db, req=request, user=current_user)
+    response = await asyncio.to_thread(
+        create_chat_completion,
+        db,
+        request,
+        current_user,
+        get_client_ip(http_request),
+    )
 
     if response.choices:
         assistant_msg = response.choices[0].message
@@ -302,6 +331,7 @@ async def chat_completions_stream(
         db,
         current_user.id if current_user else None,
         getattr(request, "session_id", None),
+        http_request,
     )
     sid = session.id if session else None
 
@@ -317,7 +347,7 @@ async def chat_completions_stream(
     db.commit()
 
     return StreamingResponse(
-        _stream_events(db, request, sid, current_user),
+        _stream_events(db, request, sid, current_user, get_client_ip(http_request)),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

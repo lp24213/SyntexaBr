@@ -24,9 +24,15 @@ Set-Location $Root
 
 $TarName     = "syntexa-deploy.tar.gz"
 
+function ConvertTo-BashScriptLf {
+    param([string]$Script)
+    if ([string]::IsNullOrEmpty($Script)) { return $Script }
+    return ($Script -replace "`r`n", "`n") -replace "`r", "`n"
+}
+
 # --- 1) Preparar diretório remoto ---
 Write-Host "[deploy-hetzner] Preparando diretório remoto..." -ForegroundColor Cyan
-ssh -i $SshKeyPath "$RemoteUser@$RemoteHost" @"
+$prepScript = @"
 set -e
 mkdir -p /root/.ssh
 touch /root/.ssh/authorized_keys
@@ -34,6 +40,8 @@ grep -qxF 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIINa81q3WlTt02lTd5Lv1F57Z0pVGqy3S
 sudo mkdir -p $RemoteBase
 sudo chown `$USER:`$USER $RemoteBase
 "@
+$prepScript = ConvertTo-BashScriptLf $prepScript
+$prepScript | & ssh.exe -i $SshKeyPath -T "${RemoteUser}@${RemoteHost}" "bash -s"
 if ($LASTEXITCODE -ne 0) { throw "SSH preparação falhou" }
 
 # --- 2) Criar tarball (um arquivo só = sem Connection reset) ---
@@ -65,7 +73,7 @@ if (-not $ok) { throw "SCP falhou após $maxAttempts tentativas (conexão SSH/He
 
 # --- 4) No servidor: extrair, venv, pip, uvicorn, health check (robusto) ---
 Write-Host "[deploy-hetzner] No servidor: extrair, venv, pip, docker, uvicorn, health check..." -ForegroundColor Cyan
-ssh -i $SshKeyPath -o ServerAliveInterval=30 "$RemoteUser@$RemoteHost" @"
+$remoteDeploy = @"
 set -e
 cd $RemoteBase
 
@@ -157,8 +165,11 @@ else
   exit 1
 fi
 "@
+$remoteDeploy = ConvertTo-BashScriptLf $remoteDeploy
+$remoteDeploy | & ssh.exe -i $SshKeyPath -o ServerAliveInterval=120 -T "${RemoteUser}@${RemoteHost}" "bash -s"
+$sshExit = $LASTEXITCODE
 
-if ($LASTEXITCODE -ne 0) {
+if ($sshExit -ne 0) {
   Write-Host ""
   Write-Host "[deploy-hetzner] API nao respondeu. Veja o diagnóstico acima (ps/ss/backend.log)." -ForegroundColor Red
   exit 1

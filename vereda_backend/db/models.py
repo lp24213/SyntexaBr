@@ -22,10 +22,14 @@ class User(Base):
     address_line = Column(String(255), nullable=True)
     address_number = Column(String(32), nullable=True)
     address_complement = Column(String(255), nullable=True)
-    subscription_plan = Column(String(32), default="free", nullable=False)  # free | basic | medium | master
+    subscription_plan = Column(String(32), default="free", nullable=False)  # free | basic | medium | master | gov
     # Papel do usuário: user | teacher | researcher | enterprise
     # is_admin=True continua sendo o flag de administrador do sistema
     role = Column(String(32), default="user", nullable=False)
+    # 2FA TOTP (admin / plano gov) — opcional
+    totp_secret = Column(String(64), nullable=True)
+    totp_enabled = Column(Boolean, default=False)
+    backup_codes_json = Column(Text, nullable=True)  # JSON: lista de hashes bcrypt
 
     created_at = Column(DateTime, default=datetime.utcnow)
     chat_sessions = relationship("ChatSession", back_populates="user")
@@ -158,6 +162,20 @@ class InstitutionalClient(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=True)
     last_seen_at = Column(DateTime, nullable=True)  # Heartbeat do sistema instalado
+
+
+class RefreshToken(Base):
+    """Refresh tokens opacos (hash SHA-256 armazenado)."""
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String(64), nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    revoked = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
 
 
 class VerificationCode(Base):

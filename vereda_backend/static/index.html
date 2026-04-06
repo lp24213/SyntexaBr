@@ -481,7 +481,7 @@
     </div>
 
     <script>
-      const API_BASE = "https://syntexabr.com.br";
+      const API_BASE = "https://api.syntexabr.com.br";
 
       const envPill = document.getElementById("env-pill");
       const userPillText = document.getElementById("user-pill-text");
@@ -527,6 +527,20 @@
         bubble.appendChild(document.createTextNode(text));
         messagesEl.appendChild(bubble);
         messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function openAssistantStreamBubble() {
+        const bubble = document.createElement("div");
+        bubble.className = "bubble assistant";
+        const meta = document.createElement("small");
+        meta.textContent = "Syntexa";
+        bubble.appendChild(meta);
+        const body = document.createElement("div");
+        body.className = "stream-body";
+        bubble.appendChild(body);
+        messagesEl.appendChild(bubble);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        return body;
       }
 
       async function doLogin() {
@@ -577,7 +591,7 @@
         input.value = "";
 
         sendBtn.disabled = true;
-        statusEl.textContent = "Chamando /v1/chat/completions…";
+        statusEl.textContent = "Streaming /v1/chat/completions/stream…";
 
         try {
           const headers = { "Content-Type": "application/json" };
@@ -586,7 +600,7 @@
             headers["Authorization"] = "Bearer " + token;
           }
 
-          const resp = await fetch(`${API_BASE}/v1/chat/completions`, {
+          const resp = await fetch(`${API_BASE}/v1/chat/completions/stream`, {
             method: "POST",
             headers,
             body: JSON.stringify({
@@ -600,13 +614,47 @@
             throw new Error("HTTP " + resp.status + ": " + txt);
           }
 
-          const data = await resp.json();
-          const msg =
-            data?.choices?.[0]?.message?.content ??
-            "Resposta vazia do backend.";
-          history.push({ role: "assistant", content: msg });
-          pushBubble("assistant", msg);
-          statusEl.textContent = "Resposta recebida da IA Syntexa.";
+          const bodyEl = openAssistantStreamBubble();
+          const reader = resp.body.getReader();
+          const dec = new TextDecoder();
+          let buf = "";
+          let full = "";
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += dec.decode(value, { stream: true });
+            const parts = buf.split("\n");
+            buf = parts.pop() || "";
+            for (const line of parts) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith("data:")) continue;
+              const payload = trimmed.slice(5).trim();
+              if (payload === "[DONE]") continue;
+              try {
+                const ev = JSON.parse(payload);
+                const chunk = ev.content || "";
+                full += chunk;
+                bodyEl.textContent = full;
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+              } catch (_) {
+                /* ignore parse errors de linhas parciais */
+              }
+            }
+          }
+          if (buf.trim()) {
+            const trimmed = buf.trim();
+            if (trimmed.startsWith("data:")) {
+              const payload = trimmed.slice(5).trim();
+              try {
+                const ev = JSON.parse(payload);
+                const chunk = ev.content || "";
+                full += chunk;
+                bodyEl.textContent = full;
+              } catch (_) {}
+            }
+          }
+          history.push({ role: "assistant", content: full || "(vazio)" });
+          statusEl.textContent = "Resposta em streaming concluída.";
         } catch (err) {
           console.error(err);
           statusEl.innerHTML =

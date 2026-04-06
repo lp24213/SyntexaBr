@@ -12,7 +12,7 @@ docker exec syntexa-ollama ollama pull mistral
 
 ## Variáveis no .env do backend
 
-- `OLLAMA_ENDPOINT=http://127.0.0.1:11434`
+- `OLLAMA_ENDPOINT=http://172.17.0.1:11434` (host → container Ollama; ver `.env.example`)
 - `OLLAMA_MODEL=mistral`
 - `DEFAULT_LLM=ollama`
 

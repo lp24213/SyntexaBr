@@ -10,7 +10,7 @@ grep -v '^OLLAMA_ENDPOINT' .env.tmp > .env.tmp2 2>/dev/null || true
 grep -v '^DEFAULT_LLM' .env.tmp2 > .env.tmp3 2>/dev/null || true
 grep -v '^OLLAMA_MODEL' .env.tmp3 > .env 2>/dev/null || true
 rm -f .env.tmp .env.tmp2 .env.tmp3
-echo 'OLLAMA_ENDPOINT=http://127.0.0.1:11434' >> .env
+echo 'OLLAMA_ENDPOINT=http://172.17.0.1:11434' >> .env
 echo 'OLLAMA_MODEL=llama3.2:1b' >> .env
 echo 'DEFAULT_LLM=ollama' >> .env
 echo "OK .env"
@@ -30,4 +30,4 @@ sleep 2
 export PYTHONPATH=/opt/syntexa
 nohup .venv/bin/python -m uvicorn vereda_backend.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
 sleep 5
-curl -s http://127.0.0.1:8000/health && echo "" && echo "Backend OK. Teste o chat."
+curl -sS --connect-timeout 15 https://api.syntexabr.com.br/health && echo "" && echo "Backend OK (API pública). Teste o chat."

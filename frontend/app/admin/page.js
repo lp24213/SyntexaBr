@@ -41,7 +41,7 @@ const SECTIONS = [
   {
     iconName: "building",
     title: "Painel Governamental",
-    desc: "Dashboard educacional nacional: desempenho por região, previsões IA, políticas públicas. Visível apenas para admins.",
+    desc: "Ferramentas de análise e relatórios (IA). Indicadores regionais oficiais dependem de integração futura — sem dados fictícios.",
     href: "/educacao/governo",
     color: "border-amber-500/40 hover:border-amber-400/70",
     badge: "Restrito",
@@ -93,9 +93,9 @@ const QUICK_LINKS = [
 ];
 
 const STEPS = [
-  ["1", "Crie uma licença institucional", "Vá em Clientes Institucionais → Nova licença. Informe nome da escola/prefeitura, tipo e plano."],
-  ["2", "Entregue a chave ao TI", "Copie a chave gerada (SYNTEXA-XXXX-XXXX-XXXX) e baixe o Guia de Instalação para o técnico da instituição."],
-  ["3", "Monitore online/offline", "O sistema instalado envia sinal a cada hora. Você verá o indicador Online no painel quando estiver ativo."],
+  ["1", "Crie uma licença institucional", "Vá em Clientes Institucionais → Nova licença. Informe nome da instituição, tipo e plano."],
+  ["2", "Entregue a chave ao TI", "Copie a chave gerada (formato SYNTEXA-…) e o material de instalação para o responsável na instituição."],
+  ["3", "Acompanhe no painel", "Use Clientes Institucionais para status das licenças. Heartbeat e métricas avançadas evoluem conforme o produto."],
 ];
 
 function AdminPage() {
@@ -188,10 +188,9 @@ function AdminPage() {
         React.createElement("div", { className: "text-amber-400 shrink-0 pt-0.5" },
           React.createElement(FuturisticIcon, { name: "shield", className: "h-6 w-6 text-amber-400/90" })),
         React.createElement("div", { className: "text-xs text-zinc-400 space-y-1" },
-          React.createElement("p", { className: "font-semibold text-amber-300" }, "Segurança do Admin"),
-          React.createElement("p", null, "Este painel é acessível apenas via login com e-mail e senha de administrador. Nunca compartilhe suas credenciais."),
-          React.createElement("p", null, "Em produção, altere a ", React.createElement("code", { className: "text-amber-300" }, "VEREDA_SECRET_KEY"), " no arquivo ", React.createElement("code", { className: "text-amber-300" }, ".env"), " para uma chave forte e única."),
-          React.createElement("p", null, "O arquivo ", React.createElement("code", { className: "text-amber-300" }, ".env"), " está no ", React.createElement("code", { className: "text-amber-300" }, ".gitignore"), " — nunca será enviado ao repositório."))),
+          React.createElement("p", { className: "font-semibold text-amber-300" }, "Segurança"),
+          React.createElement("p", null, "Acesso ao painel admin apenas com sua conta de administrador. Não compartilhe senha nem sessão."),
+          React.createElement("p", { className: "text-zinc-500" }, "Chaves de API e segredos do servidor ficam no ambiente da VPS — não aparecem nesta interface."))),
     ),
   );
 }

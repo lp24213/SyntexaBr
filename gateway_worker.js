@@ -26,6 +26,16 @@ function corsHeaders(origin) {
   };
 }
 
+/** Headers de segurança na borda (complementam o FastAPI). Rate limiting: use WAF / Rules no dashboard CF. */
+function securityHeaders() {
+  return {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "geolocation=(), microphone=(), camera=(), payment=()",
+  };
+}
+
 export default {
   async fetch(request, env) {
     const backendBase = env.BACKEND_BASE_URL;
@@ -70,6 +80,13 @@ export default {
       Object.entries(corsHeaders(origin)).forEach(([k, v]) =>
         respHeaders.set(k, v),
       );
+      Object.entries(securityHeaders()).forEach(([k, v]) => respHeaders.set(k, v));
+      // API dinâmica: não cachear no edge. Health pode cachear alguns segundos.
+      if (request.method === "GET" && pathname.endsWith("/health")) {
+        respHeaders.set("Cache-Control", "public, max-age=5");
+      } else {
+        respHeaders.set("Cache-Control", "no-store");
+      }
 
       return new Response(backendResp.body, {
         status: backendResp.status,
@@ -94,9 +111,17 @@ export default {
     init.headers.delete("host");
 
     const pagesResp = await fetch(targetUrl.toString(), init);
+    const pageHeaders = new Headers(pagesResp.headers);
+    // Assets estáticos: cache agressivo na borda (menos carga no origin)
+    if (
+      request.method === "GET" &&
+      pathname.match(/\.(js|css|mjs|woff2?|png|jpg|jpeg|webp|svg|ico|map)$/i)
+    ) {
+      pageHeaders.set("Cache-Control", "public, max-age=86400, immutable");
+    }
     return new Response(pagesResp.body, {
       status: pagesResp.status,
-      headers: new Headers(pagesResp.headers),
+      headers: pageHeaders,
     });
   },
 };

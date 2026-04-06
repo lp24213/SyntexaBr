@@ -118,7 +118,7 @@ All under prefix **`/v1`** (from `settings.api_v1_prefix`).
 ### Example: Research query
 
 ```bash
-curl -X POST "http://localhost:8000/v1/research/research/query" \
+curl -X POST "https://api.syntexabr.com.br/v1/research/research/query" \
   -H "Content-Type: application/json" \
   -d '{"query": "recent papers on transformer attention", "max_arxiv": 5}'
 ```
@@ -126,7 +126,7 @@ curl -X POST "http://localhost:8000/v1/research/research/query" \
 ### Example: Document ingestion
 
 ```bash
-curl -X POST "http://localhost:8000/v1/research/ingest" \
+curl -X POST "https://api.syntexabr.com.br/v1/research/ingest" \
   -F "file=@paper.pdf" \
   -F "namespace=documents" \
   -F "doc_id=my_paper"
@@ -135,7 +135,7 @@ curl -X POST "http://localhost:8000/v1/research/ingest" \
 ### Example: Math extension
 
 ```bash
-curl -X POST "http://localhost:8000/v1/research/math/ext" \
+curl -X POST "https://api.syntexabr.com.br/v1/research/math/ext" \
   -H "Content-Type: application/json" \
   -d '{"operation": "is_prime", "params": {"n": 97}}'
 ```

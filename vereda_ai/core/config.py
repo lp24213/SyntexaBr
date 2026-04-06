@@ -21,6 +21,8 @@ class Settings(BaseSettings):
         default=None, validation_alias="OLLAMA_ENDPOINT"
     )
     ollama_model: str = Field(default="mistral", validation_alias="OLLAMA_MODEL")
+    # Contexto menor = inferência mais rápida e menos RAM no mesmo hardware (recomendado: 2048–4096)
+    ollama_num_ctx: int = Field(default=2048, validation_alias="OLLAMA_NUM_CTX")
     llm_chat_timeout: int = Field(
         default=120,
         validation_alias="LLM_CHAT_TIMEOUT",

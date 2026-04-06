@@ -1,0 +1,2 @@
+# Shell scripts must use LF so Linux/bash on the server never sees "No such file" on shebang.
+*.sh text eol=lf

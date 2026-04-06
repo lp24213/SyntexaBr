@@ -53,6 +53,60 @@ function detectMediaIntent(text) {
   };
 }
 
+/** Base64 grande em data: URL quebra o <img> no Chrome ("erro de visualização"); Blob URL é estável. */
+function base64ToDisplayUrl(imageBase64, mime) {
+  var clean = String(imageBase64 || "").replace(/\s/g, "");
+  if (!clean) return "";
+  if (typeof window === "undefined") {
+    return "data:" + (mime || "image/png") + ";base64," + clean;
+  }
+  try {
+    var binary = atob(clean);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    var blob = new Blob([bytes], { type: mime || "image/png" });
+    return URL.createObjectURL(blob);
+  } catch (e) {
+    return "data:" + (mime || "image/png") + ";base64," + clean;
+  }
+}
+
+function ChatImage(props) {
+  var src = props.src;
+  var mounted = React.useState(false);
+  var setMounted = mounted[1];
+  var failed = React.useState(false);
+  var setFailed = failed[1];
+  React.useEffect(function () {
+    setMounted(true);
+  }, []);
+  if (!mounted[0]) {
+    return React.createElement("div", {
+      className: "mt-3 h-[min(420px,40vh)] w-full rounded-xl border border-white/10 bg-white/5",
+      "aria-hidden": true,
+    });
+  }
+  if (failed[0]) {
+    return React.createElement(
+      "p",
+      { className: "mt-3 text-sm text-amber-300/90" },
+      "Não foi possível exibir a imagem (dados inválidos ou limite do navegador). Gere de novo."
+    );
+  }
+  return React.createElement("img", {
+    src: src,
+    alt: props.alt || "Imagem gerada",
+    className: "mt-3 max-h-[420px] w-full rounded-xl border border-white/15 object-contain",
+    loading: "lazy",
+    decoding: "async",
+    onError: function () {
+      setFailed(true);
+    },
+  });
+}
+
 /** Prompt limpo para o provedor (menos "Olá crie..." repetido). */
 function extractPromptForProvider(text, kind) {
   var t = (text || "").trim();
@@ -195,9 +249,9 @@ export default function ChatPage() {
     var userMessages = messages.filter((m) => m.role === "user").length;
     var maxForPlan =
       plan === "anon"
-        ? 10
+        ? 120
         : plan === "free"
-          ? 50
+          ? 200
           : plan === "basic"
             ? 500
             : 999999; /* medium/master: uso justo, backend aplica limite se necessário */
@@ -207,7 +261,7 @@ export default function ChatPage() {
           {
             role: "assistant",
             content:
-              "Você atingiu o limite de mensagens para o seu plano atual. Faça login ou altere de plano para continuar usando a Syntexa sem restrições.",
+              "Limite de mensagens do modo atual foi atingido (uso mensal ou diário, conforme o plano). Faça login com conta gratuita ou paga para limites maiores, ou aguarde a renovação do período.",
           },
         ])
       );
@@ -264,7 +318,7 @@ export default function ChatPage() {
 
         if (kind === "image" && result && result.image_base64) {
           var mime = result.mime || "image/png";
-          var imageUrl = "data:" + mime + ";base64," + result.image_base64;
+          var imageUrl = base64ToDisplayUrl(result.image_base64, mime);
           setMessages((prev) => {
             var p = prev.slice();
             // substitui o placeholder "Gerando imagem..." pela resposta final com mídia
@@ -333,6 +387,10 @@ export default function ChatPage() {
         });
       } catch (err) {
         var msg = err instanceof Error ? err.message : String(err);
+        var netDown =
+          msg === "Failed to fetch" ||
+          msg.indexOf("NetworkError") !== -1 ||
+          msg.indexOf("Load failed") !== -1;
         setMessages((prev) => {
           var p = prev.slice();
           var fallback =
@@ -343,9 +401,14 @@ export default function ChatPage() {
                 : kind === "speech"
                   ? "Não consegui gerar a voz agora. Tente novamente em alguns instantes."
                   : "Não consegui gerar o áudio agora. Tente novamente em alguns instantes.";
+          var out = netDown
+            ? "API indisponível (não conectou em api.syntexabr.com.br). Verifique o servidor no Hetzner e nginx na porta 443."
+            : msg && String(msg).trim().length > 0
+              ? String(msg).trim()
+              : fallback;
           p[p.length - 1] = {
             role: "assistant",
-            content: fallback,
+            content: out,
           };
           return p;
         });
@@ -511,14 +574,14 @@ export default function ChatPage() {
       if (kind === "speech") result = await generateSpeech(pOth, tok);
 
       if (kind === "image" && result && result.image_base64) {
-        var mime = result.mime || "image/png";
-        var imageUrl = "data:" + mime + ";base64," + result.image_base64;
+        var mime2 = result.mime || "image/png";
+        var imageUrl2 = base64ToDisplayUrl(result.image_base64, mime2);
         setMessages((prev) =>
           prev.concat([
             {
               role: "assistant",
               content: "Imagem gerada.",
-              media: { type: "image", url: imageUrl },
+              media: { type: "image", url: imageUrl2 },
             },
           ])
         );
@@ -583,13 +646,17 @@ export default function ChatPage() {
             : kind === "speech"
               ? "Não consegui gerar a voz agora. Tente novamente em alguns instantes."
               : "Não consegui gerar o áudio agora. Tente novamente em alguns instantes.";
+      var userMsg =
+        netDown
+          ? "API indisponível (não conectou em api.syntexabr.com.br). Verifique o servidor no Hetzner e nginx na porta 443."
+          : raw && String(raw).trim().length > 0
+            ? String(raw).trim()
+            : fallback;
       setMessages((prev) =>
         prev.concat([
           {
             role: "assistant",
-            content: netDown
-              ? "API indisponível (não conectou em api.syntexabr.com.br). Verifique o servidor no Hetzner e nginx na porta 443."
-              : fallback,
+            content: userMsg,
           },
         ])
       );
@@ -674,10 +741,9 @@ export default function ChatPage() {
                   )
                 : React.createElement("p", { className: "whitespace-pre-wrap" }, m.content),
               m.media && m.media.type === "image" &&
-                React.createElement("img", {
+                React.createElement(ChatImage, {
                   src: m.media.url,
                   alt: "Imagem gerada",
-                  className: "mt-3 max-h-[420px] w-full rounded-xl border border-white/15 object-contain",
                 }),
               m.media && m.media.type === "image" &&
                 React.createElement(

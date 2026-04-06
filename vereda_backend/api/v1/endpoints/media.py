@@ -10,11 +10,12 @@ from vereda_backend.core.plan_limits import (
 from vereda_backend.services.media_engine import (
     analyze_video_basic,
     fetch_whitelisted_image_url_to_base64,
-    generate_image_from_prompt,
     generate_music_from_prompt,
     generate_tts_from_text,
     generate_video_from_prompt,
 )
+from vereda_backend.core.job_queue import run_image_job_sync
+from vereda_backend.core.rate_limit import get_client_ip
 from vereda_backend.core.security import get_current_user_optional
 from vereda_backend.db import models
 from vereda_backend.db.session import get_db
@@ -34,7 +35,7 @@ def _assert_media_limit(
     limit = get_media_limit(plan, media_kind)
     if limit is None:
         return
-    ip = (request.client.host if request and request.client else None) or "unknown"
+    ip = get_client_ip(request) if request else "unknown"
     used = count_media_usage_this_month(
         db,
         media_kind=media_kind,
@@ -58,7 +59,7 @@ def _register_media_usage(
     media_kind: str,
     current_user: models.User | None,
 ) -> None:
-    ip = (request.client.host if request and request.client else None) or "unknown"
+    ip = get_client_ip(request) if request else "unknown"
     db.add(
         models.AuditLog(
             action=f"media_generate_{media_kind}",
@@ -80,7 +81,7 @@ def images_generate(
 ) -> Dict[str, Any]:
     _assert_media_limit(db, request, "image", current_user)
     try:
-        result = generate_image_from_prompt(prompt)
+        result = run_image_job_sync(prompt)
     except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

@@ -15,6 +15,7 @@ from vereda_backend.schemas.chat import (
     ChatRequest,
     ChatResponse,
 )
+from vereda_backend.core.security import get_current_user_optional
 from vereda_backend.services.chat_engine import create_chat_completion, stream_chat_completion
 from vereda_backend.services.media_engine import (
     analyze_video_basic,
@@ -36,10 +37,7 @@ router_v1 = APIRouter()
 router_root = APIRouter()
 
 
-from vereda_backend.core.rate_limit import RateLimiter, get_client_ip as _get_client_ip
-
-# Chat público: 50 mensagens por 24h por IP
-_public_chat_limiter = RateLimiter(max_calls=50, window_seconds=86400, max_keys=20_000)
+from vereda_backend.core.rate_limit import check_public_chat_tier, get_client_ip as _get_client_ip
 
 
 def _public_session_title(ip: str) -> str:
@@ -49,13 +47,6 @@ def _public_session_title(ip: str) -> str:
 
 def _client_ip(request: Request) -> str:
     return _get_client_ip(request)
-
-
-def _check_rate_limit(ip: str) -> None:
-    _public_chat_limiter.check(
-        ip,
-        detail="Limite diário do modo gratuito excedido. Crie uma conta para continuar.",
-    )
 
 
 def _attachments_context(file_list: List) -> str:
@@ -136,10 +127,18 @@ async def _parse_public_chat_body(request: Request) -> Tuple[ChatRequest, list]:
     return req, []
 
 
-async def _public_chat_impl(http_request: Request, db: Session) -> ChatResponse:
+async def _public_chat_impl(
+    http_request: Request,
+    db: Session,
+    optional_user: Optional[models.User] = None,
+) -> ChatResponse:
     """Implementação compartilhada para /api/public-chat e /v1/public-chat."""
     ip = _client_ip(http_request)
-    _check_rate_limit(ip)
+    check_public_chat_tier(
+        ip,
+        optional_user,
+        detail="Limite diário de mensagens atingido. Aguarde ou use uma conta com plano adequado.",
+    )
     request, _files = await _parse_public_chat_body(http_request)
     session_title = _public_session_title(ip)
     session = (
@@ -166,7 +165,12 @@ async def _public_chat_impl(http_request: Request, db: Session) -> ChatResponse:
         )
     db.commit()
     try:
-        response = create_chat_completion(db=db, req=request, user=None)
+        response = create_chat_completion(
+            db=db,
+            req=request,
+            user=optional_user,
+            client_ip=_client_ip(http_request),
+        )
     except Exception as exc:
         logger.exception("Erro interno em public-chat: %s", exc)
         raise HTTPException(
@@ -190,27 +194,35 @@ async def _public_chat_impl(http_request: Request, db: Session) -> ChatResponse:
 async def public_chat(
     http_request: Request,
     db: Session = Depends(get_db),
+    optional_user: Optional[models.User] = Depends(get_current_user_optional),
 ) -> ChatResponse:
     """Modo gratuito sem login. Aceita JSON ou multipart (payload + files)."""
-    return await _public_chat_impl(http_request, db)
+    return await _public_chat_impl(http_request, db, optional_user)
 
 
 @router_v1.post("/public-chat", response_model=ChatResponse)
 async def public_chat_v1(
     http_request: Request,
     db: Session = Depends(get_db),
+    optional_user: Optional[models.User] = Depends(get_current_user_optional),
 ) -> ChatResponse:
     """Mesmo que /api/public-chat, sob /v1 para proxy que só encaminha /v1."""
-    return await _public_chat_impl(http_request, db)
+    return await _public_chat_impl(http_request, db, optional_user)
 
 
 def _stream_events(
-    db: Session, request: ChatRequest, sid: int
+    db: Session,
+    request: ChatRequest,
+    sid: int,
+    optional_user: Optional[models.User] = None,
+    client_ip: str = "unknown",
 ) -> Generator[str, None, None]:
     """Gera eventos SSE para resposta imediata (streaming)."""
     full_content: List[str] = []
     try:
-        for chunk in stream_chat_completion(db, request, user=None):
+        for chunk in stream_chat_completion(
+            db, request, user=optional_user, client_ip=client_ip
+        ):
             full_content.append(chunk)
             yield f"data: {json.dumps({'content': chunk})}\n\n"
     finally:
@@ -227,10 +239,18 @@ def _stream_events(
             db.commit()
 
 
-async def _public_chat_stream_impl(http_request: Request, db: Session):
+async def _public_chat_stream_impl(
+    http_request: Request,
+    db: Session,
+    optional_user: Optional[models.User] = None,
+):
     """Stream compartilhado para /api/public-chat/stream e /v1/public-chat/stream."""
     ip = _client_ip(http_request)
-    _check_rate_limit(ip)
+    check_public_chat_tier(
+        ip,
+        optional_user,
+        detail="Limite diário de mensagens atingido. Aguarde ou use uma conta com plano adequado.",
+    )
     request, _ = await _parse_public_chat_body(http_request)
     session_title = _public_session_title(ip)
     session = (
@@ -257,7 +277,7 @@ async def _public_chat_stream_impl(http_request: Request, db: Session):
         )
     db.commit()
     return StreamingResponse(
-        _stream_events(db, request, sid),
+        _stream_events(db, request, sid, optional_user, ip),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -271,28 +291,38 @@ async def _public_chat_stream_impl(http_request: Request, db: Session):
 async def public_chat_stream(
     http_request: Request,
     db: Session = Depends(get_db),
+    optional_user: Optional[models.User] = Depends(get_current_user_optional),
 ):
     """Chat público em streaming. Body: JSON com model, messages."""
-    return await _public_chat_stream_impl(http_request, db)
+    return await _public_chat_stream_impl(http_request, db, optional_user)
 
 
 @router_v1.post("/public-chat/stream")
 async def public_chat_stream_v1(
     http_request: Request,
     db: Session = Depends(get_db),
+    optional_user: Optional[models.User] = Depends(get_current_user_optional),
 ):
     """Mesmo que /api/public-chat/stream, sob /v1."""
-    return await _public_chat_stream_impl(http_request, db)
+    return await _public_chat_stream_impl(http_request, db, optional_user)
 
 
 @router_root.post("/public-chat", response_model=ChatResponse)
-async def public_chat_root(http_request: Request, db: Session = Depends(get_db)) -> ChatResponse:
+async def public_chat_root(
+    http_request: Request,
+    db: Session = Depends(get_db),
+    optional_user: Optional[models.User] = Depends(get_current_user_optional),
+) -> ChatResponse:
     """Chat público na raiz: POST /public-chat."""
-    return await _public_chat_impl(http_request, db)
+    return await _public_chat_impl(http_request, db, optional_user)
 
 
 @router_root.post("/public-chat/stream")
-async def public_chat_stream_root(http_request: Request, db: Session = Depends(get_db)):
+async def public_chat_stream_root(
+    http_request: Request,
+    db: Session = Depends(get_db),
+    optional_user: Optional[models.User] = Depends(get_current_user_optional),
+):
     """Stream do chat público na raiz: POST /public-chat/stream."""
-    return await _public_chat_stream_impl(http_request, db)
+    return await _public_chat_stream_impl(http_request, db, optional_user)
 

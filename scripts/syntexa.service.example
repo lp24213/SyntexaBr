@@ -1,3 +1,4 @@
+# Legado: use scripts/syntexa-backend.service (instalado automaticamente no deploy-back).
 [Unit]
 Description=Syntexa FastAPI Backend (uvicorn)
 After=network.target

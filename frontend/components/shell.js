@@ -6,8 +6,8 @@ import { Brand } from "./brand";
 import { encryptedPath } from "../lib/routes";
 import { FuturisticIcon } from "./icons/futuristic-icons";
 
-function IconAdminNav() {
-  return React.createElement(FuturisticIcon, { name: "admin", className: "h-4 w-4 text-cyan-400/85" });
+function NavIcon({ name }) {
+  return React.createElement(FuturisticIcon, { name: name || "spark", className: "h-4 w-4 text-white/85" });
 }
 
 function IconConfig() {
@@ -129,12 +129,14 @@ export function AppShell(props) {
     ];
   } else if (isAdmin) {
     navItems = [
-      { path: "admin", label: "Admin", icon: IconAdminNav },
-      { path: "chat", label: "Chat", icon: null },
-      { path: "educacao", label: "Educação", icon: null },
-      { path: "plans", label: "Planos", icon: null },
-      { path: "config", label: "Configuração", icon: IconConfig },
-      { path: "download", label: "Baixar app", icon: IconDownload },
+      { path: "admin", label: "Admin", iconName: "admin" },
+      { path: "chat", label: "Chat", iconName: "chat" },
+      { path: "educacao", label: "Educação", iconName: "book" },
+      { path: "portal", label: "Portal", iconName: "globe" },
+      { path: "plans", label: "Planos", iconName: "chart" },
+      { path: "profile", label: "Perfil", iconName: "users" },
+      { path: "config", label: "Config", iconName: "gear" },
+      { path: "download", label: "Baixar", iconName: "download" },
     ];
   } else if (role === "teacher" || role === "researcher") {
     navItems = [
@@ -185,6 +187,7 @@ export function AppShell(props) {
             navItems.map(function (item) {
               const Icon = item.icon;
               const href = encryptedPath(item.path);
+              const showIcon = Icon || item.iconName;
               return React.createElement(
                 "a",
                 {
@@ -193,11 +196,13 @@ export function AppShell(props) {
                   className:
                     "inline-flex items-center gap-1 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white",
                 },
-                Icon
+                showIcon
                   ? React.createElement(
                       React.Fragment,
                       null,
-                      React.createElement(Icon, null),
+                      Icon
+                        ? React.createElement(Icon, null)
+                        : React.createElement(NavIcon, { name: item.iconName }),
                       React.createElement(
                         "span",
                         { className: "hidden sm:inline" },

@@ -127,6 +127,44 @@ class Settings(BaseSettings):
     chat_singleflight_wait_sec: float = Field(
         default=8.0, validation_alias="CHAT_SINGLEFLIGHT_WAIT_SEC"
     )
+    # Redis: filas ARQ + cache (opcional — sem REDIS_URL o sistema segue 100% in-process)
+    redis_url: str | None = Field(default=None, validation_alias="REDIS_URL")
+    # TTL cache Redis para respostas de chat (segundos)
+    redis_chat_cache_ttl_sec: int = Field(default=120, validation_alias="REDIS_CHAT_CACHE_TTL_SEC")
+    # A partir deste max_tokens, a conclusão de chat pode ir para worker ARQ (se Redis ativo)
+    chat_long_job_threshold_tokens: int = Field(
+        default=2500, validation_alias="CHAT_LONG_JOB_THRESHOLD_TOKENS"
+    )
+    refresh_token_expire_days: int = Field(default=30, validation_alias="REFRESH_TOKEN_EXPIRE_DAYS")
+    access_token_expire_minutes: int = Field(default=720, validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES")
+    # Produção atrás do Worker Cloudflare: rejeita requisições sem CF-Connecting-IP (dev/local = False)
+    require_cloudflare: bool = Field(default=False, validation_alias="REQUIRE_CLOUDFLARE")
+
+    # Fase 2 — orçamento de contexto / saída (menos tokens = mais throughput no mesmo CPU)
+    chat_max_messages: int = Field(default=12, validation_alias="CHAT_MAX_MESSAGES")
+    chat_max_message_chars: int = Field(default=6000, validation_alias="CHAT_MAX_MESSAGE_CHARS")
+    chat_max_output_tokens_default: int = Field(
+        default=768, validation_alias="CHAT_MAX_OUTPUT_TOKENS_DEFAULT"
+    )
+    chat_max_output_tokens_long: int = Field(
+        default=3072, validation_alias="CHAT_MAX_OUTPUT_TOKENS_LONG"
+    )
+    chat_memory_top_k: int = Field(default=1, validation_alias="CHAT_MEMORY_TOP_K")
+    chat_rag_top_k: int = Field(default=1, validation_alias="CHAT_RAG_TOP_K")
+    chat_shared_cache_ttl_sec: int = Field(default=300, validation_alias="CHAT_SHARED_CACHE_TTL_SEC")
+
+    # Fase 3 — estabilidade sob pico (sem infra nova)
+    global_max_concurrent_llm: int = Field(default=12, validation_alias="GLOBAL_MAX_CONCURRENT_LLM")
+    per_user_max_concurrent_llm: int = Field(default=3, validation_alias="PER_USER_MAX_CONCURRENT_LLM")
+    slot_timeout_gov_sec: float = Field(default=300.0, validation_alias="SLOT_TIMEOUT_GOV_SEC")
+    slot_timeout_auth_sec: float = Field(default=120.0, validation_alias="SLOT_TIMEOUT_AUTH_SEC")
+    slot_timeout_public_sec: float = Field(default=45.0, validation_alias="SLOT_TIMEOUT_PUBLIC_SEC")
+    load_stress_weight_cpu: float = Field(default=0.55, validation_alias="LOAD_STRESS_WEIGHT_CPU")
+    load_stress_weight_mem: float = Field(default=0.45, validation_alias="LOAD_STRESS_WEIGHT_MEM")
+    load_degrade_scale_min: float = Field(default=0.52, validation_alias="LOAD_DEGRADE_SCALE_MIN")
+    load_queue_stress_threshold: float = Field(default=0.78, validation_alias="LOAD_QUEUE_STRESS_THRESHOLD")
+    load_gov_boost_scale: float = Field(default=0.12, validation_alias="LOAD_GOV_BOOST_SCALE")
+    session_create_per_ip_hour: int = Field(default=40, validation_alias="SESSION_CREATE_PER_IP_HOUR")
 
     @computed_field
     @property
