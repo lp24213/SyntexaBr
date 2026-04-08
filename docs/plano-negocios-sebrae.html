@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SyntexaBR - Plano de Negocios para Sebrae e Escolas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-root: #020617;
+      --bg-card: rgba(15, 23, 42, 0.96);
+      --border: rgba(192, 192, 192, 0.72);
+      --text-primary: #e5e5e5;
+      --text-secondary: #b0b0b0;
+      --accent: #d4d4d4;
+      --accent-soft: rgba(148, 163, 184, 0.22);
+      --shadow-card: 0 26px 80px rgba(2, 6, 23, 0.9), 0 0 0 1px rgba(148, 163, 184, 0.4);
+      --radius: 20px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text-primary);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(148, 163, 184, 0.16), transparent 52%),
+        radial-gradient(circle at 100% 0%, rgba(100, 116, 139, 0.16), transparent 52%),
+        radial-gradient(circle at 50% 120%, rgba(15, 23, 42, 1), #020617 58%, #000 100%);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 28px; }
+    .deck {
+      display: grid;
+      gap: 16px;
+    }
+    .slide {
+      background: linear-gradient(165deg, rgba(30, 41, 59, 0.78), rgba(2, 6, 23, 0.92));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      background: linear-gradient(120deg, rgba(255,255,255,.03), rgba(203,213,225,.13), rgba(148,163,184,.03));
+      opacity: .35;
+      pointer-events: none;
+    }
+    .slide > * { position: relative; z-index: 1; }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: .01em;
+    }
+    .tag {
+      border: 1px solid var(--border);
+      background: rgba(2, 6, 23, .45);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    h1, h2, h3 { margin: 0 0 10px; letter-spacing: -.02em; }
+    h1 { font-size: 34px; line-height: 1.15; }
+    h2 { font-size: 25px; }
+    h3 { font-size: 18px; color: var(--accent); }
+    p, li { color: var(--text-secondary); margin: 0; }
+    ul, ol { margin: 8px 0 0 18px; padding: 0; }
+    .muted { color: #94a3b8; }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .kpi {
+      border: 1px solid rgba(148,163,184,.4);
+      border-radius: 14px;
+      background: rgba(2,6,23,.45);
+      padding: 12px;
+    }
+    .kpi b { font-size: 24px; color: #f3f4f6; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+    }
+    .box {
+      border: 1px solid rgba(148,163,184,.4);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(2,6,23,.45);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid rgba(148,163,184,.45);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: #f3f4f6; background: rgba(2,6,23,.45); }
+    .ico {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .ico-fill { fill: currentColor; stroke: none; }
+
+    @media (max-width: 900px) {
+      .grid, .kpis { grid-template-columns: 1fr; }
+      h1 { font-size: 29px; }
+    }
+
+    @page { size: A4; margin: 12mm; }
+    @media print {
+      body {
+        background: #fff;
+        color: #111;
+      }
+      .wrap { max-width: none; padding: 0; }
+      .slide {
+        box-shadow: none;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        border-radius: 12px;
+        margin-bottom: 10px;
+      }
+      .slide::before { display: none; }
+      p, li, .muted, .tag { color: #374151; }
+      h1, h2, h3, th, .kpi b { color: #111827; }
+      .box, .kpi { background: #f9fafb; border-color: #d1d5db; }
+      .slide.print-break { page-break-after: always; break-after: page; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="deck">
+      <section class="slide print-break">
+        <div class="top">
+          <div class="brand">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18"/><path d="M7 6l-4 6 4 6"/><path d="M17 6l4 6-4 6"/></svg>
+            <span>SyntexaBR</span>
+          </div>
+          <span class="tag">Plano de Negocios 2026 • Sebrae + Escolas</span>
+        </div>
+        <h1>Plano de Negocios para Escala em Escolas</h1>
+        <p>Plataforma de IA educacional com modelo B2B, receita recorrente e operacao pronta para implantacao em escolas privadas e redes municipais.</p>
+        <div class="kpis">
+          <div class="kpi"><p class="muted">Meta 12 meses</p><b>10 escolas</b></div>
+          <div class="kpi"><p class="muted">MRR alvo</p><b>R$ 45k</b></div>
+          <div class="kpi"><p class="muted">Retencao</p><b>Churn &lt; 5%</b></div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>1. Dor de Mercado e Oportunidade</h2>
+        <div class="grid">
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16" r="1"/></svg> Dores das escolas</h3>
+            <ul>
+              <li>Reforco individual caro e dificil de escalar.</li>
+              <li>Falta de acompanhamento continuo por aluno.</li>
+              <li>Muito trabalho manual em relatorios pedagogicos.</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14l5-5 4 4 7-7"/><path d="M20 10V4h-6"/></svg> Oportunidade</h3>
+            <ul>
+              <li>Digitalizacao acelerada na educacao.</li>
+              <li>Demanda por IA com controle institucional.</li>
+              <li>Modelo recorrente por escola/turma/aluno.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide print-break">
+        <h2>2. Proposta de Valor e Produto</h2>
+        <p>Entregar ganho pedagogico real com baixo atrito operacional para direcao, coordenacao e professores.</p>
+        <div class="grid" style="margin-top:10px">
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Aluno</h3>
+            <ul>
+              <li>Tutor de IA por disciplina.</li>
+              <li>Explicacoes e trilhas adaptativas.</li>
+              <li>Historico de evolucao.</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7v2a3 3 0 0 0 3 3h1l2 3h2l2-3h1a3 3 0 0 0 3-3V9a7 7 0 0 0-7-7z"/></svg> Professor</h3>
+            <ul>
+              <li>Assistente para planejamento de aula.</li>
+              <li>Sugestoes de atividades e revisoes.</li>
+              <li>Reducao de retrabalho.</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 13h2v4H8zM14 9h2v8h-2z"/></svg> Gestao</h3>
+            <ul>
+              <li>Painel de desempenho por turma/escola.</li>
+              <li>Indicadores de engajamento e risco.</li>
+              <li>Base para decisao pedagogica.</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/><path d="M9 12l2 2 4-4"/></svg> Governanca</h3>
+            <ul>
+              <li>Perfis e controle institucional.</li>
+              <li>Rastreabilidade de uso.</li>
+              <li>Base LGPD e politicas de acesso.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>3. Modelo Comercial e Financeiro</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Plano</th>
+              <th>Publico</th>
+              <th>Preco referencia</th>
+              <th>Pacote</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Essencial</td>
+              <td>Escolas pequenas</td>
+              <td>R$ 1.500 a R$ 3.000 / mes</td>
+              <td>Tutor IA + dashboard base + suporte comercial</td>
+            </tr>
+            <tr>
+              <td>Profissional</td>
+              <td>Escolas medias</td>
+              <td>R$ 3.500 a R$ 8.000 / mes</td>
+              <td>Analytics + treinamento + integrações</td>
+            </tr>
+            <tr>
+              <td>Rede</td>
+              <td>Grupos / secretarias</td>
+              <td>Contrato anual (SLA)</td>
+              <td>Multiunidade + implantacao dedicada</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="muted" style="margin-top:8px">Receita = mensalidade recorrente + onboarding + treinamento docente.</p>
+      </section>
+
+      <section class="slide">
+        <h2>4. Go-to-Market e Implantacao</h2>
+        <ol>
+          <li>Piloto de 60 dias com 2 a 5 escolas.</li>
+          <li>Metrica de valor: engajamento, ganho de desempenho, reducao de retrabalho.</li>
+          <li>Conversao para contrato anual com desconto por adesao antecipada.</li>
+          <li>Escala por canais: Sebrae, associacoes e redes locais.</li>
+        </ol>
+      </section>
+
+      <section class="slide print-break">
+        <h2>5. Operacao Tecnica (Pronta para Escala)</h2>
+        <div class="grid">
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v5H3z"/><path d="M3 15h18v5H3z"/><path d="M7 6.5h.01M7 17.5h.01"/></svg> Infra atual</h3>
+            <ul>
+              <li>API e backend em Hetzner.</li>
+              <li>Frontend em Cloudflare Pages.</li>
+              <li>TLS/HTTPS ativo para API publica.</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18"/><path d="M12 3v18"/></svg> Evolucao</h3>
+            <ul>
+              <li>Redis, fila e workers por carga.</li>
+              <li>Observabilidade e SLA por cliente.</li>
+              <li>Hardening de seguranca e compliance.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>6. Tese Institucional: IA Segura e Brasileira</h2>
+        <div class="grid">
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/><path d="M9 12l2 2 4-4"/></svg> Seguranca e confianca</h3>
+            <ul>
+              <li>Governanca de acesso por perfil (aluno, professor, gestor).</li>
+              <li>Auditoria, rastreabilidade e politicas de uso responsavel.</li>
+              <li>Evolucao continua de compliance e boas praticas LGPD.</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l9 4v6c0 5-4 9-9 10-5-1-9-5-9-10V6l9-4z"/></svg> Soberania tecnologica</h3>
+            <ul>
+              <li>Prioridade para operacao em infraestrutura nacional/regional.</li>
+              <li>Arquitetura preparada para nuvem hibrida e multi-regiao.</li>
+              <li>Direcionamento para ecossistema de IA com identidade brasileira.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide print-break">
+        <h2>7. Plano de Expansao Tecnica (36 meses)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Fase</th>
+              <th>Objetivo</th>
+              <th>Infra alvo (referencia)</th>
+              <th>Resultado esperado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Fase 1 (0-6m)</td>
+              <td>Consolidar operacao escolar e observabilidade</td>
+              <td>CPU dedicada, 32-64 GB RAM, storage NVMe, backup diario</td>
+              <td>Estabilidade operacional e previsibilidade de custo</td>
+            </tr>
+            <tr>
+              <td>Fase 2 (6-18m)</td>
+              <td>Escalar inferencia e analytics</td>
+              <td>Cluster com GPU (L4/A10 ou equivalente), Redis, fila, workers</td>
+              <td>Baixa latencia e maior capacidade por escola/rede</td>
+            </tr>
+            <tr>
+              <td>Fase 3 (18-36m)</td>
+              <td>Plataforma nacional multi-tenant</td>
+              <td>Multi-regiao, DR, Kubernetes, MLOps e observabilidade corporativa</td>
+              <td>SLA empresarial e escalabilidade para grandes redes</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="muted" style="margin-top:8px">Capacidade exata (CPU, RAM e GPU) ajustada por demanda real de alunos ativos, picos de uso e tipos de modelo.</p>
+      </section>
+
+      <section class="slide">
+        <h2>8. Expansao de Mercado: Escolas, Universidades e Pesquisa</h2>
+        <div class="grid">
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-4 9 4-9 4-9-4z"/><path d="M7 12v5a5 5 0 0 0 10 0v-5"/></svg> Educacao basica</h3>
+            <ul>
+              <li>Trilhas adaptativas e reforco por disciplina.</li>
+              <li>Evidencias para coordenacao pedagogica.</li>
+              <li>Engajamento e retencao de alunos.</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="M8 10h8M8 14h6"/></svg> Ensino superior</h3>
+            <ul>
+              <li>Apoio em pesquisa, revisao e organizacao de referencias.</li>
+              <li>Ambientes de estudo e laboratorio assistidos por IA.</li>
+              <li>Integração com programas de extensao e inovacao.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>9. Roadmap de Produto Avancado</h2>
+        <ul>
+          <li><strong>Curto prazo:</strong> qualidade pedagogica, explainability e monitoramento de uso.</li>
+          <li><strong>Medio prazo:</strong> modulo multimodal (texto + imagem) para atividades e materiais.</li>
+          <li><strong>Longo prazo:</strong> laboratorio de P&amp;D para IA cientifica, otimizações de inferencia e novas abordagens computacionais.</li>
+          <li><strong>Visao estrategica:</strong> acompanhar evolucoes de computacao quantica aplicada a IA sem comprometer estabilidade do core atual.</li>
+        </ul>
+      </section>
+
+      <section class="slide print-break">
+        <h2>10. Datacenters e Arquitetura Futura</h2>
+        <div class="grid">
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="6" rx="1"/><rect x="3" y="10" width="18" height="6" rx="1"/><rect x="3" y="17" width="18" height="4" rx="1"/></svg> Estrategia de infraestrutura</h3>
+            <ul>
+              <li>Hibrido: cloud + infraestrutura dedicada por crescimento.</li>
+              <li>Separacao por camadas (API, IA, dados, observabilidade).</li>
+              <li>Plano de continuidade e recuperacao de desastre.</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"/><path d="M2 12h20"/><path d="M4.9 4.9l14.2 14.2"/><path d="M19.1 4.9L4.9 19.1"/></svg> Escala nacional</h3>
+            <ul>
+              <li>Planejamento de POPs/regions para reduzir latencia.</li>
+              <li>Expansao por polos educacionais prioritarios.</li>
+              <li>Base para atendimento a governo, redes privadas e universidades.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>11. Tese para Investidores e Governo</h2>
+        <p>A SyntexaBR combina impacto educacional, modelo recorrente e base tecnologica escalavel. A proposta de investimento acelera tres frentes:</p>
+        <ol>
+          <li><strong>Capacidade tecnica:</strong> infraestrutura, MLOps e seguranca.</li>
+          <li><strong>Expansao comercial:</strong> rede de parceiros institucionais e canais regionais.</li>
+          <li><strong>P&amp;D nacional:</strong> desenvolvimento de IA aplicada a educacao, pesquisa e produtividade cientifica.</li>
+        </ol>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
