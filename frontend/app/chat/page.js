@@ -1,20 +1,31 @@
 "use client";
-
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChatLayout } from "../../components/chat-layout";
 import { Button } from "../../components/ui/button";
 import {
-  chatCompletionStream,
+  FileExportMenu,
+  plainTextForExport,
+  downloadStructuredExport,
+} from "../../components/FileExportMenu";
+import { AudioRecorder } from "../../components/AudioRecorder";
+import {
+  USER_FACING_TRY_AGAIN,
+  USER_FACING_CONNECTION,
+  chatCompletion,
+  chatCompletionStreamWithFallback,
   chatCompletionWithMedia,
+  publicChat,
   generateImage,
   generateMusic,
   generateSpeech,
   generateVideo,
   getProfile,
-  publicChatStream,
+  publicChatStreamWithFallback,
   publicChatWithMedia,
   getChatSessionMessages,
+  multimodalAnalyze,
+  multimodalSmartExport,
 } from "../../lib/api";
 
 /** Detecta pedido de mídia em PT-BR (crie/gere imagem, vídeo, áudio — não só "gere uma imagem"). */
@@ -53,6 +64,227 @@ function detectMediaIntent(text) {
   };
 }
 
+function _badEncodingScore(text) {
+  var t = String(text || "");
+  var badMarks = (t.match(/Ã|Â|â|�|Ð|þ/g) || []).length;
+  var replacement = (t.match(/\uFFFD/g) || []).length;
+  var weird = (t.match(/[^\x09\x0A\x0D\x20-\x7EÀ-ÿ]/g) || []).length;
+  return badMarks * 4 + replacement * 6 + weird;
+}
+
+function _looksNaturalPT(text) {
+  var t = String(text || "");
+  if (!t) return false;
+  if (/[áéíóúâêôãõçÁÉÍÓÚÂÊÔÃÕÇ]/.test(t)) return true;
+  return /\b(que|não|como|para|com|uma|isso|imagem|verdadeira|resposta)\b/i.test(t);
+}
+
+function _latin1ToUtf8Candidate(raw) {
+  try {
+    var bytes = new Uint8Array(
+      Array.from(raw).map(function (ch) {
+        return ch.charCodeAt(0) & 0xff;
+      })
+    );
+    return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+  } catch {
+    return raw;
+  }
+}
+
+function _escapeDecodeCandidate(raw) {
+  try {
+    return decodeURIComponent(escape(raw));
+  } catch {
+    return raw;
+  }
+}
+
+function maybeFixMojibake(text) {
+  var raw = String(text || "");
+  if (!raw) return raw;
+  var candidates = [raw];
+  candidates.push(_latin1ToUtf8Candidate(raw));
+  candidates.push(_escapeDecodeCandidate(raw));
+  candidates.push(_latin1ToUtf8Candidate(_latin1ToUtf8Candidate(raw)));
+  candidates.push(_escapeDecodeCandidate(_latin1ToUtf8Candidate(raw)));
+  var best = raw;
+  var bestScore = _badEncodingScore(raw);
+  for (var i = 0; i < candidates.length; i++) {
+    var c = String(candidates[i] || "");
+    if (!c) continue;
+    var score = _badEncodingScore(c);
+    if (score < bestScore) {
+      best = c;
+      bestScore = score;
+    } else if (score === bestScore && _looksNaturalPT(c) && !_looksNaturalPT(best)) {
+      best = c;
+    }
+  }
+  return best;
+}
+
+function normalizeBrokenPortuguese(text) {
+  var out = String(text || "");
+  if (!out) return out;
+  var replacements = [
+    [/\bN�o\b/g, "Não"],
+    [/\bn�o\b/g, "não"],
+    [/\bposs�vel\b/gi, "possível"],
+    [/\bh�\b/g, "há"],
+    [/\bH�\b/g, "Há"],
+    [/\bgal�xia\b/gi, "galáxia"],
+    [/\bL�ctea\b/g, "Láctea"],
+    [/\bn�mero\b/gi, "número"],
+    [/\bbilh�es\b/gi, "bilhões"],
+    [/\bmilh�es\b/gi, "milhões"],
+    [/\best�\b/gi, "está"],
+    [/\bnÃ£o\b/g, "não"],
+    [/\bNÃ£o\b/g, "Não"],
+  ];
+  for (var i = 0; i < replacements.length; i++) {
+    out = out.replace(replacements[i][0], replacements[i][1]);
+  }
+  return out;
+}
+
+function stripBadControlChars(text) {
+  var s = String(text || "");
+  var out = "";
+  for (var i = 0; i < s.length; i++) {
+    var c = s.charCodeAt(i);
+    if (c === 0xfffd) continue;
+    if (c === 9 || c === 10 || c === 13 || c >= 32) out += s.charAt(i);
+  }
+  return out;
+}
+
+function sanitizeChatText(text) {
+  return stripBadControlChars(normalizeBrokenPortuguese(maybeFixMojibake(text)));
+}
+
+/** Pedido explícito de exportar a última resposta em PDF (evita depender do LLM gerar LaTeX). */
+function detectPdfExportIntent(text) {
+  var w = String(text || "").toLowerCase();
+  return (
+    /\b(exporta|exporte|baixa|baixar|gera|gere|cria|crie)\s+(um\s+)?(pdf|documento\s+pdf|ficheiro\s+pdf|arquivo\s+pdf)\b/.test(
+      w
+    ) ||
+    /\b(quero|preciso|mande|manda)\s+(um\s+)?pdf\b/.test(w) ||
+    /\bpdf\b.*\b(export|download|baixa|gera)\b/.test(w)
+  );
+}
+
+/** PDF / Excel / Word / CSV — intercetado antes do LLM para gerar ficheiro real, não “código no chat”. */
+function detectStructuredFileExportIntent(text) {
+  if (detectPdfExportIntent(text)) return "pdf";
+  var w = String(text || "").toLowerCase();
+  if (
+    /\b(xlsx|excel|planilha|folha de cálculo|folha de calculo|libreoffice|calc)\b/.test(w) &&
+    /\b(gera|gere|exporta|exporte|baixa|baixar|cria|crie|descarrega|manda|mande)\b/.test(w)
+  )
+    return "xlsx";
+  if (
+    /\b(docx|word|microsoft\s+word|\.docx)\b/.test(w) &&
+    /\b(gera|gere|exporta|baixa|cria|crie|manda|mande)\b/.test(w)
+  )
+    return "docx";
+  if (
+    /\b(csv|ficheiro\s+csv|arquivo\s+csv)\b/.test(w) &&
+    /\b(gera|gere|exporta|baixa|cria|crie)\b/.test(w)
+  )
+    return "csv";
+  return null;
+}
+
+/** Pacote servidor: planilha financeira / contrato — ficheiros reais, não markdown. */
+function detectSmartJobIntent(text) {
+  var w = String(text || "").toLowerCase();
+  var verb = /\b(faz|faça|faca|gera|gere|cria|crie|monta|manda|mande|exporta|exporte|envia|preciso|quero|me manda)\b/.test(
+    w
+  );
+  var financialHeavy = /\b(orçamento|orcamento|financeir|receita|despesa|fluxo de caixa|custos?|saldo|balanço|balanco)\b/.test(
+    w
+  );
+  var sheet = /\b(planilha|excel|xlsx|csv|tabela|spreadsheet|folha de cálculo|folha de calculo)\b/.test(w);
+  var pdf = /\b(pdf|\.pdf|documento pdf|arquivo pdf|ficheiro pdf)\b/.test(w);
+  var docx = /\b(docx|word|microsoft word|\.docx|documento word)\b/.test(w);
+  var docHint = /\b(contrato|currículo|curriculo|relatório|relatorio|cronograma|currículo vitae|cv\b)\b/.test(
+    w
+  );
+  var listHint = /\b(lista|planilha|excel|xlsx|csv|tabela|cronograma)\b/.test(w);
+  if (verb && sheet && financialHeavy) return true;
+  if (verb && sheet && !financialHeavy) return true;
+  if (verb && pdf && !sheet) return true;
+  if (verb && docx && !sheet && !pdf) return true;
+  if (/\b(odf|ods|open\s*document)\b/.test(w) && verb) return true;
+  if (verb && docHint && /\b(gera|gere|cria|crie|faz|faça|faca|manda|mande|exporta|exporte|envia)\b/.test(w))
+    return true;
+  if (verb && listHint && /\b(gera|gere|cria|crie|faz|exporta|manda)\b/.test(w)) return true;
+  if (
+    /\b(contrato|currículo|curriculo|relatório|relatorio)\b/.test(w) &&
+    /\b(gera|gere|cria|crie|faz|faça|faca|manda|mande|exporta|exporte)\b/.test(w)
+  )
+    return true;
+  return false;
+}
+
+function detectImageCorrectionFollowup(text, messages) {
+  var w = String(text || "").toLowerCase().trim();
+  if (!w) return false;
+  var correctionHints = [
+    "isso não é",
+    "isso nao é",
+    "isso nao e",
+    "quero uma",
+    "quero um",
+    "quero foto real",
+    "quero imagem real",
+    "verdadeira",
+    "mais realista",
+    "ficou errado",
+  ];
+  var hasHint = correctionHints.some(function (h) {
+    return w.indexOf(h) >= 0;
+  });
+  if (!hasHint) return false;
+  if (!Array.isArray(messages) || messages.length === 0) return false;
+  for (var i = messages.length - 1; i >= 0; i--) {
+    var m = messages[i];
+    if (!m || m.role !== "assistant") continue;
+    if (m.media && m.media.type === "image") return true;
+    if (String(m.content || "").toLowerCase().indexOf("imagem gerada") >= 0) return true;
+    return false;
+  }
+  return false;
+}
+
+/** Horário local nas bolhas (pt-BR): dia da semana, data e hora. */
+function timeLabel(date) {
+  try {
+    var d = date instanceof Date ? date : new Date();
+    return d.toLocaleString("pt-BR", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch (e) {
+    return "";
+  }
+}
+
+function formatSessionTimestamp(iso) {
+  if (!iso) return "";
+  try {
+    return timeLabel(new Date(iso));
+  } catch (e) {
+    return "";
+  }
+}
+
 /** Base64 grande em data: URL quebra o <img> no Chrome ("erro de visualização"); Blob URL é estável. */
 function base64ToDisplayUrl(imageBase64, mime) {
   var clean = String(imageBase64 || "").replace(/\s/g, "");
@@ -75,19 +307,20 @@ function base64ToDisplayUrl(imageBase64, mime) {
 
 function ChatImage(props) {
   var src = props.src;
-  var mounted = React.useState(false);
-  var setMounted = mounted[1];
   var failed = React.useState(false);
   var setFailed = failed[1];
-  React.useEffect(function () {
-    setMounted(true);
-  }, []);
-  if (!mounted[0]) {
-    return React.createElement("div", {
-      className: "mt-3 h-[min(420px,40vh)] w-full rounded-xl border border-white/10 bg-white/5",
-      "aria-hidden": true,
-    });
-  }
+  React.useEffect(
+    function () {
+      return function () {
+        if (src && String(src).indexOf("blob:") === 0) {
+          try {
+            URL.revokeObjectURL(src);
+          } catch (e) {}
+        }
+      };
+    },
+    [src]
+  );
   if (failed[0]) {
     return React.createElement(
       "p",
@@ -98,8 +331,8 @@ function ChatImage(props) {
   return React.createElement("img", {
     src: src,
     alt: props.alt || "Imagem gerada",
-    className: "mt-3 max-h-[420px] w-full rounded-xl border border-white/15 object-contain",
-    loading: "lazy",
+    className: "mt-3 max-h-[420px] w-full rounded-xl border border-zinc-200 object-contain",
+    loading: "eager",
     decoding: "async",
     onError: function () {
       setFailed(true);
@@ -122,6 +355,13 @@ function extractPromptForProvider(text, kind) {
     if (mv && mv[1]) return mv[1].trim().replace(/\s+/g, " ").slice(0, 4000);
   }
   return t.replace(/^(olá|oi|eae|opa)[!,.\s]*/i, "").trim().slice(0, 4000);
+}
+
+function mediaGenPlaceholderLabel(kind) {
+  if (kind === "image") return "Gerando imagem...";
+  if (kind === "video") return "Gerando vídeo...";
+  if (kind === "speech") return "Gerando voz...";
+  return "Gerando áudio...";
 }
 
 function IconImage() {
@@ -174,23 +414,56 @@ function IconSend() {
   );
 }
 
+/** Resumo legível da resposta /v1/multimodal/analyze para a bolha do chat. */
+function formatMultimodalResult(data) {
+  if (!data || typeof data !== "object") return "Análise indisponível.";
+  var lines = [];
+  lines.push("Análise (" + (data.detected_kind || "?") + ", " + (data.size || 0) + " bytes)");
+  if (data.ocr && data.ocr.text) {
+    lines.push("Texto extraído:\n" + String(data.ocr.text).slice(0, 4000));
+  }
+  if (data.text_preview) {
+    lines.push("Pré-visualização:\n" + String(data.text_preview).slice(0, 4000));
+  }
+  if (data.vision && data.vision.stats) {
+    lines.push("Imagem: " + data.vision.stats.width + "×" + data.vision.stats.height + " px");
+  }
+  if (data.vision && data.vision.description) {
+    lines.push("Descrição:\n" + String(data.vision.description).slice(0, 4000));
+  }
+  if (data.transcription && data.transcription.text) {
+    lines.push("Transcrição:\n" + String(data.transcription.text).slice(0, 4000));
+  }
+  if (data.note) lines.push(String(data.note));
+  if (data.detail && !data.ok) lines.push(String(data.detail));
+  return lines.join("\n\n") || "Nada a mostrar.";
+}
+
 export default function ChatPage() {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content:
-        "Olá, aqui é a SyntexaBR - interface atualizada. Em que posso te ajudar agora?",
+      content: "Olá, aqui é a Syntexa. Em que posso te ajudar?",
+      timestamp: timeLabel(),
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mediaBusy, setMediaBusy] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [plan, setPlan] = useState("anon");
   const [listening, setListening] = useState(false);
   const [recognition, setRecognition] = useState(null);
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [canStop, setCanStop] = useState(false);
+  const [multimodalBusy, setMultimodalBusy] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [authToken, setAuthToken] = useState(null);
+  const [ttsBusyIdx, setTtsBusyIdx] = useState(null);
+  const [fileExportBusy, setFileExportBusy] = useState(false);
   const abortRef = useRef(null);
+  /** Evita envios concorrentes (duplo clique, Enter+clique). */
+  const sendBusyRef = useRef(false);
   var messagesEndRef = useRef(null);
 
   useEffect(function () {
@@ -198,7 +471,7 @@ export default function ChatPage() {
       var el = messagesEndRef.current;
       if (el) el.scrollIntoView({ behavior: "smooth", block: "end" });
     } catch (e) {}
-  }, [messages, loading]);
+  }, [messages, loading, mediaBusy]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -215,10 +488,20 @@ export default function ChatPage() {
     );
   }
 
+  useEffect(function () {
+    setMessages(function (prev) {
+      if (prev.length !== 1) return prev;
+      var m = prev[0];
+      if (m.role !== "assistant" || m.timestamp) return prev;
+      return [{ ...m, timestamp: timeLabel() }];
+    });
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const token = window.localStorage.getItem("syntexa_token");
+      setAuthToken(token);
       if (!token) {
         setPlan("anon");
         return;
@@ -237,8 +520,9 @@ export default function ChatPage() {
   }, []);
 
   async function sendMessage() {
+    if (sendBusyRef.current) return;
     var content = input.trim();
-    if (!content || loading) return;
+    if (!content || loading || mediaBusy || fileExportBusy) return;
     var token = null;
     try {
       token = window.localStorage.getItem("syntexa_token");
@@ -262,19 +546,146 @@ export default function ChatPage() {
             role: "assistant",
             content:
               "Limite de mensagens do modo atual foi atingido (uso mensal ou diário, conforme o plano). Faça login com conta gratuita ou paga para limites maiores, ou aguarde a renovação do período.",
+            timestamp: timeLabel(),
           },
         ])
       );
       return;
     }
 
+    sendBusyRef.current = true;
+    try {
+    if (detectSmartJobIntent(content)) {
+      setMessages(function (prev) {
+        return prev.concat([
+          { role: "user", content: content, timestamp: timeLabel() },
+          {
+            role: "assistant",
+            content: "A gerar ficheiros reais (Excel, PDF, …)…",
+            timestamp: timeLabel(),
+          },
+        ]);
+      });
+      setInput("");
+      setLoading(true);
+      try {
+        var r = await multimodalSmartExport(content, token, true);
+        if (!r || !r.ok) throw new Error((r && r.detail) || "Falha");
+        var sf = Array.isArray(r.files) ? r.files : [];
+        var ttsU = r.tts && r.tts.audio_url;
+        setMessages(function (prev) {
+          var p = prev.slice();
+          if (p.length) p[p.length - 1] = {
+            role: "assistant",
+            content: String(r.summary || "").trim(),
+            timestamp: timeLabel(),
+            smartFiles: sf,
+            ttsAudioUrl: ttsU || undefined,
+          };
+          return p;
+        });
+      } catch (e) {
+        var me = e instanceof Error ? e.message : String(e);
+        setMessages(function (prev) {
+          var p = prev.slice();
+          if (p.length)
+            p[p.length - 1] = {
+              role: "assistant",
+              content: /400|não suportad|inválid/i.test(me)
+                ? "Não reconheci o pedido para gerar ficheiros automaticamente. Tente: «faz uma planilha financeira e manda» ou «gera um contrato»."
+                : USER_FACING_TRY_AGAIN,
+              timestamp: timeLabel(),
+            };
+          return p;
+        });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    var structuredExportKind = detectStructuredFileExportIntent(content);
+    if (structuredExportKind) {
+      var lastAsst2 = "";
+      for (var ai2 = messages.length - 1; ai2 >= 0; ai2--) {
+        var am2 = messages[ai2];
+        if (
+          am2 &&
+          am2.role === "assistant" &&
+          am2.content &&
+          !/^Gerando\s/i.test(String(am2.content))
+        ) {
+          lastAsst2 = am2.content;
+          break;
+        }
+      }
+      if (!lastAsst2) {
+        setMessages((prev) =>
+          prev.concat([
+            { role: "user", content: content, timestamp: timeLabel() },
+            {
+              role: "assistant",
+              content:
+                "Não há resposta anterior para exportar. Peça primeiro um texto; depois use os botões PDF, Excel, Word ou CSV na barra, ou os botões por mensagem.",
+              timestamp: timeLabel(),
+            },
+          ])
+        );
+        setInput("");
+        return;
+      }
+      var exportLabels = { pdf: "PDF", xlsx: "Excel", docx: "Word", csv: "CSV" };
+      var genLine =
+        "A gerar " + (exportLabels[structuredExportKind] || "ficheiro") + "…";
+      setFileExportBusy(true);
+      setMessages((prev) =>
+        prev.concat([
+          { role: "user", content: content, timestamp: timeLabel() },
+          { role: "assistant", content: genLine, timestamp: timeLabel() },
+        ])
+      );
+      setInput("");
+      try {
+        await downloadStructuredExport(structuredExportKind, lastAsst2, token || undefined);
+        setMessages((prev) => {
+          var p = prev.slice();
+          p[p.length - 1] = {
+            role: "assistant",
+            content:
+              (exportLabels[structuredExportKind] || "Ficheiro") +
+              " gerado — o download deve começar no navegador (ficheiro real, não código no chat).",
+            timestamp: timeLabel(),
+          };
+          return p;
+        });
+      } catch (errEx) {
+        var mpex = errEx instanceof Error ? errEx.message : String(errEx);
+        setMessages((prev) => {
+          var p = prev.slice();
+          p[p.length - 1] = {
+            role: "assistant",
+            content: /sess[aã]o|401|autorizado/i.test(mpex)
+              ? "Inicie sessão para exportar ficheiros, ou tente de novo em instantes."
+              : USER_FACING_TRY_AGAIN,
+            timestamp: timeLabel(),
+          };
+          return p;
+        });
+      } finally {
+        setFileExportBusy(false);
+      }
+      return;
+    }
+
     var mediaIntent = detectMediaIntent(content);
+    var imageCorrectionFollowup = detectImageCorrectionFollowup(content, messages);
     var wantsImage = mediaIntent.wantsImage;
     var wantsVideo = mediaIntent.wantsVideo;
     var wantsAudio = mediaIntent.wantsAudio;
     var wantsSpeech = mediaIntent.wantsSpeech;
 
     // Fluxo especial: texto pedindo mídia chama diretamente o gerador real.
+    if (imageCorrectionFollowup) wantsImage = true;
     if (wantsImage || wantsVideo || wantsAudio || wantsSpeech) {
       var kind = wantsImage
         ? "image"
@@ -291,19 +702,21 @@ export default function ChatPage() {
             : kind === "speech"
               ? "voz"
               : "audio";
-      var userMsg = { role: "user", content: content };
+      var userMsg = { role: "user", content: content, timestamp: timeLabel() };
+      var genLabel = mediaGenPlaceholderLabel(kind);
       setMessages((prev) =>
         prev.concat([
           userMsg,
           {
             role: "assistant",
-            content: "Gerando " + label + " no provedor real...",
+            content: genLabel,
+            timestamp: timeLabel(),
           },
         ])
       );
       setInput("");
       setAttachments([]);
-      setLoading(true);
+      setMediaBusy(true);
       try {
         var result;
         var provImage = extractPromptForProvider(content, "image");
@@ -325,6 +738,7 @@ export default function ChatPage() {
             p[p.length - 1] = {
               role: "assistant",
               content: "Imagem gerada.",
+              timestamp: timeLabel(),
               media: { type: "image", url: imageUrl },
             };
             return p;
@@ -339,6 +753,7 @@ export default function ChatPage() {
             p[p.length - 1] = {
               role: "assistant",
               content: "Imagem gerada.",
+              timestamp: timeLabel(),
               media: { type: "image", url: imgU },
             };
             return p;
@@ -365,6 +780,7 @@ export default function ChatPage() {
                   : kind === "speech"
                     ? "Fala gerada."
                     : "Áudio gerado.",
+              timestamp: timeLabel(),
               media: {
                 type: kind === "video" ? "video" : "audio",
                 url: mediaUrl,
@@ -379,9 +795,8 @@ export default function ChatPage() {
           var p = prev.slice();
           p[p.length - 1] = {
             role: "assistant",
-            content:
-              "Resposta do provedor real recebida, mas sem arquivo final ainda: " +
-              JSON.stringify(result || {}),
+            content: USER_FACING_TRY_AGAIN,
+            timestamp: timeLabel(),
           };
           return p;
         });
@@ -393,33 +808,21 @@ export default function ChatPage() {
           msg.indexOf("Load failed") !== -1;
         setMessages((prev) => {
           var p = prev.slice();
-          var fallback =
-            kind === "image"
-              ? "Não consegui gerar a imagem agora. Tente novamente em alguns instantes."
-              : kind === "video"
-                ? "Não consegui gerar o vídeo agora. Tente novamente em alguns instantes."
-                : kind === "speech"
-                  ? "Não consegui gerar a voz agora. Tente novamente em alguns instantes."
-                  : "Não consegui gerar o áudio agora. Tente novamente em alguns instantes.";
-          var out = netDown
-            ? "API indisponível (não conectou em api.syntexabr.com.br). Verifique o servidor no Hetzner e nginx na porta 443."
-            : msg && String(msg).trim().length > 0
-              ? String(msg).trim()
-              : fallback;
           p[p.length - 1] = {
             role: "assistant",
-            content: out,
+            content: netDown ? USER_FACING_CONNECTION : USER_FACING_TRY_AGAIN,
+            timestamp: timeLabel(),
           };
           return p;
         });
       } finally {
-        setLoading(false);
+        setMediaBusy(false);
       }
       return;
     }
 
     // Fluxo padrão: chat textual (público ou autenticado).
-    var nextHistory = messages.concat([{ role: "user", content: content }]);
+    var nextHistory = messages.concat([{ role: "user", content: content, timestamp: timeLabel() }]);
     setMessages(nextHistory);
     setInput("");
     setAttachments([]);
@@ -431,19 +834,23 @@ export default function ChatPage() {
         try {
           if (hasMedia) {
             reply = await chatCompletionWithMedia(token, nextHistory, attachments);
-            setMessages((prev) => prev.concat([{ role: "assistant", content: reply }]));
+            setMessages((prev) => prev.concat([{ role: "assistant", content: sanitizeChatText(reply), timestamp: timeLabel() }]));
           } else {
-            setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
+            setMessages((prev) => prev.concat([{ role: "assistant", content: "", timestamp: timeLabel() }]));
             const controller = new AbortController();
             abortRef.current = controller;
             setCanStop(true);
             try {
-              await chatCompletionStream(token, nextHistory, function (chunk) {
+              await chatCompletionStreamWithFallback(token, nextHistory, function (chunk) {
                 setMessages((prev) => {
                   var p = prev.slice();
                   var last = p[p.length - 1];
                   if (last && last.role === "assistant") {
-                    p[p.length - 1] = { ...last, content: last.content + chunk };
+                    p[p.length - 1] = {
+                      ...last,
+                      content: sanitizeChatText(last.content + chunk),
+                      timestamp: last.timestamp || timeLabel(),
+                    };
                   }
                   return p;
                 });
@@ -462,19 +869,23 @@ export default function ChatPage() {
           setPlan("anon");
           if (hasMedia) {
             reply = await publicChatWithMedia(nextHistory, attachments);
-            setMessages((prev) => prev.concat([{ role: "assistant", content: reply }]));
+            setMessages((prev) => prev.concat([{ role: "assistant", content: sanitizeChatText(reply), timestamp: timeLabel() }]));
           } else {
-            setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
+            setMessages((prev) => prev.concat([{ role: "assistant", content: "", timestamp: timeLabel() }]));
             const controller = new AbortController();
             abortRef.current = controller;
             setCanStop(true);
             try {
-              await publicChatStream(nextHistory, function (chunk) {
+              await publicChatStreamWithFallback(nextHistory, function (chunk) {
                 setMessages((prev) => {
                   var p = prev.slice();
                   var last = p[p.length - 1];
                   if (last && last.role === "assistant") {
-                    p[p.length - 1] = { ...last, content: last.content + chunk };
+                    p[p.length - 1] = {
+                      ...last,
+                      content: sanitizeChatText(last.content + chunk),
+                      timestamp: last.timestamp || timeLabel(),
+                    };
                   }
                   return p;
                 });
@@ -488,19 +899,23 @@ export default function ChatPage() {
       } else {
         if (hasMedia) {
           reply = await publicChatWithMedia(nextHistory, attachments);
-          setMessages((prev) => prev.concat([{ role: "assistant", content: reply }]));
+          setMessages((prev) => prev.concat([{ role: "assistant", content: sanitizeChatText(reply), timestamp: timeLabel() }]));
         } else {
-          setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
+          setMessages((prev) => prev.concat([{ role: "assistant", content: "", timestamp: timeLabel() }]));
           const controller = new AbortController();
           abortRef.current = controller;
           setCanStop(true);
           try {
-            await publicChatStream(nextHistory, function (chunk) {
+            await publicChatStreamWithFallback(nextHistory, function (chunk) {
               setMessages((prev) => {
                 var p = prev.slice();
                 var last = p[p.length - 1];
                 if (last && last.role === "assistant") {
-                  p[p.length - 1] = { ...last, content: last.content + chunk };
+                  p[p.length - 1] = {
+                    ...last,
+                    content: sanitizeChatText(last.content + chunk),
+                    timestamp: last.timestamp || timeLabel(),
+                  };
                 }
                 return p;
               });
@@ -512,27 +927,102 @@ export default function ChatPage() {
         }
       }
     } catch (err) {
+      try {
+        if (typeof console !== "undefined" && console.error) console.error("[chat]", err);
+      } catch (_) {}
       var msg = err instanceof Error ? err.message : String(err);
-      if (
+      var netDown =
         msg === "Failed to fetch" ||
         msg.indexOf("NetworkError") !== -1 ||
-        msg.indexOf("Load failed") !== -1
-      ) {
-        msg =
-          "não foi possível conectar à API (api.syntexabr.com.br). O servidor pode estar offline ou inacessível — verifique nginx/uvicorn no Hetzner e o DNS.";
+        msg.indexOf("Load failed") !== -1;
+      var recovered = false;
+      try {
+        var rt = null;
+        try {
+          rt = window.localStorage.getItem("syntexa_token");
+        } catch (_) {
+          rt = null;
+        }
+        if (rt) {
+          var fullRec = await chatCompletion(rt, nextHistory);
+          recovered = true;
+          setMessages(function (prev) {
+            var p = prev.slice();
+            if (p.length && p[p.length - 1].role === "assistant") {
+              p[p.length - 1] = {
+                ...p[p.length - 1],
+                content: sanitizeChatText(fullRec),
+                timestamp: timeLabel(),
+              };
+              return p;
+            }
+            return prev.concat([{ role: "assistant", content: sanitizeChatText(fullRec), timestamp: timeLabel() }]);
+          });
+        } else {
+          var fullPub = await publicChat(nextHistory);
+          recovered = true;
+          setMessages(function (prev) {
+            var p = prev.slice();
+            if (p.length && p[p.length - 1].role === "assistant") {
+              p[p.length - 1] = {
+                ...p[p.length - 1],
+                content: sanitizeChatText(fullPub),
+                timestamp: timeLabel(),
+              };
+              return p;
+            }
+            return prev.concat([{ role: "assistant", content: sanitizeChatText(fullPub), timestamp: timeLabel() }]);
+          });
+        }
+      } catch (re) {
+        try {
+          if (typeof console !== "undefined" && console.error) console.error("[chat recover]", re);
+        } catch (_) {}
       }
-      setMessages((prev) => prev.concat([{ role: "assistant", content: "Erro: " + msg }]));
+      if (!recovered) {
+        setMessages(function (prev) {
+          var p2 = prev.slice();
+          if (p2.length && p2[p2.length - 1].role === "assistant") {
+            p2[p2.length - 1] = {
+              ...p2[p2.length - 1],
+              content: netDown ? USER_FACING_CONNECTION : USER_FACING_TRY_AGAIN,
+              timestamp: timeLabel(),
+            };
+            return p2;
+          }
+          return prev.concat([
+            {
+              role: "assistant",
+              content: netDown ? USER_FACING_CONNECTION : USER_FACING_TRY_AGAIN,
+              timestamp: timeLabel(),
+            },
+          ]);
+        });
+      }
     } finally {
       setLoading(false);
+    }
+    } finally {
+      sendBusyRef.current = false;
     }
   }
 
   function handleKeyDown(e) {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (loading || mediaBusy || fileExportBusy) return;
+      sendMessage();
+    }
   }
 
   function handleNewConversation() {
-    setMessages((prev) => prev.slice(0, 2));
+    setMessages([
+      {
+        role: "assistant",
+        content: "Olá, aqui é a Syntexa. Em que posso te ajudar?",
+        timestamp: timeLabel(),
+      },
+    ]);
     setAttachments([]);
     setCurrentSessionId(null);
   }
@@ -543,9 +1033,68 @@ export default function ChatPage() {
     setAttachments(files);
   }
 
+  function handleDragOverChat(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  }
+
+  function handleDragLeaveChat(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  }
+
+  function handleDropChat(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    var fl = Array.from(e.dataTransfer.files || []);
+    if (fl.length > 0) setAttachments(fl);
+  }
+
+  async function handleAnalyzeAttachments() {
+    if (!attachments.length || multimodalBusy || loading || mediaBusy) return;
+    var tok = null;
+    try {
+      tok = window.localStorage.getItem("syntexa_token");
+    } catch (e) {
+      tok = null;
+    }
+    setMultimodalBusy(true);
+    try {
+      for (var i = 0; i < attachments.length; i++) {
+        var file = attachments[i];
+        var data = await multimodalAnalyze(file, { deep: false, token: tok });
+        var summary = formatMultimodalResult(data);
+        setMessages(function (prev) {
+          return prev.concat([
+            {
+              role: "assistant",
+            content: sanitizeChatText(summary),
+              timestamp: timeLabel(),
+            },
+          ]);
+        });
+      }
+    } catch (err) {
+      setMessages(function (prev) {
+        return prev.concat([
+          {
+            role: "assistant",
+            content: USER_FACING_TRY_AGAIN,
+            timestamp: timeLabel(),
+          },
+        ]);
+      });
+    } finally {
+      setMultimodalBusy(false);
+    }
+  }
+
   async function handleGenerateMedia(kind) {
     var prompt = input.trim();
-    if (!prompt || loading) return;
+    if (!prompt || loading || mediaBusy) return;
     var tok = null;
     try {
       tok = window.localStorage.getItem("syntexa_token");
@@ -560,9 +1109,15 @@ export default function ChatPage() {
           : kind === "speech"
             ? "voz"
             : "audio";
-    setMessages((prev) => prev.concat([{ role: "user", content: "Gerar " + label + ": " + prompt }]));
+    var genLine = mediaGenPlaceholderLabel(kind);
+    setMessages((prev) =>
+      prev.concat([
+        { role: "user", content: "Gerar " + label + ": " + prompt, timestamp: timeLabel() },
+        { role: "assistant", content: genLine, timestamp: timeLabel() },
+      ])
+    );
     setInput("");
-    setLoading(true);
+    setMediaBusy(true);
     try {
       var result;
       var pImg = extractPromptForProvider(prompt, "image") || prompt;
@@ -576,29 +1131,31 @@ export default function ChatPage() {
       if (kind === "image" && result && result.image_base64) {
         var mime2 = result.mime || "image/png";
         var imageUrl2 = base64ToDisplayUrl(result.image_base64, mime2);
-        setMessages((prev) =>
-          prev.concat([
-            {
-              role: "assistant",
-              content: "Imagem gerada.",
-              media: { type: "image", url: imageUrl2 },
-            },
-          ])
-        );
+        setMessages((prev) => {
+          var p = prev.slice();
+          p[p.length - 1] = {
+            role: "assistant",
+            content: "Imagem gerada.",
+            timestamp: timeLabel(),
+            media: { type: "image", url: imageUrl2 },
+          };
+          return p;
+        });
         return;
       }
 
       if (kind === "image" && result && (result.url || result.image_url)) {
         var imgU2 = result.url || result.image_url;
-        setMessages((prev) =>
-          prev.concat([
-            {
-              role: "assistant",
-              content: "Imagem gerada.",
-              media: { type: "image", url: imgU2 },
-            },
-          ])
-        );
+        setMessages((prev) => {
+          var p = prev.slice();
+          p[p.length - 1] = {
+            role: "assistant",
+            content: "Imagem gerada.",
+            timestamp: timeLabel(),
+            media: { type: "image", url: imgU2 },
+          };
+          return p;
+        });
         return;
       }
 
@@ -606,62 +1163,50 @@ export default function ChatPage() {
         (result && (result.url || result.video_url || result.audio_url || result.file_url || result.output_url)) ||
         "";
       if (mediaUrl) {
-        setMessages((prev) =>
-          prev.concat([
-            {
-              role: "assistant",
-              content:
-                kind === "video"
-                  ? "Vídeo gerado."
-                  : kind === "speech"
-                    ? "Fala gerada."
-                    : "Áudio gerado.",
-              media: { type: kind === "video" ? "video" : "audio", url: mediaUrl },
-            },
-          ])
-        );
+        setMessages((prev) => {
+          var p = prev.slice();
+          p[p.length - 1] = {
+            role: "assistant",
+            content:
+              kind === "video"
+                ? "Vídeo gerado."
+                : kind === "speech"
+                  ? "Fala gerada."
+                  : "Áudio gerado.",
+            timestamp: timeLabel(),
+            media: { type: kind === "video" ? "video" : "audio", url: mediaUrl },
+          };
+          return p;
+        });
         return;
       }
 
-      setMessages((prev) =>
-        prev.concat([
-          {
-            role: "assistant",
-            content:
-              "Não consegui gerar o arquivo de mídia agora. Tente novamente em alguns instantes.",
-          },
-        ])
-      );
+      setMessages((prev) => {
+        var p = prev.slice();
+        p[p.length - 1] = {
+          role: "assistant",
+          content: "Não consegui gerar o arquivo de mídia agora. Tente novamente em alguns instantes.",
+          timestamp: timeLabel(),
+        };
+        return p;
+      });
     } catch (err) {
       var raw = err instanceof Error ? err.message : String(err);
       var netDown =
         raw === "Failed to fetch" ||
         raw.indexOf("NetworkError") !== -1 ||
         raw.indexOf("Load failed") !== -1;
-      var fallback =
-        kind === "image"
-          ? "Não consegui gerar a imagem agora. Tente novamente em alguns instantes."
-          : kind === "video"
-            ? "Não consegui gerar o vídeo agora. Tente novamente em alguns instantes."
-            : kind === "speech"
-              ? "Não consegui gerar a voz agora. Tente novamente em alguns instantes."
-              : "Não consegui gerar o áudio agora. Tente novamente em alguns instantes.";
-      var userMsg =
-        netDown
-          ? "API indisponível (não conectou em api.syntexabr.com.br). Verifique o servidor no Hetzner e nginx na porta 443."
-          : raw && String(raw).trim().length > 0
-            ? String(raw).trim()
-            : fallback;
-      setMessages((prev) =>
-        prev.concat([
-          {
-            role: "assistant",
-            content: userMsg,
-          },
-        ])
-      );
+      setMessages((prev) => {
+        var p = prev.slice();
+        p[p.length - 1] = {
+          role: "assistant",
+          content: netDown ? USER_FACING_CONNECTION : USER_FACING_TRY_AGAIN,
+          timestamp: timeLabel(),
+        };
+        return p;
+      });
     } finally {
-      setLoading(false);
+      setMediaBusy(false);
     }
   }
 
@@ -684,8 +1229,97 @@ export default function ChatPage() {
     setListening(true);
   }
 
+  function exportAssistantFileForMessage(kind, text) {
+    var tok = null;
+    try {
+      tok = window.localStorage.getItem("syntexa_token");
+    } catch (e) {
+      tok = null;
+    }
+    setFileExportBusy(true);
+    (async function () {
+      try {
+        await downloadStructuredExport(kind, text, tok || undefined);
+      } catch (e) {
+        setMessages(function (prev) {
+          return prev.concat([
+            {
+              role: "assistant",
+              content: USER_FACING_TRY_AGAIN,
+              timestamp: timeLabel(),
+            },
+          ]);
+        });
+      } finally {
+        setFileExportBusy(false);
+      }
+    })();
+  }
+
+  function listenAssistantForMessage(globalIdx, text) {
+    var tok = null;
+    try {
+      tok = window.localStorage.getItem("syntexa_token");
+    } catch (e) {
+      tok = null;
+    }
+    setTtsBusyIdx(globalIdx);
+    (async function () {
+      try {
+        var r = await generateSpeech(plainTextForExport(text).slice(0, 8000), tok);
+        var url = r && r.audio_url;
+        if (url) {
+          setMessages(function (prev) {
+            var p = prev.slice();
+            if (p[globalIdx])
+              p[globalIdx] = Object.assign({}, p[globalIdx], { ttsAudioUrl: url });
+            return p;
+          });
+        }
+      } catch (e) {
+        setMessages(function (prev) {
+          return prev.concat([
+            {
+              role: "assistant",
+              content: USER_FACING_TRY_AGAIN,
+              timestamp: timeLabel(),
+            },
+          ]);
+        });
+      } finally {
+        setTtsBusyIdx(null);
+      }
+    })();
+  }
+
+  function downloadAttachmentFile(file) {
+    try {
+      var u = URL.createObjectURL(file);
+      var a = document.createElement("a");
+      a.href = u;
+      a.download = file.name || "anexo";
+      a.click();
+      setTimeout(function () {
+        try {
+          URL.revokeObjectURL(u);
+        } catch (e2) {}
+      }, 2500);
+    } catch (e) {}
+  }
+
   var visible = messages.filter((m) => m.role !== "system");
-  var showTyping = loading && visible.length > 0;
+  var lastVisible = visible.length ? visible[visible.length - 1] : null;
+  var lastIsMediaPlaceholder =
+    lastVisible &&
+    lastVisible.role === "assistant" &&
+    /^Gerando\s/i.test(String(lastVisible.content || ""));
+  var showTyping =
+    loading &&
+    !fileExportBusy &&
+    visible.length > 0 &&
+    !lastIsMediaPlaceholder &&
+    lastVisible &&
+    lastVisible.role === "user";
 
   function handleStop() {
     try {
@@ -714,7 +1348,8 @@ export default function ChatPage() {
           const mapped = msgs.map(function (m) {
             return {
               role: m.role,
-              content: m.content,
+              content: sanitizeChatText(m.content),
+              timestamp: formatSessionTimestamp(m.created_at),
             };
           });
           setCurrentSessionId(sessionId);
@@ -729,17 +1364,156 @@ export default function ChatPage() {
       React.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-4 sm:px-8 sm:py-5" },
         React.createElement("div", { className: "mx-auto flex w-full max-w-3xl flex-col gap-4" },
           visible.map((m, idx) => {
-            var cn = m.role === "user" ? "syntexa-bubble-user ml-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed break-words" : "syntexa-bubble-assistant mr-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed text-[var(--text-primary)] break-words";
-            return React.createElement(motion.div, { key: idx, initial: false, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, delay: idx * 0.03 }, className: cn },
-              React.createElement("div", { className: "mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50" }, m.role === "user" ? "Você" : "Syntexa"),
-              (m.role === "assistant" && /^Gerando\s/i.test(String(m.content || "")))
+            var safeContent = sanitizeChatText(m.content || "");
+            var globalIdx = messages.indexOf(m);
+            var cn = m.role === "user" ? "syntexa-bubble-user ml-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed break-words" : "syntexa-bubble-assistant mr-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed break-words";
+            return React.createElement(motion.div, { key: idx, initial: false, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, delay: idx * 0.03 },
+              className: cn + " rounded-2xl mb-3 px-3 py-2 sm:px-5 sm:py-4 max-w-[98vw] sm:max-w-[70%] font-[system-ui,-apple-system,'SF Pro Display','Segoe UI',sans-serif] text-[15px] leading-relaxed" },
+              React.createElement("div", { className: "flex items-center justify-between mb-1.5" },
+                React.createElement("span", { className: "text-[12px] font-semibold text-zinc-400" }, m.role === "user" ? "Você" : "Syntexa"),
+                m.timestamp && React.createElement("span", { className: "text-[11px] text-zinc-400 ml-2" }, m.timestamp)
+              ),
+              (m.role === "assistant" && /^Gerando\s/i.test(String(safeContent || "")))
                 ? React.createElement(
                     "div",
                     { className: "flex items-center gap-2 whitespace-pre-wrap" },
                     React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true }),
-                    React.createElement("span", null, m.content)
+                    React.createElement("span", null, safeContent)
                   )
-                : React.createElement("p", { className: "whitespace-pre-wrap" }, m.content),
+                : React.createElement("p", { className: "whitespace-pre-wrap" }, safeContent),
+              m.role === "assistant" &&
+                m.smartFiles &&
+                m.smartFiles.length > 0 &&
+                React.createElement(
+                  "div",
+                  { className: "mt-2 flex flex-wrap gap-1.5" },
+                  m.smartFiles.map(function (f, fi) {
+                    return React.createElement(
+                      "button",
+                      {
+                        type: "button",
+                        key: "sf-" + fi,
+                        className:
+                          "rounded-lg border border-emerald-600/80 bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-950 hover:bg-emerald-100",
+                        onClick: function () {
+                          try {
+                            var raw = atob(String(f.data_base64 || ""));
+                            var arr = new Uint8Array(raw.length);
+                            for (var bi = 0; bi < raw.length; bi++) arr[bi] = raw.charCodeAt(bi);
+                            var blob = new Blob([arr], {
+                              type: f.mime || "application/octet-stream",
+                            });
+                            var u = URL.createObjectURL(blob);
+                            var a = document.createElement("a");
+                            a.href = u;
+                            a.download = f.filename || "syntexa-download";
+                            a.click();
+                            setTimeout(function () {
+                              try {
+                                URL.revokeObjectURL(u);
+                              } catch (e2) {}
+                            }, 2500);
+                          } catch (err) {}
+                        },
+                      },
+                      "Baixar " + String(f.kind || "ficheiro").toUpperCase()
+                    );
+                  })
+                ),
+              m.role === "assistant" &&
+                !/^Gerando\s/i.test(String(safeContent || "")) &&
+                String(safeContent || "").trim() &&
+                globalIdx >= 0 &&
+                !(m.smartFiles && m.smartFiles.length) &&
+                React.createElement(
+                  "div",
+                  { className: "mt-2 flex flex-wrap gap-1.5" },
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: fileExportBusy,
+                      className:
+                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
+                      onClick: function () {
+                        exportAssistantFileForMessage("pdf", m.content || "");
+                      },
+                    },
+                    "PDF"
+                  ),
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: fileExportBusy,
+                      className:
+                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
+                      onClick: function () {
+                        exportAssistantFileForMessage("xlsx", m.content || "");
+                      },
+                    },
+                    "Excel"
+                  ),
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: fileExportBusy,
+                      className:
+                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
+                      onClick: function () {
+                        exportAssistantFileForMessage("docx", m.content || "");
+                      },
+                    },
+                    "Word"
+                  ),
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: fileExportBusy,
+                      className:
+                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
+                      onClick: function () {
+                        exportAssistantFileForMessage("csv", m.content || "");
+                      },
+                    },
+                    "CSV"
+                  ),
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: fileExportBusy,
+                      className:
+                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
+                      onClick: function () {
+                        exportAssistantFileForMessage("txt", m.content || "");
+                      },
+                    },
+                    "TXT"
+                  ),
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: ttsBusyIdx === globalIdx,
+                      className:
+                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
+                      onClick: function () {
+                        listenAssistantForMessage(globalIdx, m.content || "");
+                      },
+                    },
+                    ttsBusyIdx === globalIdx ? "Voz…" : "Ouvir"
+                  )
+                ),
+              m.role === "assistant" &&
+                m.ttsAudioUrl &&
+                React.createElement("audio", {
+                  src: m.ttsAudioUrl,
+                  controls: true,
+                  className: "mt-2 w-full max-w-full",
+                }),
               m.media && m.media.type === "image" &&
                 React.createElement(ChatImage, {
                   src: m.media.url,
@@ -754,7 +1528,7 @@ export default function ChatPage() {
                     target: "_blank",
                     rel: "noreferrer",
                     className:
-                      "mt-2 inline-flex items-center text-xs font-medium text-emerald-300 hover:text-emerald-200 underline decoration-emerald-400/70",
+                      "mt-2 inline-flex items-center text-xs font-medium text-emerald-700 hover:text-emerald-900 underline decoration-emerald-400/70",
                   },
                   "Baixar imagem"
                 ),
@@ -763,12 +1537,12 @@ export default function ChatPage() {
                   ? React.createElement("img", {
                       src: m.media.url,
                       alt: "Video gerado",
-                      className: "mt-3 max-h-[420px] w-full rounded-xl border border-white/15 object-contain",
+                      className: "mt-3 max-h-[420px] w-full rounded-xl border border-zinc-200 object-contain",
                     })
                   : React.createElement("video", {
                       src: m.media.url,
                       controls: true,
-                      className: "mt-3 max-h-[420px] w-full rounded-xl border border-white/15",
+                      className: "mt-3 max-h-[420px] w-full rounded-xl border border-zinc-200",
                     })),
               m.media && m.media.type === "video" &&
                 !String(m.media.url || "").startsWith("data:image/") &&
@@ -780,7 +1554,7 @@ export default function ChatPage() {
                     target: "_blank",
                     rel: "noreferrer",
                     className:
-                      "mt-2 inline-flex items-center text-xs font-medium text-emerald-300 hover:text-emerald-200 underline decoration-emerald-400/70",
+                      "mt-2 inline-flex items-center text-xs font-medium text-emerald-700 hover:text-emerald-900 underline decoration-emerald-400/70",
                   },
                   "Baixar vídeo"
                 ),
@@ -799,14 +1573,14 @@ export default function ChatPage() {
                     target: "_blank",
                     rel: "noreferrer",
                     className:
-                      "mt-2 inline-flex items-center text-xs font-medium text-emerald-300 hover:text-emerald-200 underline decoration-emerald-400/70",
+                      "mt-2 inline-flex items-center text-xs font-medium text-emerald-700 hover:text-emerald-900 underline decoration-emerald-400/70",
                   },
                   "Baixar áudio"
                 ));
           }),
-          showTyping && React.createElement(motion.div, { initial: false, animate: { opacity: 1, y: 0 }, transition: { duration: 0.25 }, className: "syntexa-bubble-assistant mr-auto max-w-[85%] sm:max-w-[80%] rounded-[18px] px-4 py-3 sm:px-5 sm:py-4" },
-            React.createElement("div", { className: "mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50" }, "Syntexa"),
-            React.createElement("div", { className: "flex items-center gap-2 text-sm text-white/75" },
+          showTyping && React.createElement(motion.div, { key: "typing-once", initial: false, animate: { opacity: 1, y: 0 }, transition: { duration: 0.25 }, className: "syntexa-bubble-assistant mr-auto max-w-[85%] sm:max-w-[80%] rounded-[18px] px-4 py-3 sm:px-5 sm:py-4" },
+            React.createElement("div", { className: "mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-600" }, "Syntexa"),
+            React.createElement("div", { className: "flex items-center gap-2 text-sm text-zinc-700" },
               React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true }),
               React.createElement("span", null, "Processando resposta..."))),
           visible.length === 0 &&
@@ -821,25 +1595,131 @@ export default function ChatPage() {
         "div",
         {
           className:
-            "shrink-0 border-t border-white/10 bg-black/85 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:px-8 sm:py-4",
+            "shrink-0 z-30 border-t border-zinc-200 bg-[#f7f7fa] px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-8 sm:py-4" +
+            (dragOver ? " ring-2 ring-emerald-500/50 ring-inset" : ""),
+          onDragOver: handleDragOverChat,
+          onDragLeave: handleDragLeaveChat,
+          onDrop: handleDropChat,
         },
         React.createElement(
           "div",
           { className: "mx-auto flex w-full max-w-3xl flex-col gap-3" },
+          React.createElement(
+            "div",
+            { className: "flex flex-wrap items-center gap-2 text-[11px] text-zinc-500" },
+            React.createElement(FileExportMenu, {
+              token: authToken,
+              className: "flex flex-wrap gap-2",
+              getExportText: function () {
+                for (var gi = messages.length - 1; gi >= 0; gi--) {
+                  var mm = messages[gi];
+                  if (
+                    mm &&
+                    mm.role === "assistant" &&
+                    mm.content &&
+                    !/^Gerando\s/i.test(String(mm.content))
+                  )
+                    return mm.content;
+                }
+                return "";
+              },
+            }),
+            React.createElement(AudioRecorder, {
+              token: authToken,
+              mode: "transcribe",
+              onTranscript: function (t) {
+                setInput(function (prev) {
+                  return (prev ? prev + " " : "") + t;
+                });
+              },
+              onError: function () {
+                setMessages(function (prev) {
+                  return prev.concat([
+                    {
+                      role: "assistant",
+                      content:
+                        "Não consegui transcrever o áudio. Confirme microfone, tente de novo e verifique no servidor: AZURE_SPEECH_KEY + AZURE_SPEECH_REGION e ffmpeg para WebM.",
+                      timestamp: timeLabel(),
+                    },
+                  ]);
+                });
+              },
+              className: "inline-flex",
+            }),
+            React.createElement(AudioRecorder, {
+              token: authToken,
+              mode: "pipeline",
+              onVoicePipelineResult: function (data) {
+                var tr = (data && data.transcript) || "";
+                var reply = (data && data.reply) || "";
+                var tts = data && data.tts;
+                var url = tts && tts.audio_url;
+                setMessages(function (prev) {
+                  return prev.concat([
+                    { role: "user", content: tr || "(áudio)", timestamp: timeLabel() },
+                    {
+                      role: "assistant",
+                      content: sanitizeChatText(reply),
+                      timestamp: timeLabel(),
+                      ttsAudioUrl: url || undefined,
+                    },
+                  ]);
+                });
+              },
+              onError: function (err) {
+                setMessages(function (prev) {
+                  return prev.concat([
+                    {
+                      role: "assistant",
+                      content: String(err || USER_FACING_TRY_AGAIN),
+                      timestamp: timeLabel(),
+                    },
+                  ]);
+                });
+              },
+              className: "inline-flex",
+            }),
+            attachments.length > 0 &&
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  disabled: multimodalBusy || loading || mediaBusy,
+                  onClick: function () {
+                    void handleAnalyzeAttachments();
+                  },
+                  className:
+                    "rounded-lg border border-violet-400/60 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-950 hover:bg-violet-100 disabled:opacity-40",
+                },
+                multimodalBusy ? "A analisar…" : "Analisar ficheiros"
+              )
+          ),
           attachments.length > 0 &&
             React.createElement(
               "div",
-              { className: "flex flex-wrap items-center gap-2 text-xs text-white/80" },
+              { className: "flex flex-wrap items-center gap-2 text-xs text-zinc-700" },
               attachments.map((file) =>
                 React.createElement(
                   "span",
                   {
                     key: file.name + file.size,
                     className:
-                      "inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5",
+                      "inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5",
                   },
-                  React.createElement("span", { className: "h-2 w-2 rounded-full bg-emerald-400" }),
-                  React.createElement("span", null, file.name)
+                  React.createElement("span", { className: "h-2 w-2 shrink-0 rounded-full bg-emerald-400" }),
+                  React.createElement("span", { className: "max-w-[200px] truncate" }, file.name),
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      className:
+                        "shrink-0 text-[11px] font-medium text-emerald-700 underline decoration-emerald-400/70 hover:text-emerald-900",
+                      onClick: function () {
+                        downloadAttachmentFile(file);
+                      },
+                    },
+                    "Baixar"
+                  )
                 )
               )
             ),
@@ -849,14 +1729,14 @@ export default function ChatPage() {
             React.createElement(
               "div",
               { className: "flex gap-2 overflow-x-auto pb-1" },
-              React.createElement(
+                React.createElement(
                 "button",
                 {
                   type: "button",
                   onClick: function () { handleGenerateMedia("image"); },
-                  disabled: loading || !input.trim(),
+                  disabled: loading || mediaBusy || multimodalBusy || !input.trim(),
                   className:
-                    "shrink-0 h-9 rounded-xl border border-white/20 bg-white/5 px-3 text-xs text-white/85 hover:bg-white/10 disabled:opacity-40 inline-flex items-center gap-1.5",
+                    "shrink-0 h-9 rounded-xl border border-zinc-200 bg-white px-3 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 inline-flex items-center gap-1.5",
                 },
                 React.createElement(IconImage, null),
                 "Imagem"
@@ -866,9 +1746,9 @@ export default function ChatPage() {
                 {
                   type: "button",
                   onClick: function () { handleGenerateMedia("audio"); },
-                  disabled: loading || !input.trim(),
+                  disabled: loading || mediaBusy || multimodalBusy || !input.trim(),
                   className:
-                    "shrink-0 h-9 rounded-xl border border-white/20 bg-white/5 px-3 text-xs text-white/85 hover:bg-white/10 disabled:opacity-40 inline-flex items-center gap-1.5",
+                    "shrink-0 h-9 rounded-xl border border-zinc-200 bg-white px-3 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 inline-flex items-center gap-1.5",
                 },
                 React.createElement(IconAudio, null),
                 "Áudio"
@@ -881,7 +1761,8 @@ export default function ChatPage() {
                 id: "syntexa-file-input",
                 type: "file",
                 multiple: true,
-                accept: "image/*,video/*,audio/*",
+                accept:
+                  "image/*,video/*,audio/*,application/pdf,.pdf,.txt,.md,.json,.csv,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx",
                 className: "hidden",
                 onChange: handleFilesChange,
               }),
@@ -895,7 +1776,7 @@ export default function ChatPage() {
                     if (inputEl) inputEl.click();
                   },
                   className:
-                    "shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white/80",
+                    "syntexa-attach-btn shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50",
                 },
                 React.createElement(IconAttach, null)
               ),
@@ -906,7 +1787,7 @@ export default function ChatPage() {
                 rows: 2,
                 placeholder: "Digite ou fale sua mensagem...",
                 className:
-                  "syntexa-input min-h-[44px] max-h-28 flex-1 resize-none rounded-xl px-4 py-2.5 text-sm",
+                  "syntexa-input min-h-[44px] max-h-28 flex-1 resize-none rounded-2xl px-4 py-3 text-sm shadow-sm",
               }),
               recognition && React.createElement(
                 "button",
@@ -915,20 +1796,19 @@ export default function ChatPage() {
                   "aria-label": "Falar",
                   onClick: toggleVoice,
                   className:
-                    "shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border " +
-                    (listening ? "border-red-400 bg-red-500/20 text-red-300" : "border-white/20 bg-white/5 hover:bg-white/10 text-white/80"),
+                    (listening ? "syntexa-mic-btn-listening" : "syntexa-mic-btn") + " shrink-0 flex items-center justify-center w-10 h-10 rounded-xl",
                 },
                 listening
                   ? React.createElement(
                       "svg",
-                      { viewBox: "0 0 24 24", className: "h-4 w-4", fill: "currentColor", "aria-hidden": true },
+                      { viewBox: "0 0 24 24", className: "h-4 w-4 text-red-600", fill: "currentColor", "aria-hidden": true },
                       React.createElement("rect", { x: "7", y: "7", width: "10", height: "10", rx: "1.5" })
                     )
                   : React.createElement(IconMic, null)
               ),
               React.createElement(
                 Button,
-              { onClick: sendMessage, className: "shrink-0 self-end inline-flex items-center gap-2", disabled: loading },
+              { onClick: sendMessage, className: "shrink-0 self-end inline-flex items-center gap-2", disabled: loading || mediaBusy || multimodalBusy },
                 loading
                   ? React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true })
                   : React.createElement(IconSend, null),
