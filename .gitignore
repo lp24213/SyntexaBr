@@ -7,6 +7,9 @@
 .env
 .env.*
 !.env.example
+azure-vm-host.txt
+config/syntexa-pg.url.local
+.syntexa-apply-pg.url.tmp
 *.env
 
 # Python
@@ -37,6 +40,11 @@ coverage.xml
 # Node / Next.js
 node_modules/
 .next/
+# Instaladores Electron na API (só .gitkeep no repo)
+vereda_backend/static/desktop/*
+!vereda_backend/static/desktop/.gitkeep
+frontend/public/download/*
+!frontend/public/download/.gitkeep
 out/
 .turbo/
 .vercel/
@@ -64,6 +72,10 @@ syntexa-deploy.tar.gz
 *.log
 backend.log
 nohup.out
+
+# Cert exportado manualmente (pode conter chave privada)
+Certificate.zip
+certificate_extracted/
 
 # Chaves e certificados
 *.pem
@@ -94,3 +106,7 @@ desktop.ini
 
 # Cloudflare / Wrangler
 .wrangler/
+
+# Playwright E2E
+playwright-report/
+test-results/

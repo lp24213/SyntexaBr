@@ -8,8 +8,8 @@ export function Card(props) {
       ? React.createElement(
           "header",
           { className: "mb-5 space-y-1.5" },
-          title && React.createElement("h2", { className: "text-base font-semibold text-white" }, title),
-          description && React.createElement("p", { className: "text-sm text-white/60" }, description)
+          title && React.createElement("h2", { className: "text-base font-semibold text-zinc-900" }, title),
+          description && React.createElement("p", { className: "text-sm text-zinc-500" }, description)
         )
       : null;
   return React.createElement(

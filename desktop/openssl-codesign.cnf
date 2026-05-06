@@ -1,0 +1,22 @@
+# Self-signed code signing (Authenticode). Not trusted by SmartScreen; use a paid CA for reputation.
+[req]
+default_bits       = 2048
+prompt             = no
+default_md         = sha256
+distinguished_name = dn
+x509_extensions    = v3_code_sign
+
+[dn]
+C  = BR
+ST = Mato Grosso
+L  = Brasil
+O  = Syntexabr
+OU = Publishing
+CN = Syntexabr
+
+[v3_code_sign]
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints       = CA:FALSE
+keyUsage               = critical,digitalSignature
+extendedKeyUsage       = codeSigning

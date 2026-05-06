@@ -1,5 +1,7 @@
 import asyncio
 import json
+import logging
+import time
 from typing import List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -7,6 +9,8 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from vereda_backend.core.config import settings
+from vereda_backend.core.chat_context import reset_chat_request_context, set_chat_request_context
+from vereda_backend.core.public_messages import MSG_TRY_AGAIN_PT
 from vereda_backend.core.plan_limits import (
     count_user_messages_this_month,
     get_message_limit,
@@ -24,20 +28,42 @@ from vereda_backend.schemas.chat import (
 )
 from vereda_backend.services.media_engine import (
     analyze_video_basic,
-    describe_image_with_ollama,
+    describe_image_with_vision_llm,
     transcribe_audio_local,
 )
 from vereda_backend.services.tools import analyze_image_basic
-from vereda_backend.services.chat_engine import create_chat_completion, stream_chat_completion
+from vereda_backend.services.chat_engine import (
+    create_chat_completion,
+    record_stream_chat_completion_audit,
+    stream_chat_completion,
+)
+from vereda_backend.ai_runtime import llm_engine as runtime_llm_engine
+from vereda_backend.services.conversation_store import (
+    ensure_conversation,
+    ensure_v2_session,
+    persist_assistant_output,
+    persist_input_message_batch,
+)
+from vereda_backend.core.syntexa_intel import detect_language, detect_sentiment, detect_subject
+from vereda_backend.core.syntexa_intel import remember_user_preference
+from vereda_backend.core.prom_metrics import record_chat_error, record_chat_success
 
 
 router = APIRouter()
+_log = logging.getLogger(__name__)
 
 _session_create_limiter = RateLimiter(
     max_calls=max(5, int(getattr(settings, "session_create_per_ip_hour", 40) or 40)),
     window_seconds=3600,
     max_keys=15_000,
 )
+
+
+def _resolve_locale(preferred: Optional[str], accept_language: Optional[str]) -> str:
+    raw = ((preferred or "") + "," + (accept_language or "")).lower()
+    if "en" in raw:
+        return "en-US"
+    return "pt-BR"
 
 
 def _attachments_context(file_list: List) -> str:
@@ -50,7 +76,7 @@ def _attachments_context(file_list: List) -> str:
                 info = analyze_image_basic(f)
                 size = info.get("size", {})
                 mean = info.get("mean_rgb", {})
-                vision = describe_image_with_ollama(f)
+                vision = describe_image_with_vision_llm(f)
                 lines.append(
                     f"- imagem {filename}: {size.get('width')}x{size.get('height')}, "
                     f"cor média RGB=({mean.get('r')}, {mean.get('g')}, {mean.get('b')})."
@@ -89,8 +115,8 @@ async def _parse_chat_body(request: Request) -> Tuple[ChatRequest, List]:
             payload_str = (payload_str.read() or b"").decode("utf-8")
         try:
             data = json.loads(payload_str)
-        except json.JSONDecodeError as e:
-            raise HTTPException(status_code=400, detail=f"payload JSON inválido: {e}")
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Pedido inválido.")
         req = ChatRequest.model_validate(data)
         files = form.getlist("files")
         file_list = [f for f in files if f and getattr(f, "filename", None)]
@@ -215,28 +241,77 @@ def _stream_events(
     db: Session,
     request: ChatRequest,
     sid: Optional[int],
+    v2_conversation_id: Optional[int],
     current_user: Optional[models.User],
     client_ip: str,
 ):
+    ctx_token = set_chat_request_context(
+        session_id=sid,
+        v2_conversation_id=v2_conversation_id,
+        client_ip=client_ip,
+    )
+    t0 = time.perf_counter()
     full_content: list[str] = []
+    last_ping = time.monotonic()
     try:
         for chunk in stream_chat_completion(
             db, request, user=current_user, client_ip=client_ip
         ):
+            # Heartbeat SSE para manter proxies/CDN vivos em respostas longas.
+            now = time.monotonic()
+            if now - last_ping >= 15.0:
+                yield ": keep-alive\n\n"
+                last_ping = now
             full_content.append(chunk)
             yield f"data: {json.dumps({'content': chunk})}\n\n"
+    except Exception:
+        _log.exception("Falha no streaming do chat")
+        record_chat_error(endpoint="chat_completions_stream", error_type="stream_exception")
+        yield f"data: {json.dumps({'content': MSG_TRY_AGAIN_PT})}\n\n"
     finally:
-        if full_content and sid:
-            full_text = "".join(full_content)
-            db.add(
-                models.ConversationLog(
-                    user_id=current_user.id if current_user else None,
-                    session_id=sid,
-                    role="assistant",
-                    content=full_text,
+        try:
+            if full_content and sid:
+                full_text = "".join(full_content)
+                prompt_tokens = sum(len((m.content or "").split()) for m in request.messages)
+                completion_tokens = len((full_text or "").split())
+                record_chat_success(
+                    endpoint="chat_completions_stream",
+                    latency_ms=(time.perf_counter() - t0) * 1000.0,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    total_tokens=prompt_tokens + completion_tokens,
                 )
-            )
-            db.commit()
+                db.add(
+                    models.ConversationLog(
+                        user_id=current_user.id if current_user else None,
+                        session_id=sid,
+                        role="assistant",
+                        content=full_text,
+                    )
+                )
+                db.commit()
+                if v2_conversation_id:
+                    persist_assistant_output(
+                        db,
+                        conversation_id=v2_conversation_id,
+                        user_id=current_user.id if current_user else None,
+                        content=full_text,
+                        model_used=request.model,
+                        provider=str(getattr(runtime_llm_engine, "_default", settings.default_llm)),
+                        prompt_tokens=None,
+                        completion_tokens=len(full_text.split()),
+                        total_tokens=None,
+                        latency_ms=None,
+                    )
+                    db.commit()
+            if full_content:
+                last_u = next((m for m in reversed(request.messages) if m.role == "user"), None)
+                preview = (last_u.content or "")[:500] if last_u else ""
+                record_stream_chat_completion_audit(
+                    db, current_user, preview, "".join(full_content)
+                )
+        finally:
+            reset_chat_request_context(ctx_token)
 
 
 @router.post("/chat/completions", response_model=ChatResponse)
@@ -249,6 +324,10 @@ async def chat_completions(
     Chat Completions. Aceita JSON ou multipart (payload + files). Cria/usa sessão e grava logs.
     """
     request, _files = await _parse_chat_body(http_request)
+    request.locale = _resolve_locale(
+        getattr(request, "locale", None),
+        http_request.headers.get("accept-language"),
+    )
 
     # Reconhecimento de pagamento: aplicar limite de mensagens por plano
     if current_user:
@@ -270,6 +349,27 @@ async def chat_completions(
         http_request,
     )
     sid = session.id if session else None
+    last_user = next((m for m in reversed(request.messages) if m.role == "user"), None)
+    seed_text = (last_user.content if last_user else "") if last_user else ""
+    language = detect_language(seed_text)
+    subject = detect_subject(seed_text)
+    sentiment = detect_sentiment(seed_text)
+    v2_session = ensure_v2_session(
+        db,
+        user_id=current_user.id if current_user else None,
+        is_anonymous=current_user is None,
+        language=language,
+        source="v1/chat/completions",
+    )
+    v2_conversation = ensure_conversation(
+        db,
+        session_id=v2_session.id,
+        user_id=current_user.id if current_user else None,
+        title=(seed_text or "Nova conversa")[:120],
+        language=language,
+        subject=subject,
+        sentiment=sentiment,
+    )
 
     for msg in request.messages:
         db.add(
@@ -281,14 +381,43 @@ async def chat_completions(
             )
         )
     db.commit()
-
-    response = await asyncio.to_thread(
-        create_chat_completion,
+    persist_input_message_batch(
         db,
-        request,
-        current_user,
-        get_client_ip(http_request),
+        conversation_id=v2_conversation.id,
+        user_id=current_user.id if current_user else None,
+        messages=request.messages,
     )
+    if current_user and seed_text:
+        remember_user_preference(
+            db,
+            user_id=current_user.id,
+            key=f"last_topic:{subject}",
+            value=seed_text[:2000],
+            language=language,
+            subject=subject,
+            sentiment=sentiment,
+        )
+    db.commit()
+
+    t0 = time.perf_counter()
+    ctx_token = set_chat_request_context(
+        session_id=sid,
+        v2_conversation_id=v2_conversation.id,
+        client_ip=get_client_ip(http_request),
+    )
+    try:
+        response = await asyncio.to_thread(
+            create_chat_completion,
+            db,
+            request,
+            current_user,
+            get_client_ip(http_request),
+        )
+    except Exception as exc:
+        record_chat_error(endpoint="chat_completions", error_type=type(exc).__name__)
+        raise
+    finally:
+        reset_chat_request_context(ctx_token)
 
     if response.choices:
         assistant_msg = response.choices[0].message
@@ -301,6 +430,28 @@ async def chat_completions(
             )
         )
         db.commit()
+        usage = response.usage
+        persist_assistant_output(
+            db,
+            conversation_id=v2_conversation.id,
+            user_id=current_user.id if current_user else None,
+            content=assistant_msg.content,
+            model_used=response.model or request.model,
+            provider=str(getattr(runtime_llm_engine, "_default", settings.default_llm)),
+            prompt_tokens=usage.prompt_tokens if usage else None,
+            completion_tokens=usage.completion_tokens if usage else None,
+            total_tokens=usage.total_tokens if usage else None,
+            latency_ms=(time.perf_counter() - t0) * 1000.0,
+        )
+        db.commit()
+    usage = response.usage
+    record_chat_success(
+        endpoint="chat_completions",
+        latency_ms=(time.perf_counter() - t0) * 1000.0,
+        prompt_tokens=usage.prompt_tokens if usage else 0,
+        completion_tokens=usage.completion_tokens if usage else 0,
+        total_tokens=usage.total_tokens if usage else 0,
+    )
 
     return response
 
@@ -312,6 +463,10 @@ async def chat_completions_stream(
     current_user: Optional[models.User] = Depends(get_current_user),
 ):
     request, _files = await _parse_chat_body(http_request)
+    request.locale = _resolve_locale(
+        getattr(request, "locale", None),
+        http_request.headers.get("accept-language"),
+    )
 
     if current_user:
         plan = getattr(current_user, "subscription_plan", None) or "free"
@@ -334,6 +489,27 @@ async def chat_completions_stream(
         http_request,
     )
     sid = session.id if session else None
+    last_user = next((m for m in reversed(request.messages) if m.role == "user"), None)
+    seed_text = (last_user.content if last_user else "") if last_user else ""
+    language = detect_language(seed_text)
+    subject = detect_subject(seed_text)
+    sentiment = detect_sentiment(seed_text)
+    v2_session = ensure_v2_session(
+        db,
+        user_id=current_user.id if current_user else None,
+        is_anonymous=current_user is None,
+        language=language,
+        source="v1/chat/completions/stream",
+    )
+    v2_conversation = ensure_conversation(
+        db,
+        session_id=v2_session.id,
+        user_id=current_user.id if current_user else None,
+        title=(seed_text or "Nova conversa")[:120],
+        language=language,
+        subject=subject,
+        sentiment=sentiment,
+    )
 
     for msg in request.messages:
         db.add(
@@ -345,10 +521,34 @@ async def chat_completions_stream(
             )
         )
     db.commit()
+    persist_input_message_batch(
+        db,
+        conversation_id=v2_conversation.id,
+        user_id=current_user.id if current_user else None,
+        messages=request.messages,
+    )
+    if current_user and seed_text:
+        remember_user_preference(
+            db,
+            user_id=current_user.id,
+            key=f"last_topic:{subject}",
+            value=seed_text[:2000],
+            language=language,
+            subject=subject,
+            sentiment=sentiment,
+        )
+    db.commit()
 
     return StreamingResponse(
-        _stream_events(db, request, sid, current_user, get_client_ip(http_request)),
-        media_type="text/event-stream",
+        _stream_events(
+            db,
+            request,
+            sid,
+            v2_conversation.id,
+            current_user,
+            get_client_ip(http_request),
+        ),
+        media_type="text/event-stream; charset=utf-8",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",

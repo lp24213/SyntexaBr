@@ -5,10 +5,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#050506",
-        surface: "#111114",
-        surfaceMuted: "#0c0c0f",
-        borderStrong: "rgba(255,255,255,0.15)",
+        background: "#f8f9fb",
+        surface: "#ffffff",
+        surfaceMuted: "#f1f5f9",
+        borderStrong: "rgba(15,23,42,0.12)",
         primary: "#3b82f6",
         primarySoft: "rgba(59,130,246,0.15)",
         accent: "#3b82f6",

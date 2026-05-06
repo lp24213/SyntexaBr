@@ -7,9 +7,11 @@ routes = [
   { pattern = "www.syntexabr.com.br/*", zone_name = "syntexabr.com.br" }
 ]
 
+# Origem do fetch no Worker = FQDN do Container App (HTTPS estável; evita IPv6/resolução quebrada para o hostname customizado).
+# O utilizador e o JS estático usam https://api.syntexabr.com.br (mesmo serviço).
 [vars]
 BACKEND_BASE_URL = "https://api.syntexabr.com.br"
-FRONTEND_BASE_URL = "https://syntexa-frontend.pages.dev"
+FRONTEND_BASE_URL = "https://syntexabr.com.br"
 
 
 

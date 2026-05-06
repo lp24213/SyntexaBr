@@ -2,15 +2,20 @@
   "name": "syntexa-desktop",
   "version": "1.0.0",
   "description": "Syntexa AI - app desktop",
+  "homepage": "https://syntexabr.com.br",
   "main": "main.js",
   "author": "SyntexaBR",
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win && node copy-exe.js",
-    "build:portable": "electron-builder --win portable",
+    "build": "electron-builder --win --linux && node copy-artifacts.js",
+    "build:win": "electron-builder --win && node copy-artifacts.js",
+    "build:linux": "electron-builder --linux && node copy-artifacts.js",
+    "build:mac": "electron-builder --mac && node copy-artifacts.js",
+    "build:installer": "electron-builder --win nsis && node copy-artifacts.js",
+    "build:portable": "electron-builder --win portable && node copy-artifacts.js",
     "pack": "electron-builder --win dir",
-    "copy-exe": "node copy-exe.js"
+    "copy-artifacts": "node copy-artifacts.js"
   },
   "devDependencies": {
     "electron": "^28.0.0",
@@ -20,12 +25,27 @@
     "appId": "br.com.syntexabr.desktop",
     "productName": "Syntexa AI",
     "directories": { "output": "dist" },
-    "files": ["main.js"],
+    "files": ["main.js", "preload.js"],
+    "forceCodeSigning": false,
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.productivity",
+      "artifactName": "SyntexaAI-macos-universal-${version}.${ext}"
+    },
+    "linux": {
+      "target": [{ "target": "tar.gz", "arch": ["x64"] }],
+      "category": "Utility",
+      "synopsis": "Cliente desktop Syntexa AI",
+      "maintainer": "SyntexaBR <contato@syntexabr.com.br>",
+      "artifactName": "SyntexaAI-linux-${version}.${ext}"
+    },
     "win": {
-      "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
-      ],
+      "target": [{ "target": "portable", "arch": ["x64"] }],
+      "artifactName": "SyntexaAI-Setup-${version}.${ext}",
+      "signAndEditExecutable": false,
+      "verifyUpdateCodeSignature": false
+    },
+    "portable": {
       "artifactName": "SyntexaAI-Setup-${version}.${ext}"
     },
     "nsis": {

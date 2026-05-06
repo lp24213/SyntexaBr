@@ -1,0 +1,9 @@
+=== Syntexa verify === 2026-04-25T12:37:22.845190+00:00
+BASE=https://api.syntexabr.com.br
+[PASS] GET /health — status=200 len=256
+[PASS] GET /v1/multimodal/capabilities — status=200 stt=True tts=True
+[PASS] POST /v1/multimodal/export/pdf (bytes %PDF) — status=200 len=5362 ct=application/pdf
+[PASS] POST /v1/multimodal/export/xlsx (ZIP/PK) — status=200 len=5255
+[PASS] POST /v1/multimodal/export/docx (ZIP/PK) — status=200 len=37272
+[PASS] POST /v1/multimodal/transcribe (JSON válido) — status=200 ok=False provider=None text_len=0
+[PASS] POST /v1/public-chat — status=200

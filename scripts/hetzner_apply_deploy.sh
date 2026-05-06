@@ -16,14 +16,40 @@ pip install -r requirements.txt -q
 grep -v '^FRONTEND_ORIGIN' .env > .env.tmp 2>/dev/null || cp .env .env.tmp 2>/dev/null || touch .env.tmp
 mv .env.tmp .env
 echo 'FRONTEND_ORIGIN=https://syntexabr.com.br,https://www.syntexabr.com.br' >> .env
-grep -v '^OLLAMA_ENDPOINT\|^OLLAMA_MODEL\|^DEFAULT_LLM' .env > .env.tmp 2>/dev/null || true
-mv .env.tmp .env 2>/dev/null || true
-echo 'OLLAMA_ENDPOINT=http://172.17.0.1:11434' >> .env
-echo 'OLLAMA_MODEL=llama3.2:1b' >> .env
-echo 'DEFAULT_LLM=ollama' >> .env
-cd llm-server
-docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null || true
-cd ..
+# Não sobrescrever variáveis LLM existentes. Aplica fallback inteligente se DEFAULT_LLM ausente.
+if ! grep -q '^DEFAULT_LLM=' .env 2>/dev/null; then
+  if grep -q '^AZURE_TGI_ENDPOINT=' .env 2>/dev/null; then
+    echo 'DEFAULT_LLM=azure_tgi' >> .env
+  elif grep -q '^EXLLAMA_ENDPOINT=' .env 2>/dev/null; then
+    echo 'DEFAULT_LLM=exllama' >> .env
+  elif grep -q '^REMOTE_LLM_ENDPOINT=' .env 2>/dev/null; then
+    echo 'DEFAULT_LLM=remote' >> .env
+  elif grep -q '^OLLAMA_ENDPOINT=' .env 2>/dev/null; then
+    echo 'DEFAULT_LLM=ollama' >> .env
+  else
+    echo 'DEFAULT_LLM não definido; deixe .env com a configuração desejada.'
+  fi
+fi
+
+# Docker Ollama na VM só se pedires stack local OU endpoint apontar para :11434 neste host.
+# Ollama Cloud (https://ollama.com + OLLAMA_API_KEY) não precisa de container — evita conflito e “moagem”.
+_ollama_ep=""
+if grep -q '^OLLAMA_ENDPOINT=' .env 2>/dev/null; then
+  _ollama_ep=$(grep '^OLLAMA_ENDPOINT=' .env | cut -d= -f2- | tr -d '\r' | tr -d '"' | tr -d "'")
+fi
+if grep -q '^ENABLE_LOCAL_LLM_STACK=true' .env 2>/dev/null; then
+  cd llm-server
+  docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null || true
+  cd ..
+elif grep -q '^DEFAULT_LLM=ollama' .env 2>/dev/null && [[ -n "$_ollama_ep" ]]; then
+  case "$_ollama_ep" in
+    http://127.0.0.1*|http://localhost*|http://0.0.0.0*)
+      cd llm-server
+      docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null || true
+      cd ..
+      ;;
+  esac
+fi
 python3 scripts/patch_vereda_ai_config.py
 install -m 644 "$REMOTE_BASE/scripts/syntexa-backend.service" /etc/systemd/system/syntexa-backend.service
 systemctl daemon-reload

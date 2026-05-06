@@ -5,16 +5,18 @@ import { motion } from "framer-motion";
 import { Brand } from "./brand";
 import { encryptedPath } from "../lib/routes";
 import { FuturisticIcon } from "./icons/futuristic-icons";
+import { getAdminMe } from "../lib/api";
+import { getClientLocale, t } from "../lib/i18n";
 
 function NavIcon({ name }) {
-  return React.createElement(FuturisticIcon, { name: name || "spark", className: "h-4 w-4 text-white/85" });
+  return React.createElement(FuturisticIcon, { name: name || "spark", className: "h-4 w-4 text-zinc-600" });
 }
 
 function IconConfig() {
   return React.createElement(
     "svg",
     {
-      className: "h-4 w-4 text-white/80",
+      className: "h-4 w-4 text-zinc-600",
       viewBox: "0 0 24 24",
       fill: "none",
       xmlns: "http://www.w3.org/2000/svg",
@@ -38,7 +40,7 @@ function IconProfile() {
   return React.createElement(
     "svg",
     {
-      className: "h-4 w-4 text-white/80",
+      className: "h-4 w-4 text-zinc-600",
       viewBox: "0 0 24 24",
       fill: "none",
       xmlns: "http://www.w3.org/2000/svg",
@@ -62,7 +64,7 @@ function IconProfile() {
 function IconDownload() {
   return React.createElement(
     "svg",
-    { className: "h-4 w-4 text-white/80", viewBox: "0 0 24 24", fill: "none", xmlns: "http://www.w3.org/2000/svg" },
+    { className: "h-4 w-4 text-zinc-600", viewBox: "0 0 24 24", fill: "none", xmlns: "http://www.w3.org/2000/svg" },
     React.createElement("path", { d: "M12 4v12m0 0l-4-4m4 4l4-4", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }),
     React.createElement("path", { d: "M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
   );
@@ -72,7 +74,7 @@ function IconLogin() {
   return React.createElement(
     "svg",
     {
-      className: "h-4 w-4 text-white/80",
+      className: "h-4 w-4 text-zinc-600",
       viewBox: "0 0 24 24",
       fill: "none",
       xmlns: "http://www.w3.org/2000/svg",
@@ -101,89 +103,108 @@ function IconLogin() {
 
 export function AppShell(props) {
   const { children } = props;
+  const locale = getClientLocale();
   const [authed, setAuthed] = useState(false);
   const [role, setRole] = useState("user");
   const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
+  function logout() {
     try {
-      const token = window.localStorage.getItem("syntexa_token");
-      const storedRole = window.localStorage.getItem("syntexa_role") || "user";
-      const storedAdmin = window.localStorage.getItem("syntexa_is_admin") === "1";
-      setAuthed(!!token);
-      setRole(storedRole);
-      setIsAdmin(storedAdmin);
-    } catch {
-      setAuthed(false);
-    }
+      window.localStorage.removeItem("syntexa_token");
+      window.localStorage.removeItem("syntexa_role");
+      window.localStorage.removeItem("syntexa_is_admin");
+    } catch {}
+    window.location.href = encryptedPath("login");
+  }
+
+  useEffect(() => {
+    (async function () {
+      try {
+        const token = window.localStorage.getItem("syntexa_token");
+        const storedRole = window.localStorage.getItem("syntexa_role") || "user";
+        setAuthed(!!token);
+        setRole(storedRole);
+        if (!token) {
+          setIsAdmin(false);
+          return;
+        }
+        const me = await getAdminMe(token);
+        const validAdmin = !!(me && me.is_admin);
+        setIsAdmin(validAdmin);
+        window.localStorage.setItem("syntexa_is_admin", validAdmin ? "1" : "0");
+      } catch {
+        setAuthed(false);
+        setIsAdmin(false);
+      }
+    })();
   }, []);
 
   var navItems;
   if (!authed) {
     navItems = [
-      { path: "educacao", label: "Educação", icon: null },
-      { path: "login", label: "Login", icon: IconLogin },
-      { path: "register", label: "Cadastro", icon: null },
-      { path: "plans", label: "Planos", icon: null },
-      { path: "download", label: "Baixar app", icon: null },
+      { path: "educacao", label: "Educação", iconName: "book" },
+      { path: "login", label: t("login", locale), icon: IconLogin },
+      { path: "register", label: "Cadastro", iconName: "users" },
+      { path: "plans", label: t("plans", locale), iconName: "chart" },
+      { path: "download", label: "Baixar app", iconName: "download" },
     ];
   } else if (isAdmin) {
     navItems = [
       { path: "admin", label: "Admin", iconName: "admin" },
-      { path: "chat", label: "Chat", iconName: "chat" },
+      { path: "chat", label: t("chat", locale), iconName: "chat" },
       { path: "educacao", label: "Educação", iconName: "book" },
       { path: "portal", label: "Portal", iconName: "globe" },
-      { path: "plans", label: "Planos", iconName: "chart" },
-      { path: "profile", label: "Perfil", iconName: "users" },
+      { path: "plans", label: t("plans", locale), iconName: "chart" },
+      { path: "profile", label: t("profile", locale), iconName: "users" },
       { path: "config", label: "Config", iconName: "gear" },
       { path: "download", label: "Baixar", iconName: "download" },
     ];
   } else if (role === "teacher" || role === "researcher") {
     navItems = [
-      { path: "chat", label: "Chat", icon: null },
-      { path: "educacao", label: "Educação", icon: null },
-      { path: "educacao-professor", label: "Prof.", icon: null },
-      { path: "plans", label: "Planos", icon: null },
+      { path: "chat", label: t("chat", locale), iconName: "chat" },
+      { path: "educacao", label: "Educação", iconName: "book" },
+      { path: "educacao-professor", label: "Prof.", iconName: "userTie" },
+      { path: "plans", label: t("plans", locale), iconName: "chart" },
       { path: "config", label: "Configuração", icon: IconConfig },
       { path: "profile", label: "Perfil", icon: IconProfile },
-      { path: "download", label: "Baixar app", icon: null },
+      { path: "download", label: "Baixar app", iconName: "download" },
     ];
   } else {
     navItems = [
-      { path: "chat", label: "Chat", icon: null },
-      { path: "educacao", label: "Educação", icon: null },
-      { path: "plans", label: "Planos", icon: null },
+      { path: "chat", label: t("chat", locale), iconName: "chat" },
+      { path: "educacao", label: "Educação", iconName: "book" },
+      { path: "plans", label: t("plans", locale), iconName: "chart" },
       { path: "config", label: "Configuração", icon: IconConfig },
       { path: "profile", label: "Perfil", icon: IconProfile },
-      { path: "download", label: "Baixar app", icon: null },
+      { path: "download", label: "Baixar app", iconName: "download" },
     ];
   }
 
   return React.createElement(
     "div",
-    { className: "relative min-h-screen text-white selection:bg-white/10" },
+    { className: "relative min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-[#f8f9fb] text-zinc-900 selection:bg-slate-200/80" },
     React.createElement(
       "div",
-      { className: "mx-auto flex min-h-screen max-w-6xl flex-col px-5 pb-12 pt-6 sm:px-8 lg:px-10" },
+      { className: "mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-10 pt-4 sm:px-8 sm:pb-12 sm:pt-6 lg:px-10" },
       React.createElement(
         motion.header,
         {
-          className: "syntexa-header sticky top-0 z-20 -mx-5 mb-10 px-5 py-5 sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10",
+          className: "syntexa-header sticky top-0 z-20 -mx-4 mb-8 rounded-2xl px-4 py-4 sm:-mx-8 sm:mb-10 sm:rounded-none sm:px-8 sm:py-5 lg:-mx-10 lg:px-10",
           initial: { opacity: 0, y: -8 },
           animate: { opacity: 1, y: 0 },
           transition: { duration: 0.3 },
         },
         React.createElement(
           "div",
-          { className: "flex items-center justify-between gap-4" },
+          { className: "flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4" },
           React.createElement(
             "a",
-            { href: "/", className: "flex items-center gap-3" },
-            React.createElement("span", { className: "flex h-16 min-h-[64px] w-[260px] items-center" }, React.createElement(Brand, { className: "h-14 w-full max-w-[240px] object-contain object-left" }))
+            { href: "/", className: "flex w-full shrink-0 items-center justify-center sm:w-auto sm:justify-start" },
+            React.createElement("span", { className: "flex h-14 min-h-[56px] w-full max-w-[220px] items-center justify-center sm:h-16 sm:min-h-[64px] sm:max-w-[260px] sm:justify-start" }, React.createElement(Brand, { className: "h-12 w-full max-w-[200px] object-contain sm:h-14 sm:max-w-[240px] sm:object-left" }))
           ),
           React.createElement(
             "nav",
-            { className: "flex items-center gap-1" },
+            { className: "flex w-full max-w-full flex-wrap items-center justify-center gap-1 sm:w-auto sm:flex-nowrap sm:justify-end" },
             navItems.map(function (item) {
               const Icon = item.icon;
               const href = encryptedPath(item.path);
@@ -194,7 +215,7 @@ export function AppShell(props) {
                   key: href,
                   href: href,
                   className:
-                    "inline-flex items-center gap-1 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white",
+                    "inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-xl px-2.5 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 sm:min-h-0 sm:min-w-0 sm:px-3.5 sm:py-2.5",
                 },
                 showIcon
                   ? React.createElement(
@@ -212,13 +233,29 @@ export function AppShell(props) {
                   : item.label
               );
             })
-          )
+          ),
+          authed &&
+            React.createElement(
+              "button",
+              {
+                type: "button",
+                onClick: logout,
+                className:
+                  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 sm:min-h-0 sm:min-w-0 sm:px-3.5 sm:py-2.5",
+              },
+              React.createElement(NavIcon, { name: "exit" }),
+              React.createElement(
+                "span",
+                { className: "hidden sm:inline" },
+                t("logout", locale)
+              )
+            )
         )
       ),
       React.createElement(
         motion.main,
         {
-          className: "flex-1",
+          className: "flex-1 w-full min-w-0",
           initial: { opacity: 0, y: 12 },
           animate: { opacity: 1, y: 0 },
           transition: { duration: 0.35, ease: "easeOut" },
@@ -227,11 +264,15 @@ export function AppShell(props) {
       ),
       React.createElement(
         "footer",
-        { className: "mt-8 border-t border-white/10 pt-4 text-center text-[11px] text-white/40" },
+        { className: "mt-8 border-t border-zinc-200 pt-4 text-center text-[11px] text-zinc-500" },
         "© ",
-        new Date().getFullYear(),
-        " SyntexaBR. Todos os direitos reservados. ",
-        React.createElement("a", { href: encryptedPath("portal"), className: "underline underline-offset-2 hover:text-white/60" }, "Portal")
+        React.createElement(
+          "span",
+          { suppressHydrationWarning: true },
+          String(new Date().getFullYear())
+        ),
+        " SyntexaBR. " + t("rightsReserved", locale) + " ",
+        React.createElement("a", { href: encryptedPath("portal"), className: "underline underline-offset-2 hover:text-zinc-800" }, "Portal")
       )
     )
   );

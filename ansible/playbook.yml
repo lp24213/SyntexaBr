@@ -1,0 +1,99 @@
+---
+# Playbook para configurar ExLlama na VM Azure e atualizar Hetzner
+# Requisitos: Ansible 2.9+, Python3, acesso SSH às VMs (chaves configuradas).
+
+- name: Deploy ExLlama on Azure VM
+  hosts: exllama
+  become: yes
+  vars:
+    exllama_compose_src: "{{ playbook_dir }}/../llm-server/docker-compose.exllama.yml"
+    exllama_model_dir: "/opt/exllama/models"
+    exllama_service_dir: "/opt/exllama"
+  tasks:
+    - name: Ensure apt cache is updated
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - docker.io
+          - docker-compose-plugin
+          - python3-pip
+          - ca-certificates
+          - curl
+        state: present
+
+    - name: Ensure docker service running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create model directory
+      file:
+        path: "{{ exllama_model_dir }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Create service directory
+      file:
+        path: "{{ exllama_service_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy docker-compose.exllama.yml to host
+      copy:
+        src: "{{ exllama_compose_src }}"
+        dest: "{{ exllama_service_dir }}/docker-compose.exllama.yml"
+        mode: '0644'
+
+    - name: Start ExLlama via docker compose
+      community.docker.docker_compose:
+        project_src: "{{ exllama_service_dir }}"
+        files:
+          - docker-compose.exllama.yml
+        state: present
+        restarted: yes
+
+- name: Update Hetzner backend .env and restart
+  hosts: hetzner
+  become: yes
+  vars:
+    exllama_endpoint: "http://{{ hostvars[groups['exllama'][0]]['ansible_host'] }}:8080"
+    default_llm: exllama
+  tasks:
+    - name: Backup current .env
+      copy:
+        src: /opt/syntexa/.env
+        dest: /opt/syntexa/.env.bak
+        remote_src: yes
+
+    - name: Ensure .env contains EXLLAMA_ENDPOINT
+      lineinfile:
+        path: /opt/syntexa/.env
+        regexp: '^EXLLAMA_ENDPOINT='
+        line: "EXLLAMA_ENDPOINT={{ exllama_endpoint }}"
+        create: yes
+
+    - name: Ensure .env contains EXLLAMA_MODEL
+      lineinfile:
+        path: /opt/syntexa/.env
+        regexp: '^EXLLAMA_MODEL='
+        line: 'EXLLAMA_MODEL=exllama-v2-13b'
+        create: yes
+
+    - name: Ensure DEFAULT_LLM=exllama
+      lineinfile:
+        path: /opt/syntexa/.env
+        regexp: '^DEFAULT_LLM='
+        line: 'DEFAULT_LLM=exllama'
+        create: yes
+
+    - name: Restart syntexa-backend service
+      systemd:
+        name: syntexa-backend
+        state: restarted
+        daemon_reload: yes

@@ -7,11 +7,13 @@ Plataforma de IA **Syntexa**, com arquitetura modular para chat avançado, motor
 | Camada | Onde roda |
 |--------|-----------|
 | Frontend estático | **Cloudflare Pages** — `https://syntexabr.com.br` |
-| API HTTP (FastAPI) | **Hetzner** — `https://api.syntexabr.com.br` |
-| Ollama / LLM | **Hetzner** (Docker `llm-server` ou serviço no VPS) |
-| Redis / fila ARQ | **Hetzner** (URL em `REDIS_URL` no servidor) |
+| API HTTP (FastAPI) | **VM Azure** — `https://api.syntexabr.com.br` (uvicorn + nginx) |
+| Ollama / LLM | **Mesma VM** (`llm-server`/Docker) ou **Azure OpenAI** / TGI (via `.env`) |
+| Redis / fila ARQ | **Redis gerenciado ou VM** — `REDIS_URL` no servidor (recomendado para filas e cache em escala) |
 
-A máquina do desenvolvedor é usada apenas para **editar código** e **deploy** (por exemplo `.\deploy-syntexa.ps1 deploy`). Não há fluxo suportado de backend, Next dev ou modelos de IA na máquina local.
+**Escala (milhares de utilizadores):** o limite real é **inferência** (GPU/RAM) e **base de dados**. Para tráfego massivo: `REDIS_URL` obrigatório, PostgreSQL em vez de SQLite, várias réplicas da API atrás de um balanceador, e modelo servido por **Azure OpenAI** ou **pool Ollama** dedicado — não uma única VM indefinidamente.
+
+A máquina do desenvolvedor é só para **código** e **deploy** (`.\deploy-syntexa.ps1 deploy`). Modelos e dados de produção ficam no servidor.
 
 ## Estrutura
 
@@ -23,8 +25,8 @@ A máquina do desenvolvedor é usada apenas para **editar código** e **deploy**
 
 ## Deploy
 
-- **Completo (Cloudflare + Hetzner):** `.\deploy-syntexa.ps1 deploy`
-- **Só API:** `.\deploy-syntexa.ps1 deploy-back` ou `.\deploy-hetzner.ps1`
+- **Completo (Cloudflare + VM):** `.\deploy-syntexa.ps1 deploy`
+- **Só API:** `.\deploy-syntexa.ps1 deploy-back`
 - **Só frontend:** `.\deploy-syntexa.ps1 deploy-front` (requer `npm`/`wrangler` para build e upload)
 
 Processo no servidor: **systemd** é o caminho suportado pelo deploy — unidade `scripts/syntexa-backend.service` (instalada em `/etc/systemd/system/syntexa-backend.service`, `Restart=always`).  

@@ -1,0 +1,13 @@
+[Unit]
+Description=Syntexa LLM periodic guard (readiness + rollback API)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/syntexa/ops.env
+ExecStart=/bin/bash /opt/syntexa/syntexabr/scripts/own-model/guard_with_flock.sh \
+  ${SYNTEXA_API_BASE} ${SYNTEXA_ADMIN_TOKEN} ${SYNTEXA_ROLLBACK_MODEL}
+
+[Install]
+WantedBy=multi-user.target

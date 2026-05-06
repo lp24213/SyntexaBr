@@ -1,0 +1,7 @@
+{"domain":"matematica","prompt":"Resolva a equação 2x + 5 = 17 e explique em passos curtos.","expected_keywords":["x","6","equação","passo"]}
+{"domain":"fisica","prompt":"Explique a diferença entre velocidade e aceleração com exemplo simples.","expected_keywords":["velocidade","aceleração","m/s","tempo"]}
+{"domain":"quimica","prompt":"O que é mol em química e por que ele é usado?","expected_keywords":["mol","quantidade de matéria","avogadro"]}
+{"domain":"biologia","prompt":"Defina fotossíntese e cite seus reagentes e produtos principais.","expected_keywords":["fotossíntese","co2","glicose","oxigênio"]}
+{"domain":"politica","prompt":"Explique separação de poderes de forma neutra e objetiva.","expected_keywords":["executivo","legislativo","judiciário"]}
+{"domain":"literatura","prompt":"Compare realismo e romantismo em 4 pontos objetivos.","expected_keywords":["realismo","romantismo","estilo","narrativa"]}
+{"domain":"programacao","prompt":"Escreva uma função Python para inverter string e inclua um teste rápido.","expected_keywords":["def","python","return","teste"]}

@@ -1,0 +1,376 @@
+{
+  "timestamp_utc": "2026-04-25T12:43:41.722931Z",
+  "url": "https://syntexabr.com.br/v1/public-chat",
+  "rounds": 40,
+  "summary": {
+    "total": 40,
+    "success": 36,
+    "failed": 4,
+    "success_rate": 90.0,
+    "latency_avg_sec": 4.139773762498953,
+    "latency_p50_sec": 4.677740049985005,
+    "latency_p95_sec": 8.326476400019601
+  },
+  "results": [
+    {
+      "index": 1,
+      "status_code": 200,
+      "latency_sec": 5.390880599996308,
+      "ok": true,
+      "answer_len": 2076,
+      "answer_preview": "SAT and NP‑completeness  | Term | Definition | |------|------------| | SAT | Decision problem: “Given a Boolean formula ϕ, is there an assignment of truth values to its variables that makes ϕ true?” | | NP | Class of dec",
+      "error": ""
+    },
+    {
+      "index": 2,
+      "status_code": 503,
+      "latency_sec": 8.247582500014687,
+      "ok": false,
+      "answer_len": 0,
+      "answer_preview": "",
+      "error": "{\"detail\":\"Não foi possível concluir agora. Tente novamente em alguns instantes.\"}"
+    },
+    {
+      "index": 3,
+      "status_code": 200,
+      "latency_sec": 5.772221299994271,
+      "ok": true,
+      "answer_len": 1144,
+      "answer_preview": "1. Visão geral  | Camada | Responsabilidade | Tecnologias recomendadas | |--------|------------------|--------------------------| | Cliente | UI de planilha (grid, fórmulas, formatação) + WebSocket/Realtime | React/Angul",
+      "error": ""
+    },
+    {
+      "index": 4,
+      "status_code": 200,
+      "latency_sec": 4.527276700013317,
+      "ok": true,
+      "answer_len": 2926,
+      "answer_preview": "Short answer  | Model | Long‑context strength | Main limitation | Typical use case | |-------|-----------------------|-----------------|------------------| | RNN (LSTM/GRU) | Can, in theory, remember arbitrarily long seq",
+      "error": ""
+    },
+    {
+      "index": 5,
+      "status_code": 200,
+      "latency_sec": 5.992095699999481,
+      "ok": true,
+      "answer_len": 1011,
+      "answer_preview": "PostgreSQL Multi‑Tenant Schema with Audit Logging & LGPD‑Compliant Data Erasure  Below is a ready‑to‑copy design that you can drop into a new database or adapt to an existing one.  It covers:  | Feature | How it’s achiev",
+      "error": ""
+    },
+    {
+      "index": 6,
+      "status_code": 200,
+      "latency_sec": 5.0091699000040535,
+      "ok": true,
+      "answer_len": 1986,
+      "answer_preview": "Incident Response Plan – API Outage  (Designed for a production API that is governed by Service‑Level Objectives – SLOs – and requires a rollback capability.)   ---  1. Scope & Objectives   | Item | Description | |------",
+      "error": ""
+    },
+    {
+      "index": 7,
+      "status_code": 503,
+      "latency_sec": 9.111674299987499,
+      "ok": false,
+      "answer_len": 0,
+      "answer_preview": "",
+      "error": "{\"detail\":\"Não foi possível concluir agora. Tente novamente em alguns instantes.\"}"
+    },
+    {
+      "index": 8,
+      "status_code": 200,
+      "latency_sec": 4.3785495000192896,
+      "ok": true,
+      "answer_len": 2282,
+      "answer_preview": "Performance Plan – Reduce API P95 Latency from 2.4 s → < 900 ms  | Phase | Goal | Key Actions | Deliverables | Owner | Timeframe | |-------|------|-------------|--------------|-------|-----------| | 1. Baseline & Metrics",
+      "error": ""
+    },
+    {
+      "index": 9,
+      "status_code": 200,
+      "latency_sec": 4.52396590000717,
+      "ok": true,
+      "answer_len": 1878,
+      "answer_preview": "Derivação da solução em forma fechada de uma EDO linear do primeiro grau  A equação diferencial ordinária (EDO) linear do primeiro grau tem a forma geral   \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I \\]  onde \\(p(x)\\) e \\(q(",
+      "error": ""
+    },
+    {
+      "index": 10,
+      "status_code": 503,
+      "latency_sec": 8.326476400019601,
+      "ok": false,
+      "answer_len": 0,
+      "answer_preview": "",
+      "error": "{\"detail\":\"Não foi possível concluir agora. Tente novamente em alguns instantes.\"}"
+    },
+    {
+      "index": 11,
+      "status_code": 200,
+      "latency_sec": 5.316300099977525,
+      "ok": true,
+      "answer_len": 2682,
+      "answer_preview": "SAT is NP‑complete  • SAT (Boolean satisfiability) asks whether a Boolean formula has a truth assignment that makes it true.  • It is in NP because a satisfying assignment can be verified in polynomial time.  • Cook’s th",
+      "error": ""
+    },
+    {
+      "index": 12,
+      "status_code": 200,
+      "latency_sec": 3.529301000002306,
+      "ok": true,
+      "answer_len": 975,
+      "answer_preview": "Integral  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice.  1. First integration by parts   Let \\(u=x^{2}\\), \\(dv=e^{-x}dx\\).   Then \\(du=2x\\,dx\\), \\(v=-e^{-x}\\).  \\[ \\int x^{2}e^{-x}\\,dx = -x^{2}e^{-x} + \\int",
+      "error": ""
+    },
+    {
+      "index": 13,
+      "status_code": 200,
+      "latency_sec": 6.111901399999624,
+      "ok": true,
+      "answer_len": 2976,
+      "answer_preview": "Collaborative Spreadsheet – High‑Level Architecture  | Layer | Responsibility | Key Components | |-------|-----------------|----------------| | Client (UI) | Rendering, user input, local state | React/Angular component, ",
+      "error": ""
+    },
+    {
+      "index": 14,
+      "status_code": 200,
+      "latency_sec": 4.775380499981111,
+      "ok": true,
+      "answer_len": 3465,
+      "answer_preview": "Comparação de modelos para previsão de séries temporais com contexto longo  | Característica | RNN (incl. LSTM/GRU) | Transformer (Self‑Attention) | State‑Space Models (SSM) | |-----------------|----------------------|--",
+      "error": ""
+    },
+    {
+      "index": 15,
+      "status_code": 503,
+      "latency_sec": 8.36613040001248,
+      "ok": false,
+      "answer_len": 0,
+      "answer_preview": "",
+      "error": "{\"detail\":\"Não foi possível concluir agora. Tente novamente em alguns instantes.\"}"
+    },
+    {
+      "index": 16,
+      "status_code": 200,
+      "latency_sec": 4.413120900018839,
+      "ok": true,
+      "answer_len": 1844,
+      "answer_preview": "Incident Response Plan – API Outage  (Designed for a production API that exposes a REST/GraphQL interface to internal and external consumers.)   ---  1. Pre‑incident Preparation   | Item | What to Have Ready | Why | |---",
+      "error": ""
+    },
+    {
+      "index": 17,
+      "status_code": 200,
+      "latency_sec": 4.887121100007789,
+      "ok": true,
+      "answer_len": 2104,
+      "answer_preview": "Byzantine Fault Tolerance (BFT) vs. Raft – o que muda e quando isso importa na nuvem  | Característica | Raft (Crash‑Fault Tolerant) | BFT (Byzantine‑Fault Tolerant) | |-----------------|-----------------------------|---",
+      "error": ""
+    },
+    {
+      "index": 18,
+      "status_code": 200,
+      "latency_sec": 3.995348999975249,
+      "ok": true,
+      "answer_len": 2392,
+      "answer_preview": "Performance Plan – Reduzir a latência p95 de 2,4 s para < 900 ms  | Etapa | Objetivo | Ações concretas | Indicadores de sucesso | Prazo | |-------|----------|-----------------|------------------------|-------| | 1. Diagn",
+      "error": ""
+    },
+    {
+      "index": 19,
+      "status_code": 200,
+      "latency_sec": 4.958655499998713,
+      "ok": true,
+      "answer_len": 1923,
+      "answer_preview": "Closed‑form solution of a first‑order linear ODE  Consider the linear differential equation   \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I\\subset\\mathbb{R} \\]  where \\(p\\) and \\(q\\) are given functions.  ---  1. Integrating f",
+      "error": ""
+    },
+    {
+      "index": 20,
+      "status_code": 200,
+      "latency_sec": 5.739870299992617,
+      "ok": true,
+      "answer_len": 1749,
+      "answer_preview": "1. Visão geral do pipeline • ExportJob: micro‑service que recebe a solicitação de exportação, valida, cria um job e publica na fila. • Queue: garante desacoplamento, escalabilidade e retry automático (SQS DLQ ou Kafka co",
+      "error": ""
+    },
+    {
+      "index": 21,
+      "status_code": 200,
+      "latency_sec": 4.901845799991861,
+      "ok": true,
+      "answer_len": 1847,
+      "answer_preview": "SAT é NP‑completo  • SAT (Boolean satisfiability problem) pede‑se se existe uma atribuição de valores verdadeiros/falsos a variáveis que torne uma fórmula booleana verdadeira.  • NP‑completo significa que (i) SAT ∈ NP (a",
+      "error": ""
+    },
+    {
+      "index": 22,
+      "status_code": 200,
+      "latency_sec": 4.9937719000154175,
+      "ok": true,
+      "answer_len": 1138,
+      "answer_preview": "Indefinite integral  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice (or the general formula for \\(\\int x^{n}e^{ax}\\,dx\\)).  1. First integration by parts   Let \\(u=x^{2}\\), \\(dv=e^{-x}dx\\).   Then \\(du=2x\\,dx",
+      "error": ""
+    },
+    {
+      "index": 23,
+      "status_code": 200,
+      "latency_sec": 4.580099599988898,
+      "ok": true,
+      "answer_len": 2078,
+      "answer_preview": "Collaborative Spreadsheet – High‑level Architecture  | Layer | Responsibility | Key Components | |-------|-----------------|----------------| | Client UI | Rendering, user interaction, local edits | React/Angular + Hands",
+      "error": ""
+    },
+    {
+      "index": 24,
+      "status_code": 200,
+      "latency_sec": 4.498378599993885,
+      "ok": true,
+      "answer_len": 3470,
+      "answer_preview": "Comparação rápida  | Modelo | Como lida com long‑context | Pontos fortes | Limitações | Quando usar | |---------|---------------------------|---------------|------------|-------------| | RNN (incl. LSTM/GRU) | Processa s",
+      "error": ""
+    },
+    {
+      "index": 25,
+      "status_code": 200,
+      "latency_sec": 4.2357593000051565,
+      "ok": true,
+      "answer_len": 29,
+      "answer_preview": "1. Visão geral  | Requisito |",
+      "error": ""
+    },
+    {
+      "index": 26,
+      "status_code": 200,
+      "latency_sec": 0.2249833999958355,
+      "ok": true,
+      "answer_len": 1844,
+      "answer_preview": "Incident Response Plan – API Outage  (Designed for a production API that exposes a REST/GraphQL interface to internal and external consumers.)   ---  1. Pre‑incident Preparation   | Item | What to Have Ready | Why | |---",
+      "error": ""
+    },
+    {
+      "index": 27,
+      "status_code": 200,
+      "latency_sec": 0.22289379997528158,
+      "ok": true,
+      "answer_len": 2104,
+      "answer_preview": "Byzantine Fault Tolerance (BFT) vs. Raft – o que muda e quando isso importa na nuvem  | Característica | Raft (Crash‑Fault Tolerant) | BFT (Byzantine‑Fault Tolerant) | |-----------------|-----------------------------|---",
+      "error": ""
+    },
+    {
+      "index": 28,
+      "status_code": 200,
+      "latency_sec": 0.19110430000000633,
+      "ok": true,
+      "answer_len": 2392,
+      "answer_preview": "Performance Plan – Reduzir a latência p95 de 2,4 s para < 900 ms  | Etapa | Objetivo | Ações concretas | Indicadores de sucesso | Prazo | |-------|----------|-----------------|------------------------|-------| | 1. Diagn",
+      "error": ""
+    },
+    {
+      "index": 29,
+      "status_code": 200,
+      "latency_sec": 0.20089130001724698,
+      "ok": true,
+      "answer_len": 1923,
+      "answer_preview": "Closed‑form solution of a first‑order linear ODE  Consider the linear differential equation   \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I\\subset\\mathbb{R} \\]  where \\(p\\) and \\(q\\) are given functions.  ---  1. Integrating f",
+      "error": ""
+    },
+    {
+      "index": 30,
+      "status_code": 200,
+      "latency_sec": 0.2233717999770306,
+      "ok": true,
+      "answer_len": 1749,
+      "answer_preview": "1. Visão geral do pipeline • ExportJob: micro‑service que recebe a solicitação de exportação, valida, cria um job e publica na fila. • Queue: garante desacoplamento, escalabilidade e retry automático (SQS DLQ ou Kafka co",
+      "error": ""
+    },
+    {
+      "index": 31,
+      "status_code": 200,
+      "latency_sec": 0.20710209998651408,
+      "ok": true,
+      "answer_len": 1847,
+      "answer_preview": "SAT é NP‑completo  • SAT (Boolean satisfiability problem) pede‑se se existe uma atribuição de valores verdadeiros/falsos a variáveis que torne uma fórmula booleana verdadeira.  • NP‑completo significa que (i) SAT ∈ NP (a",
+      "error": ""
+    },
+    {
+      "index": 32,
+      "status_code": 200,
+      "latency_sec": 0.24921370000811294,
+      "ok": true,
+      "answer_len": 1138,
+      "answer_preview": "Indefinite integral  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice (or the general formula for \\(\\int x^{n}e^{ax}\\,dx\\)).  1. First integration by parts   Let \\(u=x^{2}\\), \\(dv=e^{-x}dx\\).   Then \\(du=2x\\,dx",
+      "error": ""
+    },
+    {
+      "index": 33,
+      "status_code": 200,
+      "latency_sec": 0.21765639999648556,
+      "ok": true,
+      "answer_len": 2078,
+      "answer_preview": "Collaborative Spreadsheet – High‑level Architecture  | Layer | Responsibility | Key Components | |-------|-----------------|----------------| | Client UI | Rendering, user interaction, local edits | React/Angular + Hands",
+      "error": ""
+    },
+    {
+      "index": 34,
+      "status_code": 200,
+      "latency_sec": 0.21291519998339936,
+      "ok": true,
+      "answer_len": 3470,
+      "answer_preview": "Comparação rápida  | Modelo | Como lida com long‑context | Pontos fortes | Limitações | Quando usar | |---------|---------------------------|---------------|------------|-------------| | RNN (incl. LSTM/GRU) | Processa s",
+      "error": ""
+    },
+    {
+      "index": 35,
+      "status_code": 200,
+      "latency_sec": 0.1927268000144977,
+      "ok": true,
+      "answer_len": 29,
+      "answer_preview": "1. Visão geral  | Requisito |",
+      "error": ""
+    },
+    {
+      "index": 36,
+      "status_code": 200,
+      "latency_sec": 6.486498099984601,
+      "ok": true,
+      "answer_len": 912,
+      "answer_preview": "Incident Response Plan – API Outage  (Designed for a production API that is governed by Service‑Level Objectives – SLOs – and requires a rollback strategy and a clear communication cadence.)  ---  1. Purpose & Scope  • P",
+      "error": ""
+    },
+    {
+      "index": 37,
+      "status_code": 200,
+      "latency_sec": 4.858263200003421,
+      "ok": true,
+      "answer_len": 2783,
+      "answer_preview": "Byzantine Fault Tolerance (BFT) vs. Raft – Core Differences  | Feature | BFT (e.g., PBFT, HotStuff, Tendermint) | Raft | |---------|----------------------------------------|------| | Fault model | Arbitrary (Byzantine) f",
+      "error": ""
+    },
+    {
+      "index": 38,
+      "status_code": 200,
+      "latency_sec": 4.246918299992103,
+      "ok": true,
+      "answer_len": 2586,
+      "answer_preview": "Performance Plan – API P95 Latency: 2.4 s → < 900 ms  | Phase | Goal | Key Actions | Deliverables | Timeline | |-------|------|-------------|---------------|-----------| | 1. Baseline & Diagnostics | Understand where the",
+      "error": ""
+    },
+    {
+      "index": 39,
+      "status_code": 200,
+      "latency_sec": 5.108695900009479,
+      "ok": true,
+      "answer_len": 1500,
+      "answer_preview": "Derivação da solução geral de uma EDO linear do 1.º grau  1. Forma padrão   \\[  y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I  \\]  onde \\(p,q\\) são funções reais.  2. Fator integrante   \\[  \\mu(x)=e^{\\int p(x)\\,dx}  \\]  (o sinal ",
+      "error": ""
+    },
+    {
+      "index": 40,
+      "status_code": 200,
+      "latency_sec": 6.164837999996962,
+      "ok": true,
+      "answer_len": 1442,
+      "answer_preview": "Pipeline de Exportação de Arquivos Segura (PDF / XLSX / DOCX)  > Objetivo – Gerar arquivos de exportação em formatos PDF, XLSX ou DOCX de forma segura, confiável e auditável, usando fila de mensagens, lógica de retry e r",
+      "error": ""
+    }
+  ]
+}

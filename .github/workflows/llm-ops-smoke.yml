@@ -1,0 +1,53 @@
+name: LLM ops smoke
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - "vereda_ai/syntexa_core/promotion_attestation.py"
+      - "vereda_ai/syntexa_core/model_registry.py"
+      - "scripts/own-model/**"
+      - "vereda_backend/api/v1/endpoints/admin.py"
+
+jobs:
+  attestation-roundtrip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Round-trip atestação
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python <<'PY'
+          from vereda_ai.syntexa_core.promotion_attestation import (
+              build_llm_promotion_attestation,
+              verify_attestation_document,
+          )
+          doc, d = build_llm_promotion_attestation(
+              promotion_type="ci_roundtrip",
+              previous_active="m_a",
+              candidate_model="m_b",
+              active_after="m_b",
+              readiness_report={"ready": True, "active_model": "m_b", "checks": [{"name": "t", "ok": True}]},
+              policy_snapshot={"policy_version": "ci", "policy_sha256": "deadbeef", "policy_profile": "production"},
+              admin_user_id=1,
+              extra={"ci": True},
+          )
+          ok, msg, _ = verify_attestation_document(doc)
+          assert ok, msg
+          assert d == doc["attestation_sha256"]
+          print("ok", d[:16])
+          PY
+      - name: CLI verify falha com documento inválido
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          set +e
+          echo '{}' | python scripts/own-model/verify_promotion_attestation.py
+          ec=$?
+          set -e
+          test "$ec" -eq 1
+          echo "ok (digest inválido => exit 1)"

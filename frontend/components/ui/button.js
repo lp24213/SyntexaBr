@@ -3,13 +3,13 @@ import { clsx } from "clsx";
 import React from "react";
 
 const buttonStyles = cva(
-  "inline-flex items-center justify-center rounded-[14px] text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(59,130,246,0.4)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050506] disabled:opacity-60 disabled:cursor-not-allowed",
+  "inline-flex items-center justify-center rounded-[14px] text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(59,130,246,0.4)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f8f9fb] disabled:opacity-60 disabled:cursor-not-allowed",
   {
     variants: {
       variant: {
         primary: "syntexa-btn-primary bg-[var(--text-primary)] text-[var(--bg-root)]",
         outline: "syntexa-btn-outline",
-        ghost: "bg-transparent text-zinc-400 hover:bg-white/5 border border-transparent hover:text-white",
+        ghost: "bg-transparent text-zinc-500 hover:bg-zinc-100 border border-transparent hover:text-zinc-900",
       },
       size: {
         sm: "px-3 py-1.5 text-xs",

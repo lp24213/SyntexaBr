@@ -3,6 +3,7 @@ Description=Syntexa FastAPI Backend (uvicorn)
 Documentation=file:///opt/syntexa/README.md
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -11,7 +12,7 @@ WorkingDirectory=/opt/syntexa
 EnvironmentFile=-/opt/syntexa/.env
 Environment=PYTHONPATH=/opt/syntexa
 Environment=PYTHONDONTWRITEBYTECODE=1
-ExecStart=/opt/syntexa/.venv/bin/python -m uvicorn vereda_backend.main:app --host 0.0.0.0 --port 8000
+ExecStart=/bin/bash /opt/syntexa/scripts/run_uvicorn_prod.sh
 Restart=always
 RestartSec=4
 # Logs também em ficheiro (além do journal) para compatibilidade com deploy-syntexa.ps1 logs

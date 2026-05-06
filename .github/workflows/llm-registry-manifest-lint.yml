@@ -1,0 +1,28 @@
+name: LLM registry and manifests
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - "config/syntexa_model_registry.json"
+      - "config/**/*.manifest.json"
+      - "scripts/own-model/lint_model_registry.py"
+      - "scripts/own-model/validate_model_manifest.py"
+      - "scripts/own-model/validate_all_manifests_glob.py"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Lint registry
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/own-model/lint_model_registry.py
+      - name: Validar manifests encontrados
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/own-model/validate_all_manifests_glob.py

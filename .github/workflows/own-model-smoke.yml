@@ -1,0 +1,39 @@
+name: own-model-smoke
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "training/**"
+      - "vereda_ai/syntexa_core/**"
+      - ".github/workflows/own-model-smoke.yml"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-research.txt
+
+      - name: Smoke own model
+        run: |
+          python training/smoke_own_model.py
+
+      - name: Enforce no-fallback readiness (production strict)
+        env:
+          ENVIRONMENT: production
+          DEFAULT_LLM: syntexa_native
+          OWN_MODEL_STRICT_NO_FALLBACK: "1"
+        run: |
+          python scripts/own-model/verify_no_fallback.py

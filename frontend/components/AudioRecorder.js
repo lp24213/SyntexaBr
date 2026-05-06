@@ -1,20 +1,32 @@
 "use client";
 
 import React, { useCallback, useRef, useState } from "react";
-import { CHAT_MAX_TOKENS, multimodalTranscribe, multimodalVoiceConversation } from "../lib/api";
+import {
+  CHAT_MAX_TOKENS,
+  multimodalTranscribe,
+  multimodalVoiceConversation,
+} from "../lib/api";
 
 /**
  * @param {"transcribe"|"pipeline"} mode
+ * @param {"chat"|"server"} [pipelineMode="chat"]
  * - transcribe: STT → onTranscript (cola na caixa)
- * - pipeline: STT → chat → TTS no servidor → onVoicePipelineResult
+ * - pipeline + chat: STT → onVoiceSubmitChat (mesmo fluxo que enviar texto: mídia, ficheiros, chat)
+ * - pipeline + server: POST /v1/multimodal/voice/conversation → onVoicePipelineResult (roteamento no backend + TTS)
  */
 export function AudioRecorder({
   token,
   mode = "transcribe",
+  /** Só em mode=pipeline: "chat" (padrão) ou "server" (endpoint legado). */
+  pipelineMode = "chat",
   onTranscript,
   onError,
+  /** @param {string} transcript */
+  onVoiceSubmitChat,
+  /** @param {object} data resposta JSON do /voice/conversation */
   onVoicePipelineResult,
   buttonLabel,
+  buttonIcon,
   className,
 }) {
   const [rec, setRec] = useState(null);
@@ -62,13 +74,33 @@ export function AudioRecorder({
       setPhase("stt");
       try {
         if (mode === "pipeline") {
-          setPhase("llm");
-          const data = await multimodalVoiceConversation(
-            file,
-            token || undefined,
-            CHAT_MAX_TOKENS
-          );
-          if (typeof onVoicePipelineResult === "function") onVoicePipelineResult(data);
+          if (pipelineMode === "server") {
+            setPhase("llm");
+            const data = await multimodalVoiceConversation(
+              file,
+              token || undefined,
+              CHAT_MAX_TOKENS
+            );
+            if (typeof onVoicePipelineResult === "function") {
+              onVoicePipelineResult(data);
+            } else if (onError) {
+              onError("Configure onVoicePipelineResult no modo pipeline server.");
+            }
+          } else {
+            setPhase("llm");
+            const data = await multimodalTranscribe(file, token || undefined);
+            const t = (data && data.text) || "";
+            if (!t) {
+              const detail = (data && data.detail) || "Transcrição vazia.";
+              if (onError) onError(detail);
+              return;
+            }
+            if (typeof onVoiceSubmitChat === "function") {
+              await onVoiceSubmitChat(t);
+            } else if (onError) {
+              onError("Configure onVoiceSubmitChat no modo pipeline chat.");
+            }
+          }
         } else {
           const data = await multimodalTranscribe(file, token || undefined);
           const t = (data && data.text) || "";
@@ -88,13 +120,23 @@ export function AudioRecorder({
     };
     mr.start(250);
     setRec(mr);
-  }, [onTranscript, onError, onVoicePipelineResult, token, mode]);
+  }, [
+    onTranscript,
+    onError,
+    onVoiceSubmitChat,
+    onVoicePipelineResult,
+    token,
+    mode,
+    pipelineMode,
+  ]);
 
   var busyText =
     busy && mode === "pipeline"
       ? phase === "stt"
         ? "A transcrever…"
-        : "A responder e gerar áudio…"
+        : pipelineMode === "server"
+          ? "A responder e gerar áudio (servidor)…"
+          : "A processar (mesmo que o chat)…"
       : busy
         ? "A transcrever…"
         : "";
@@ -112,7 +154,10 @@ export function AudioRecorder({
           }
           onClick={() => void start()}
         >
-          {busy ? busyText || "…" : buttonLabel || defaultLabel}
+          <span className="inline-flex items-center gap-1.5">
+            {!busy && buttonIcon ? buttonIcon : null}
+            <span>{busy ? busyText || "…" : buttonLabel || defaultLabel}</span>
+          </span>
         </button>
       ) : (
         <button

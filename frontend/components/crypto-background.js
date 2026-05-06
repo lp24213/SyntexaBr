@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 const CHARS = "01{}[]();=<>@#&*%$§|/\\~^+-:.,ABCDEFabcdef0123456789";
@@ -18,8 +18,8 @@ function Column(props) {
   return React.createElement(
     motion.div,
     {
-      className: "flex flex-col gap-0 font-mono text-[11px] leading-none text-white",
-      style: { opacity: 0.05 + (i % 4) * 0.015 },
+      className: "flex flex-col gap-0 font-mono text-[11px] leading-none text-slate-500",
+      style: { opacity: 0.06 + (i % 4) * 0.02 },
       initial: { y: "-100%" },
       animate: { y: "100vh" },
       transition: { duration, repeat: Infinity, repeatDelay: 0 },
@@ -30,11 +30,40 @@ function Column(props) {
   );
 }
 
+const overlayStyle = {
+  background:
+    "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(159,184,222,0.12) 0%, transparent 50%)," +
+    "linear-gradient(to bottom, rgba(248,249,251,0.95), rgba(241,245,249,0.98))",
+};
+
+/**
+ * O “rain” usa Math.random() por célula; isso quebra hidratação (HTML estático ≠ cliente).
+ * Primeiro paint: só o gradiente (SSR = cliente); depois do mount, animação — sem React #418.
+ */
 export function CryptoBackground() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(function () {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return React.createElement(
+      "div",
+      {
+        className: "pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#f8f9fb]",
+        "aria-hidden": true,
+      },
+      React.createElement("div", {
+        className: "absolute inset-0",
+        style: overlayStyle,
+      })
+    );
+  }
+
   return React.createElement(
     "div",
     {
-      className: "pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#02030a]",
+      className: "pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#f8f9fb]",
       "aria-hidden": true,
     },
     React.createElement(
@@ -46,11 +75,7 @@ export function CryptoBackground() {
     ),
     React.createElement("div", {
       className: "absolute inset-0",
-      style: {
-        background:
-          "radial-gradient(ellipse 90% 60% at 50% 0%, rgba(226,232,240,0.08) 0%, transparent 55%)," +
-          "linear-gradient(to bottom, rgba(15,23,42,0.4), transparent 40%, rgba(3,7,18,0.9))",
-      },
+      style: overlayStyle,
     })
   );
 }

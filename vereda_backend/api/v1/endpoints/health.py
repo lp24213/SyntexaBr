@@ -11,15 +11,27 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 
 from fastapi import APIRouter
+from fastapi.responses import PlainTextResponse
 from sqlalchemy import text
 
 from vereda_backend.core.config import settings
+from vereda_backend.core.prom_metrics import render_metrics_text
 from vereda_backend.core.redis_app import get_redis
+from vereda_backend.core.runtime_watchdog import get_runtime_watchdog_snapshot
 from vereda_backend.db.session import engine
 
 router = APIRouter()
 
 _START_MONOTONIC = time.monotonic()
+
+
+def _mask_llm_for_public(llm: Dict[str, Any]) -> Dict[str, Any]:
+    """Health é público: não expor URL de gateway nem rótulos de fornecedor externos."""
+    out = {k: v for k, v in llm.items() if k != "checked"}
+    prov = out.get("provider")
+    if prov is not None and str(prov).strip() and str(prov).strip().lower() != "syntexa":
+        out["provider"] = "syntexa"
+    return out
 
 
 def _uptime_seconds() -> float:
@@ -49,20 +61,12 @@ def _service_redis() -> Dict[str, Any]:
         return {"status": "down", "error": str(exc)[:120]}
 
 
-def _service_ollama() -> Dict[str, Any]:
-    ep = (settings.ollama_endpoint or "").strip()
-    if not ep:
-        return {"status": "not_configured"}
-    url = ep.rstrip("/") + "/api/tags"
+def _service_llm() -> Dict[str, Any]:
+    # Usa o cliente LLM para checar disponibilidade do endpoint preferido.
     try:
-        req = urllib.request.Request(url, method="GET")
-        with urllib.request.urlopen(req, timeout=1.8) as resp:
-            code = getattr(resp, "status", 200) or 200
-            if 200 <= int(code) < 300:
-                return {"status": "up"}
-            return {"status": "degraded", "http": int(code)}
-    except urllib.error.HTTPError as e:
-        return {"status": "down", "http": e.code}
+        from vereda_backend.services.llm_client import ping_llm
+
+        return ping_llm()
     except Exception as exc:
         return {"status": "down", "error": str(exc)[:120]}
 
@@ -75,7 +79,7 @@ def health_check():
     """
     db = _service_database()
     redis = _service_redis()
-    ollama = _service_ollama()
+    llm = _mask_llm_for_public(_service_llm())
 
     db_ok = db.get("status") == "up"
     overall_ok = db_ok
@@ -92,7 +96,20 @@ def health_check():
         "services": {
             "database": db,
             "redis": redis,
-            "ollama": ollama,
+            "llm": llm,
         },
     }
     return payload
+
+
+@router.get("/metrics", response_class=PlainTextResponse)
+def prometheus_metrics() -> str:
+    snap = get_runtime_watchdog_snapshot()
+    ready = 1 if bool(snap.get("ready", False)) else 0
+    strict = 1 if bool(getattr(settings, "chat_strict_real_providers", True)) else 0
+    checked_at = float(snap.get("checked_at", 0.0) or 0.0)
+    return render_metrics_text(
+        runtime_ready=ready,
+        strict_no_fallback=strict,
+        last_check_unix=checked_at,
+    )

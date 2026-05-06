@@ -106,10 +106,10 @@ password_reset_limiter = RateLimiter(max_calls=5, window_seconds=3600)
 # Verificação de e-mail: 10 tentativas por 5 minutos — previne força bruta de código
 verify_email_limiter = RateLimiter(max_calls=10, window_seconds=300)
 
-# Chat público (24h / IP): tiers — anônimos mais restritos; logados e gov mais folga (mesmo hardware)
-_public_chat_anon = RateLimiter(max_calls=200, window_seconds=86400, max_keys=20_000)
-_public_chat_auth = RateLimiter(max_calls=800, window_seconds=86400, max_keys=30_000)
-_public_chat_gov = RateLimiter(max_calls=3000, window_seconds=86400, max_keys=5_000)
+# Chat público (24h / IP): limites altos para conversa fluir; anónimos mais baixos que logados.
+_public_chat_anon = RateLimiter(max_calls=5000, window_seconds=86400, max_keys=50_000)
+_public_chat_auth = RateLimiter(max_calls=20000, window_seconds=86400, max_keys=80_000)
+_public_chat_gov = RateLimiter(max_calls=50000, window_seconds=86400, max_keys=20_000)
 
 
 def check_public_chat_tier(ip: str, user: Optional[object], *, detail: Optional[str] = None) -> None:

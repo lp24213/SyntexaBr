@@ -24,6 +24,7 @@ export default function RegisterPage() {
   const [addressLine, setAddressLine] = useState("");
   const [addressNumber, setAddressNumber] = useState("");
   const [addressComplement, setAddressComplement] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -34,6 +35,10 @@ export default function RegisterPage() {
     setSuccess(null);
     if (password !== confirmPassword) {
       setError("As senhas não coincidem.");
+      return;
+    }
+    if (!acceptedTerms) {
+      setError("Você precisa aceitar os Termos e Condições para continuar.");
       return;
     }
     setLoading(true);
@@ -77,7 +82,7 @@ export default function RegisterPage() {
   return React.createElement(
     AppShell,
     null,
-    React.createElement("div", { className: "flex min-h-[calc(100vh-5rem)] items-center justify-center" },
+    React.createElement("div", { className: "flex min-h-[calc(100vh-5rem)] items-start justify-center py-8" },
       React.createElement(motion.div, {
         className: "w-full max-w-md",
         initial: { opacity: 0, y: 12 },
@@ -98,6 +103,21 @@ export default function RegisterPage() {
               React.createElement(Input, { label: "Complemento", value: addressComplement, onChange: function (e) { setAddressComplement(e.target.value); } }),
               React.createElement(Input, { label: "Senha", type: "password", autoComplete: "new-password", value: password, onChange: onPassword, required: true }),
               React.createElement(Input, { label: "Confirmar senha", type: "password", autoComplete: "new-password", value: confirmPassword, onChange: onConfirm, required: true })),
+            React.createElement("label", { className: "flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700" },
+              React.createElement("input", {
+                type: "checkbox",
+                checked: acceptedTerms,
+                onChange: function (e) { setAcceptedTerms(e.target.checked); },
+                required: true,
+                className: "mt-0.5 h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500",
+              }),
+              React.createElement("span", null,
+                "Li e aceito os ",
+                React.createElement("a", { href: "/termos", target: "_blank", rel: "noreferrer", className: "underline hover:text-zinc-900" }, "Termos e Condições"),
+                " e a ",
+                React.createElement("a", { href: "/privacidade", target: "_blank", rel: "noreferrer", className: "underline hover:text-zinc-900" }, "Política de Privacidade"),
+                ".")
+            ),
             error ? React.createElement("p", { className: "text-sm text-rose-400" }, error) : null,
             success ? React.createElement("p", { className: "text-sm text-emerald-400" }, success) : null,
             React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? "Criando conta..." : "Criar conta"),

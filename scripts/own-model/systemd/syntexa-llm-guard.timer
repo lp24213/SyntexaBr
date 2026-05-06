@@ -1,0 +1,11 @@
+[Unit]
+Description=Executa syntexa-llm-guard a cada 5 minutos
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

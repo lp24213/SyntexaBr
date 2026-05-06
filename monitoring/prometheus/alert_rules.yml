@@ -1,0 +1,42 @@
+groups:
+  - name: syntexa-runtime-alerts
+    rules:
+      - alert: SyntexaRuntimeDown
+        expr: syntexa_runtime_ready == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: syntexa-own-model
+        annotations:
+          summary: "Runtime da IA própria indisponível"
+          description: "syntexa_runtime_ready permaneceu 0 por mais de 2 minutos."
+
+      - alert: SyntexaNoFallbackDisabled
+        expr: syntexa_runtime_strict_no_fallback == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: syntexa-backend
+        annotations:
+          summary: "Modo estrito sem fallback está desativado"
+          description: "syntexa_runtime_strict_no_fallback ficou em 0 por mais de 5 minutos."
+
+      - alert: SyntexaChatHighErrorRate
+        expr: (sum(rate(syntexa_chat_requests_total{status="error"}[5m])) / clamp_min(sum(rate(syntexa_chat_requests_total[5m])), 0.001)) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: syntexa-backend
+        annotations:
+          summary: "Taxa de erro de chat alta"
+          description: "Erro acima de 5% nas últimas janelas de 5 minutos."
+
+      - alert: SyntexaChatHighP95Latency
+        expr: histogram_quantile(0.95, sum by (le) (rate(syntexa_chat_latency_ms_bucket[5m]))) > 3000
+        for: 10m
+        labels:
+          severity: warning
+          service: syntexa-backend
+        annotations:
+          summary: "Latência p95 de chat elevada"
+          description: "P95 de latência acima de 3000ms por 10 minutos."

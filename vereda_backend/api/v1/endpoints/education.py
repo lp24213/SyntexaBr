@@ -673,13 +673,18 @@ except ImportError:
 # ChatRequest builder
 # ============================================================
 
-def _build_chat_request(messages_data: list, max_tokens: int = 1024) -> ChatRequest:
+def _build_chat_request(messages_data: list, max_tokens: int = 8192) -> ChatRequest:
     msgs = []
     for m in messages_data:
+        if not isinstance(m, dict):
+            continue
         role = m.get("role", "user")
-        if role not in ("system", "user", "assistant"):
+        if role not in ("system", "user", "assistant", "tool"):
             role = "user"
-        msgs.append(ChatMessage(role=role, content=str(m.get("content", ""))))
+        row = dict(m)
+        row["role"] = role
+        row["content"] = str(row.get("content", ""))
+        msgs.append(ChatMessage.model_validate(row))
     return ChatRequest(model="syntexa-large", messages=msgs, max_tokens=max_tokens)
 
 
@@ -1023,7 +1028,7 @@ def education_compute(
         req = _build_chat_request(
             [{"role": "system", "content": "Você é um professor de matemática altamente especializado."},
              {"role": "user", "content": explanation_prompt}],
-            max_tokens=512,
+            max_tokens=2048,
         )
         try:
             resp = create_chat_completion(db, req, user=user)
@@ -1050,7 +1055,7 @@ def education_compute(
     req = _build_chat_request(
         [{"role": "system", "content": "Você é um sistema de computação matemática com precisão de calculadora científica."},
          {"role": "user", "content": fallback_prompt}],
-        max_tokens=1024,
+        max_tokens=8192,
     )
     try:
         resp = create_chat_completion(db, req, user=user)
@@ -1100,7 +1105,7 @@ def education_code_sandbox(
             req = _build_chat_request(
                 [{"role": "system", "content": "Você é um depurador Python especialista em ensino de programação."},
                  {"role": "user", "content": analysis_prompt}],
-                max_tokens=1024,
+                max_tokens=4096,
             )
             try:
                 resp = create_chat_completion(db, req, user=user)
@@ -1117,7 +1122,7 @@ def education_code_sandbox(
             req = _build_chat_request(
                 [{"role": "system", "content": "Você é um especialista em análise de código Python."},
                  {"role": "user", "content": analysis_prompt}],
-                max_tokens=512,
+                max_tokens=2048,
             )
             try:
                 resp = create_chat_completion(db, req, user=user)
@@ -1136,7 +1141,7 @@ def education_code_sandbox(
     req = _build_chat_request(
         [{"role": "system", "content": "Você é um especialista em JavaScript e desenvolvimento web."},
          {"role": "user", "content": analysis_prompt}],
-        max_tokens=1024,
+        max_tokens=4096,
     )
     try:
         resp = create_chat_completion(db, req, user=user)

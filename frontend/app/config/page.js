@@ -5,7 +5,7 @@ import { AppShell } from "../../components/shell";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { encryptedPath } from "../../lib/routes";
-import { getAdminAllowedIps, putAdminAllowedIps } from "../../lib/api";
+import { enableTwoFactor, getAdminAllowedIps, putAdminAllowedIps, setupTwoFactor } from "../../lib/api";
 import { FuturisticIcon } from "../../components/icons/futuristic-icons";
 
 export default function ConfigPage() {
@@ -14,6 +14,11 @@ export default function ConfigPage() {
   const [ipText, setIpText] = useState("");
   const [ipStatus, setIpStatus] = useState("");
   const [ipLoading, setIpLoading] = useState(false);
+  const [twoFaSecret, setTwoFaSecret] = useState("");
+  const [twoFaUri, setTwoFaUri] = useState("");
+  const [twoFaCode, setTwoFaCode] = useState("");
+  const [twoFaStatus, setTwoFaStatus] = useState("");
+  const [twoFaBusy, setTwoFaBusy] = useState(false);
 
   useEffect(() => {
     try {
@@ -55,12 +60,43 @@ export default function ConfigPage() {
       .catch((e) => setIpStatus(e.message || "Erro ao salvar."));
   }
 
+  async function startTwoFactorSetup() {
+    if (!token) return;
+    setTwoFaBusy(true);
+    setTwoFaStatus("");
+    try {
+      const data = await setupTwoFactor(token);
+      setTwoFaSecret(String((data && data.secret) || ""));
+      setTwoFaUri(String((data && data.otpauth_uri) || ""));
+      setTwoFaStatus("Setup 2FA gerado. Cadastre no app autenticador e confirme o código abaixo.");
+    } catch (e) {
+      setTwoFaStatus((e && e.message) || "Não foi possível iniciar o setup 2FA.");
+    } finally {
+      setTwoFaBusy(false);
+    }
+  }
+
+  async function confirmTwoFactor() {
+    if (!token || !twoFaCode.trim()) return;
+    setTwoFaBusy(true);
+    setTwoFaStatus("");
+    try {
+      const out = await enableTwoFactor(token, twoFaCode.trim());
+      setTwoFaStatus(String((out && out.detail) || "2FA ativado com sucesso."));
+      setTwoFaCode("");
+    } catch (e) {
+      setTwoFaStatus((e && e.message) || "Falha ao ativar 2FA.");
+    } finally {
+      setTwoFaBusy(false);
+    }
+  }
+
   return React.createElement(
     AppShell,
     null,
     React.createElement(
       "div",
-      { className: "mx-auto flex max-w-3xl flex-col gap-8 py-10" },
+      { className: "mx-auto flex max-w-3xl flex-col gap-6 py-8 sm:py-10" },
       React.createElement(
         Card,
         {
@@ -69,9 +105,69 @@ export default function ConfigPage() {
         },
         React.createElement(
           "p",
-          { className: "text-sm text-white/70" },
+          { className: "text-sm text-zinc-600" },
           "Use Planos para assinatura, Perfil para dados pessoais e o painel Admin (se aplicável) para gestão da plataforma."
         )
+      ),
+      React.createElement(
+        Card,
+        {
+          title: "Segurança de conta (2FA)",
+          description:
+            "Ative autenticação em dois fatores (TOTP) para reforçar o acesso. Use apps como Google Authenticator, Authy ou Microsoft Authenticator.",
+        },
+        React.createElement(
+          "div",
+          { className: "mb-4 flex items-start gap-3 rounded-xl border border-violet-200 bg-violet-50 p-3" },
+          React.createElement(FuturisticIcon, { name: "shield", className: "h-5 w-5 text-violet-500 shrink-0 mt-0.5" }),
+          React.createElement(
+            "p",
+            { className: "text-xs leading-relaxed text-zinc-600" },
+            "Para sua conta, a disponibilidade do 2FA depende da política do backend (admin/governo). Se não estiver habilitado, a API retorna mensagem de permissão."
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "flex flex-wrap gap-2" },
+          React.createElement(
+            Button,
+            { type: "button", variant: "primary", onClick: startTwoFactorSetup, disabled: twoFaBusy || !token },
+            twoFaBusy ? "Gerando..." : "Gerar setup 2FA"
+          )
+        ),
+        twoFaSecret &&
+          React.createElement(
+            "div",
+            { className: "mt-4 rounded-xl border border-zinc-200 bg-white p-3" },
+            React.createElement("p", { className: "text-xs font-semibold text-zinc-700" }, "Chave secreta"),
+            React.createElement("code", { className: "mt-1 block break-all text-[11px] text-zinc-600" }, twoFaSecret),
+            twoFaUri &&
+              React.createElement(
+                React.Fragment,
+                null,
+                React.createElement("p", { className: "mt-3 text-xs font-semibold text-zinc-700" }, "URI otpauth"),
+                React.createElement("code", { className: "mt-1 block break-all text-[11px] text-zinc-600" }, twoFaUri)
+              )
+          ),
+        React.createElement("label", { className: "mt-4 mb-2 block text-xs font-medium text-zinc-500" }, "Código do autenticador"),
+        React.createElement("input", {
+          type: "text",
+          value: twoFaCode,
+          onChange: function (e) {
+            setTwoFaCode(e.target.value);
+          },
+          className:
+            "mb-3 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-violet-300 focus:outline-none",
+          placeholder: "Ex.: 123456",
+          disabled: twoFaBusy || !token,
+        }),
+        React.createElement(
+          Button,
+          { type: "button", variant: "primary", onClick: confirmTwoFactor, disabled: twoFaBusy || !token || !twoFaCode.trim() },
+          twoFaBusy ? "Validando..." : "Ativar 2FA"
+        ),
+        twoFaStatus &&
+          React.createElement("p", { className: "mt-3 text-xs text-zinc-600" }, twoFaStatus)
       ),
       isAdmin &&
         React.createElement(
@@ -83,18 +179,18 @@ export default function ConfigPage() {
           },
           React.createElement(
             "div",
-            { className: "flex items-start gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 mb-4" },
+            { className: "mb-4 flex items-start gap-3 rounded-xl border border-cyan-200 bg-cyan-50 p-3" },
             React.createElement(FuturisticIcon, { name: "shield", className: "h-5 w-5 text-cyan-400/90 shrink-0 mt-0.5" }),
             React.createElement(
               "p",
-              { className: "text-xs text-white/60 leading-relaxed" },
+              { className: "text-xs leading-relaxed text-zinc-600" },
               "A lista é armazenada no servidor. Para bloquear acesso por IP na prática, configure também o proxy (Cloudflare) ou o nginx na VPS — esta tela não substitui firewall."
             )
           ),
-          React.createElement("label", { className: "mb-2 block text-xs font-medium text-white/50" }, "IPs (IPv4 ou IPv6, um por linha)"),
+          React.createElement("label", { className: "mb-2 block text-xs font-medium text-zinc-500" }, "IPs (IPv4 ou IPv6, um por linha)"),
           React.createElement("textarea", {
             className:
-              "mb-3 min-h-[140px] w-full rounded-xl border border-white/10 bg-[rgba(8,15,30,0.85)] px-3 py-2 font-mono text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-cyan-500/35",
+              "mb-3 min-h-[140px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 font-mono text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-cyan-300 focus:outline-none",
             placeholder: "203.0.113.10\n2001:db8::1",
             value: ipText,
             disabled: ipLoading,
@@ -103,7 +199,7 @@ export default function ConfigPage() {
             },
           }),
           ipStatus &&
-            React.createElement("p", { className: "mb-3 text-xs text-amber-200/90" }, ipStatus),
+            React.createElement("p", { className: "mb-3 text-xs text-zinc-600" }, ipStatus),
           React.createElement(
             Button,
             { type: "button", variant: "primary", onClick: saveIps, disabled: ipLoading || !token },

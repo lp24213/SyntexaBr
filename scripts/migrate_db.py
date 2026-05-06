@@ -29,7 +29,16 @@ MIGRATIONS_USERS = {
 def migrate():
     inspector = inspect(engine)
     tables = set(inspector.get_table_names())
-    print(f"[migrate] Banco: {DB_URL}")
+    def _b(u: str) -> str:
+        if "@" not in u or "://" not in u:
+            return u
+        head, _sep, rest = u.partition("://")
+        if "@" not in rest:
+            return f"{head}://***@***{rest[rest.rfind('/'):] if '/' in rest else ''}"
+        creds, _at, hostpart = rest.partition("@")
+        return f"{head}://***:***@{hostpart}" if "@" in rest else u
+
+    print(f"[migrate] Banco: {_b(DB_URL)}")
     print(f"[migrate] Tabelas encontradas: {sorted(tables)}")
 
     with engine.connect() as conn:

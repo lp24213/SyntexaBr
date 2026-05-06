@@ -4,11 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "node ./scripts/no-local-dev.cjs",
-    "build": "next build",
+    "build": "node ./scripts/build-with-out-junction.cjs",
     "start": "node ./scripts/no-local-dev.cjs",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test",
+    "test:e2e:audit": "playwright test e2e/syntexa-site-audit.spec.js",
+    "test:e2e:local": "cross-env SYNTEXA_E2E_BASE=http://127.0.0.1:3456 playwright test e2e/syntexa-site-audit.spec.js",
+    "test:e2e:full": "playwright test e2e/syntexa-full-checkup.spec.js",
+    "test:e2e:exports": "playwright test e2e/export-content-validation.spec.js",
+    "test:e2e:downloads": "playwright test e2e/download-artifacts.spec.js",
+    "test:e2e:all": "playwright test e2e/syntexa-site-audit.spec.js e2e/export-content-validation.spec.js"
   },
   "dependencies": {
+    "@heyputer/puter.js": "^2.2.15",
     "class-variance-authority": "latest",
     "clsx": "latest",
     "framer-motion": "latest",
@@ -18,15 +26,21 @@
     "react-dom": "latest"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.0",
     "@tailwindcss/postcss": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "autoprefixer": "latest",
+    "cross-env": "^10.1.0",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "mammoth": "^1.8.0",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^4.10.38",
     "postcss": "latest",
     "tailwindcss": "latest",
     "typescript": "latest",
-    "wrangler": "4.0.0"
+    "wrangler": "4.0.0",
+    "xlsx": "^0.18.5"
   }
 }

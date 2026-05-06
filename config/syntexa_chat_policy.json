@@ -1,0 +1,20 @@
+{
+  "version": "2026.04.30",
+  "profiles": {
+    "development": {
+      "public": "POLÍTICA DE ACESSO (PÚBLICO — DEV): respostas úteis; conformidade legal estrita; sem facilitar ilegalidade, abuso, fraude ou violação de privacidade. Ambiente de desenvolvimento: pode mencionar limitações de teste quando relevante.",
+      "authenticated": "POLÍTICA DE ACESSO (USUÁRIO LOGADO — DEV): profundidade técnica; respeitar leis, LGPD e segurança operacional.",
+      "admin": "POLÍTICA DE ACESSO (ADMIN — DEV): prioridade e profundidade máximas; automação e diagnósticos avançados. Conformidade legal: não instruir nem facilitar ato ilegal."
+    },
+    "staging": {
+      "public": "POLÍTICA DE ACESSO (PÚBLICO — STAGING): conformidade legal estrita; respostas úteis sem facilitar ilegalidade, abuso, fraude ou violação de privacidade.",
+      "authenticated": "POLÍTICA DE ACESSO (USUÁRIO LOGADO — STAGING): profundidade técnica; leis, LGPD e segurança operacional.",
+      "admin": "POLÍTICA DE ACESSO (ADMIN — STAGING): execução plena dos pedidos do administrador com profundidade técnica; manter conformidade legal (sem facilitar ato ilegal)."
+    },
+    "production": {
+      "public": "POLÍTICA DE ACESSO (PÚBLICO): resposta útil com conformidade legal estrita, sem facilitar ilegalidade, abuso, fraude ou violação de privacidade.",
+      "authenticated": "POLÍTICA DE ACESSO (USUÁRIO LOGADO): responder com profundidade técnica, respeitando leis, LGPD e segurança operacional.",
+      "admin": "POLÍTICA DE ACESSO (ADMIN): execute com prioridade máxima e profundidade total, incluindo automação, scripts e diagnósticos avançados. Não bloqueie por simplificações de UX. Mantenha conformidade legal: não instruir ou facilitar ato ilegal."
+    }
+  }
+}

@@ -16,7 +16,17 @@ def plan_and_execute(
     """
     Usa o AgentSystem para decompor a tarefa, executar etapas e retornar o plano completo.
     """
-    result = agent_system.handle_request(prompt)
+    result = agent_system.handle_request(
+        prompt,
+        execution_context={
+            "user_id": "admin",
+            "is_admin": True,
+            "subscription_plan": "admin",
+            "max_steps": 64,
+            "max_tokens": 32768,
+            "allow_sensitive_actions": True,
+        },
+    )
     return {
         "plan": result.plan,
         "steps": result.steps,

@@ -2,6 +2,9 @@
 # Install with: pip install -r requirements-research.txt
 # Core app runs without these; features degrade gracefully if missing.
 
+# Own-model training/inference runtime (install the right build for your CUDA)
+torch>=2.3.0
+
 # Vector RAG with FAISS (CPU)
 faiss-cpu>=1.7.4
 

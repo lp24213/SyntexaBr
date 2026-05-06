@@ -20,17 +20,22 @@ from vereda_ai.memory.chat_history_db import ChatHistoryDB
 logger = get_logger(__name__)
 
 
+def _runtime_embed_batch(texts: list[str]) -> list[list[float]]:
+    """Uma única porta para vetores no RAG/memória em RAM (Ollama / FastEmbed / …)."""
+    from vereda_ai.syntexa_core.hybrid_engine import native_embed
+
+    return native_embed(texts)
+
+
 # Instâncias globais (singleton simples para o backend atual)
 llm_engine = LLMEngine()
 reasoning_engine = ReasoningEngine(llm_engine)
 
 planner = Planner(llm_engine)
-executor = Executor()
 task_manager = TaskManager()
-agent_system = AgentSystem(planner, executor, task_manager)
 
 # Memória vetorial em memória, usada tanto para RAG quanto para memórias de conversa/episódica/semântica.
-vector_store = InMemoryVectorStore()
+vector_store = InMemoryVectorStore(embed_batch_fn=_runtime_embed_batch)
 conversation_memory = ConversationMemory(vector_store)
 episodic_memory = EpisodicMemory(vector_store)
 semantic_memory = SemanticMemory(vector_store)
@@ -54,6 +59,8 @@ code_validator = CodeValidator()
 response_cache = ResponseCache(ttl_seconds=300)
 chat_history_db = ChatHistoryDB()
 modular_engine = ModularReasoningEngine(llm=llm_engine, rag=rag_engine, cache=response_cache)
+executor = Executor(llm=llm_engine, modular_engine=modular_engine)
+agent_system = AgentSystem(planner, executor, task_manager)
 
 
 def init_runtime() -> None:

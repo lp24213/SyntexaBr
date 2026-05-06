@@ -65,9 +65,9 @@ const LANGUAGES = [
 ];
 
 const SECTION_COLORS = {
-  violet: { border: "border-violet-500/25 hover:border-violet-400/50", active: "border-violet-500/40 bg-violet-500/8", badge: "bg-violet-500/10 text-violet-300 border-violet-500/20", btn: "bg-violet-600/80 border-violet-500/40 hover:bg-violet-500/90" },
-  sky: { border: "border-sky-500/25 hover:border-sky-400/50", active: "border-sky-500/40 bg-sky-500/8", badge: "bg-sky-500/10 text-sky-300 border-sky-500/20", btn: "bg-sky-600/80 border-sky-500/40 hover:bg-sky-500/90" },
-  emerald: { border: "border-emerald-500/25 hover:border-emerald-400/50", active: "border-emerald-500/40 bg-emerald-500/8", badge: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20", btn: "bg-emerald-600/80 border-emerald-500/40 hover:bg-emerald-500/90" },
+  violet: { border: "border-violet-200 hover:border-violet-300", active: "border-violet-300 bg-violet-50", badge: "bg-violet-50 text-violet-700 border-violet-200", btn: "bg-violet-600 border-violet-500 hover:bg-violet-500" },
+  sky: { border: "border-sky-200 hover:border-sky-300", active: "border-sky-300 bg-sky-50", badge: "bg-sky-50 text-sky-700 border-sky-200", btn: "bg-sky-600 border-sky-500 hover:bg-sky-500" },
+  emerald: { border: "border-emerald-200 hover:border-emerald-300", active: "border-emerald-300 bg-emerald-50", badge: "bg-emerald-50 text-emerald-700 border-emerald-200", btn: "bg-emerald-600 border-emerald-500 hover:bg-emerald-500" },
 };
 
 function BackIcon() {
@@ -84,7 +84,7 @@ function StopIcon() {
     React.createElement("rect", { x: "6", y: "6", width: "12", height: "12", rx: "2", stroke: "currentColor", strokeWidth: "1.5" }));
 }
 function LockIcon() {
-  return React.createElement("svg", { className: "h-12 w-12 text-violet-400/60", viewBox: "0 0 24 24", fill: "none" },
+  return React.createElement("svg", { className: "h-12 w-12 text-violet-500/80", viewBox: "0 0 24 24", fill: "none" },
     React.createElement("rect", { x: "5", y: "11", width: "14", height: "10", rx: "2", stroke: "currentColor", strokeWidth: "1.5" }),
     React.createElement("path", { d: "M8 11V7a4 4 0 018 0v4", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
     React.createElement("circle", { cx: "12", cy: "16", r: "1.5", fill: "currentColor" }));
@@ -95,11 +95,11 @@ function MessageBubble({ role, content, streaming }) {
   return React.createElement(motion.div, { className: `flex ${isUser ? "justify-end" : "justify-start"}`, initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.2 } },
     React.createElement("div", {
       className: isUser
-        ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-white/10 px-4 py-3 text-sm text-white whitespace-pre-wrap"
-        : "max-w-[90%] rounded-2xl rounded-tl-sm border border-white/8 bg-[rgba(15,23,42,0.95)] px-4 py-3 text-sm text-white/85 leading-relaxed whitespace-pre-wrap",
+        ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-zinc-100 px-4 py-3 text-sm text-zinc-900 whitespace-pre-wrap"
+        : "max-w-[90%] rounded-2xl rounded-tl-sm border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-800 leading-relaxed whitespace-pre-wrap",
     },
       content,
-      streaming && React.createElement("span", { className: "inline-block ml-0.5 h-3.5 w-0.5 animate-pulse bg-white/60 align-middle" })
+      streaming && React.createElement("span", { className: "inline-block ml-0.5 h-3.5 w-0.5 animate-pulse bg-zinc-500 align-middle" })
     )
   );
 }
@@ -190,7 +190,7 @@ export default function ProfessorPage() {
   if (authLoading) {
     return React.createElement(AppShell, null,
       React.createElement("div", { className: "flex min-h-[50vh] items-center justify-center" },
-        React.createElement("div", { className: "h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-violet-400" }))
+        React.createElement("div", { className: "h-6 w-6 animate-spin rounded-full border-2 border-zinc-200 border-t-violet-400" }))
     );
   }
 
@@ -200,13 +200,13 @@ export default function ProfessorPage() {
       React.createElement("div", { className: "flex min-h-[60vh] flex-col items-center justify-center py-12 text-center" },
         React.createElement(motion.div, { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4 } },
           React.createElement(LockIcon, null),
-          React.createElement("h2", { className: "mt-4 text-2xl font-bold text-white" }, "Acesso Restrito"),
-          React.createElement("p", { className: "mt-2 max-w-sm text-sm text-white/50" }, "Área exclusiva para professores e pesquisadores. Faça login ou crie sua conta gratuita."),
+          React.createElement("h2", { className: "mt-4 text-2xl font-bold text-zinc-900" }, "Acesso Restrito"),
+          React.createElement("p", { className: "mt-2 max-w-sm text-sm text-zinc-500" }, "Área exclusiva para professores e pesquisadores. Faça login ou crie sua conta gratuita."),
           React.createElement("div", { className: "mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center" },
-            React.createElement("button", { onClick: function () { window.location.href = encryptedPath("login"); }, className: "rounded-[14px] bg-violet-600/80 border border-violet-500/40 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500/90" }, "Entrar"),
-            React.createElement("button", { onClick: function () { window.location.href = encryptedPath("register"); }, className: "rounded-[14px] border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 hover:text-white" }, "Criar conta")
+            React.createElement("button", { onClick: function () { window.location.href = encryptedPath("login"); }, className: "rounded-[14px] border border-violet-500 bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500" }, "Entrar"),
+            React.createElement("button", { onClick: function () { window.location.href = encryptedPath("register"); }, className: "rounded-[14px] border border-zinc-200 px-5 py-2.5 text-sm font-medium text-zinc-600 hover:text-zinc-900" }, "Criar conta")
           ),
-          React.createElement("button", { onClick: function () { window.location.href = "/educacao"; }, className: "mt-4 inline-flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60" }, React.createElement(BackIcon, null), "Voltar")
+          React.createElement("button", { onClick: function () { window.location.href = "/educacao"; }, className: "mt-4 inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600" }, React.createElement(BackIcon, null), "Voltar")
         )
       )
     );
@@ -221,18 +221,18 @@ export default function ProfessorPage() {
       React.createElement("div", { className: "flex h-[calc(100vh-11rem)] flex-col" },
         React.createElement(motion.div, { className: "mb-3 flex items-center justify-between flex-wrap gap-2", initial: { opacity: 0 }, animate: { opacity: 1 } },
           React.createElement("div", { className: "flex items-center gap-2" },
-            React.createElement("button", { onClick: function () { setActiveTool(null); setMessages([]); }, className: "inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60 hover:text-white" }, React.createElement(BackIcon, null), "Ferramentas"),
-            React.createElement(FuturisticIcon, { name: activeTool.iconName, className: "h-6 w-6 text-violet-300/90" }),
-            React.createElement("span", { className: "text-sm font-medium text-white" }, activeTool.label),
+            React.createElement("button", { onClick: function () { setActiveTool(null); setMessages([]); }, className: "inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-900" }, React.createElement(BackIcon, null), "Ferramentas"),
+            React.createElement(FuturisticIcon, { name: activeTool.iconName, className: "h-6 w-6 text-violet-600/90" }),
+            React.createElement("span", { className: "text-sm font-medium text-zinc-900" }, activeTool.label),
             React.createElement("span", { className: `hidden rounded-full border px-2 py-0.5 text-[10px] sm:inline ${colors.badge}` }, toolSection?.label)
           ),
           React.createElement("div", { className: "flex items-center gap-1.5 flex-wrap" },
-            LEVELS.map(l => React.createElement("button", { key: l.id, onClick: function () { setLevel(l.id); }, className: `rounded-xl px-2.5 py-1 text-xs transition-all ${level === l.id ? "bg-white/10 text-white border border-white/20" : "text-white/40 hover:text-white/70"}` }, l.label)),
-            React.createElement("span", { className: "text-white/20" }, "|"),
-            LANGUAGES.map(l => React.createElement("button", { key: l.id, onClick: function () { setLanguage(l.id); }, className: `rounded-xl px-2 py-1 text-xs transition-all ${language === l.id ? "bg-white/10 text-white border border-white/20" : "text-white/40 hover:text-white/70"}` }, l.label))
+            LEVELS.map(l => React.createElement("button", { key: l.id, onClick: function () { setLevel(l.id); }, className: `rounded-xl px-2.5 py-1 text-xs transition-all ${level === l.id ? "bg-zinc-100 text-zinc-900 border border-zinc-200" : "text-zinc-500 hover:text-zinc-700"}` }, l.label)),
+            React.createElement("span", { className: "text-zinc-400" }, "|"),
+            LANGUAGES.map(l => React.createElement("button", { key: l.id, onClick: function () { setLanguage(l.id); }, className: `rounded-xl px-2 py-1 text-xs transition-all ${language === l.id ? "bg-zinc-100 text-zinc-900 border border-zinc-200" : "text-zinc-500 hover:text-zinc-700"}` }, l.label))
           )
         ),
-        React.createElement("div", { className: "flex-1 overflow-y-auto rounded-2xl border border-white/6 bg-[rgba(8,15,30,0.8)] p-4 space-y-4" },
+        React.createElement("div", { className: "flex-1 overflow-y-auto rounded-2xl border border-zinc-200 bg-zinc-50 p-4 space-y-4" },
           messages.map(function (msg, idx) {
             const isLast = idx === messages.length - 1;
             return React.createElement(MessageBubble, { key: idx, role: msg.role, content: msg.content, streaming: isLast && streaming && msg.role === "assistant" });
@@ -240,23 +240,23 @@ export default function ProfessorPage() {
           React.createElement("div", { ref: bottomRef })
         ),
         error && React.createElement("p", { className: "mt-2 text-xs text-red-400" }, error),
-        context.trim() && React.createElement("p", { className: "mt-1 text-xs text-white/30" }, "Contexto: ", context.slice(0, 60), "..."),
+        context.trim() && React.createElement("p", { className: "mt-1 text-xs text-zinc-400" }, "Contexto: ", context.slice(0, 60), "..."),
         React.createElement("div", { className: "mt-3 flex items-end gap-2" },
-          React.createElement("div", { className: `flex-1 rounded-2xl border bg-[rgba(15,23,42,0.95)] px-4 py-3 transition-colors focus-within:${colors.border.split(" ")[0].replace("border-", "border-")} border-white/10` },
+          React.createElement("div", { className: `flex-1 rounded-2xl border bg-white px-4 py-3 transition-colors focus-within:${colors.border.split(" ")[0].replace("border-", "border-")} border-zinc-200` },
             React.createElement("textarea", {
               value: input,
               onChange: function (e) { setInput(e.target.value); },
               onKeyDown: handleKeyDown,
               placeholder: activeTool.placeholder,
               rows: 3,
-              className: "w-full resize-none bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none",
+              className: "w-full resize-none bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none",
               disabled: streaming,
             })
           ),
           React.createElement("button", {
             onClick: streaming ? handleStop : handleSend,
             disabled: !streaming && !input.trim(),
-            className: `flex h-11 w-11 items-center justify-center rounded-xl border transition-all ${streaming ? "bg-red-600/70 border-red-500/40" : `${colors.btn} disabled:opacity-40`} text-white`,
+            className: `flex h-11 w-11 items-center justify-center rounded-xl border transition-all ${streaming ? "bg-red-600/70 border-red-500/40" : `${colors.btn} disabled:opacity-40`} text-zinc-900`,
           }, streaming ? React.createElement(StopIcon, null) : React.createElement(SendIcon, null))
         )
       )
@@ -270,12 +270,12 @@ export default function ProfessorPage() {
   return React.createElement(AppShell, null,
     React.createElement("div", { className: "py-8 space-y-6" },
       React.createElement(motion.div, { initial: { opacity: 0 }, animate: { opacity: 1 } },
-        React.createElement("button", { onClick: function () { window.location.href = "/educacao"; }, className: "inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 mb-6" }, React.createElement(BackIcon, null), "Educação & Pesquisa")
+        React.createElement("button", { onClick: function () { window.location.href = "/educacao"; }, className: "inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-700 mb-6" }, React.createElement(BackIcon, null), "Educação & Pesquisa")
       ),
       React.createElement(motion.div, { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4 } },
         React.createElement("div", { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-xs text-violet-300" }, "Área Professor / Pesquisador"),
-        React.createElement("h1", { className: "text-3xl font-bold text-white" }, "Ferramentas Avançadas"),
-        React.createElement("p", { className: "mt-1 text-sm text-white/50" }, `Bem-vindo${profile?.full_name ? ", " + profile.full_name : ""}. Selecione uma categoria e ferramenta.`)
+        React.createElement("h1", { className: "text-3xl font-bold text-zinc-900" }, "Ferramentas Avançadas"),
+        React.createElement("p", { className: "mt-1 text-sm text-zinc-500" }, `Bem-vindo${profile?.full_name ? ", " + profile.full_name : ""}. Selecione uma categoria e ferramenta.`)
       ),
 
       // Section tabs
@@ -285,7 +285,7 @@ export default function ProfessorPage() {
           return React.createElement("button", {
             key: s.id,
             onClick: function () { setActiveSection(s.id); },
-            className: `rounded-xl border px-4 py-2 text-sm font-medium transition-all ${activeSection === s.id ? `${sc.active} ${sc.badge}` : "border-white/8 text-white/50 hover:text-white/80"}`,
+            className: `rounded-xl border px-4 py-2 text-sm font-medium transition-all ${activeSection === s.id ? `${sc.active} ${sc.badge}` : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}`,
           }, s.label);
         })
       ),
@@ -293,12 +293,12 @@ export default function ProfessorPage() {
       // Settings row
       React.createElement("div", { className: "flex items-center gap-4 flex-wrap" },
         React.createElement("div", { className: "flex items-center gap-1.5" },
-          React.createElement("p", { className: "text-xs text-white/40" }, "Nível:"),
-          LEVELS.map(l => React.createElement("button", { key: l.id, onClick: function () { setLevel(l.id); }, className: `rounded-xl border px-2.5 py-1 text-xs transition-all ${level === l.id ? "bg-white/10 border-white/25 text-white" : "border-white/8 text-white/40 hover:text-white/60"}` }, l.label))
+          React.createElement("p", { className: "text-xs text-zinc-500" }, "Nível:"),
+          LEVELS.map(l => React.createElement("button", { key: l.id, onClick: function () { setLevel(l.id); }, className: `rounded-xl border px-2.5 py-1 text-xs transition-all ${level === l.id ? "bg-zinc-100 border-zinc-300 text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-600"}` }, l.label))
         ),
         React.createElement("div", { className: "flex items-center gap-1.5" },
-          React.createElement("p", { className: "text-xs text-white/40" }, "Idioma:"),
-          LANGUAGES.map(l => React.createElement("button", { key: l.id, onClick: function () { setLanguage(l.id); }, className: `rounded-xl border px-2.5 py-1 text-xs transition-all ${language === l.id ? "bg-white/10 border-white/25 text-white" : "border-white/8 text-white/40 hover:text-white/60"}` }, l.label))
+          React.createElement("p", { className: "text-xs text-zinc-500" }, "Idioma:"),
+          LANGUAGES.map(l => React.createElement("button", { key: l.id, onClick: function () { setLanguage(l.id); }, className: `rounded-xl border px-2.5 py-1 text-xs transition-all ${language === l.id ? "bg-zinc-100 border-zinc-300 text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-600"}` }, l.label))
         )
       ),
 
@@ -308,7 +308,7 @@ export default function ProfessorPage() {
           return React.createElement(motion.button, {
             key: tool.id,
             onClick: function () { selectTool(tool); },
-            className: `group flex flex-col items-start gap-3 rounded-2xl border bg-[rgba(15,23,42,0.9)] p-6 text-left transition-all ${colors.border}`,
+            className: `group flex flex-col items-start gap-3 rounded-2xl border bg-white p-6 text-left transition-all ${colors.border}`,
             initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, delay: idx * 0.04 },
           },
             React.createElement("div", { className: "flex w-full items-start justify-between" },
@@ -316,22 +316,22 @@ export default function ProfessorPage() {
               React.createElement("span", { className: `rounded-full border px-2 py-0.5 text-[10px] ${colors.badge}` }, currentSection?.label)
             ),
             React.createElement("div", null,
-              React.createElement("p", { className: "font-semibold text-white" }, tool.label),
-              React.createElement("p", { className: "mt-0.5 text-xs text-white/40 leading-relaxed" }, tool.desc)
+              React.createElement("p", { className: "font-semibold text-zinc-900" }, tool.label),
+              React.createElement("p", { className: "mt-0.5 text-xs text-zinc-500 leading-relaxed" }, tool.desc)
             )
           );
         })
       ),
 
       // Context input
-      React.createElement(motion.div, { className: "rounded-2xl border border-white/8 bg-[rgba(15,23,42,0.7)] p-5", initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.3 } },
-        React.createElement("p", { className: "mb-2 text-xs font-medium text-white/50 uppercase tracking-wider" }, "Contexto persistente (opcional)"),
+      React.createElement(motion.div, { className: "rounded-2xl border border-zinc-200 bg-zinc-50 p-5", initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.3 } },
+        React.createElement("p", { className: "mb-2 text-xs font-medium text-zinc-500 uppercase tracking-wider" }, "Contexto persistente (opcional)"),
         React.createElement("textarea", {
           value: context,
           onChange: function (e) { setContext(e.target.value); },
           placeholder: "Informe turma, disciplina, nível ou qualquer contexto que ajude a personalizar todas as respostas...",
           rows: 2,
-          className: "w-full resize-none bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none",
+          className: "w-full resize-none bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none",
         })
       )
     )

@@ -62,6 +62,7 @@ export default function CadastroPage() {
   var [addressLine, setAddressLine] = useState("");
   var [addressNumber, setAddressNumber] = useState("");
   var [addressComplement, setAddressComplement] = useState("");
+  var [acceptedTerms, setAcceptedTerms] = useState(false);
   var [loading, setLoading] = useState(false);
   var [error, setError] = useState(null);
   var [success, setSuccess] = useState(null);
@@ -77,6 +78,10 @@ export default function CadastroPage() {
     setSuccess(null);
     if (password !== confirmPassword) {
       setError("As senhas não coincidem.");
+      return;
+    }
+    if (!acceptedTerms) {
+      setError("Você precisa aceitar os Termos e Condições para continuar.");
       return;
     }
     setLoading(true);
@@ -117,7 +122,7 @@ export default function CadastroPage() {
   return React.createElement(
     AppShell,
     null,
-    React.createElement("div", { className: "flex min-h-[calc(100vh-5rem)] items-center justify-center py-8 px-4" },
+    React.createElement("div", { className: "flex min-h-[calc(100vh-5rem)] items-start justify-center py-8 px-4" },
       React.createElement(AnimatePresence, { mode: "wait" },
         step === 1
           ? React.createElement(motion.div, {
@@ -138,9 +143,9 @@ export default function CadastroPage() {
                   onClick: function() { selectRole(r.id); },
                   className: "syntexa-card text-left p-5 border rounded-xl transition-all duration-200 " + r.color + " bg-zinc-900 hover:bg-zinc-800",
                 },
-                  React.createElement("div", { className: "mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5" },
+                  React.createElement("div", { className: "mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50" },
                     React.createElement(FuturisticIcon, { name: r.iconName, className: "h-7 w-7 " + r.accent })),
-                  React.createElement("div", { className: "font-semibold text-zinc-100 mb-1 " + r.accent }, r.label),
+                  React.createElement("div", { className: "font-semibold text-zinc-900 mb-1 " + r.accent }, r.label),
                   React.createElement("div", { className: "text-xs text-zinc-400 leading-relaxed" }, r.desc));
               })),
             React.createElement("div", { className: "mt-6 text-center text-xs text-zinc-500" },
@@ -148,7 +153,7 @@ export default function CadastroPage() {
               React.createElement("button", {
                 type: "button",
                 onClick: function() { window.location.href = encryptedPath("login"); },
-                className: "text-zinc-300 hover:underline",
+                className: "text-zinc-600 hover:text-zinc-900 hover:underline",
               }, "Fazer login")))
 
           : React.createElement(motion.div, {
@@ -160,15 +165,15 @@ export default function CadastroPage() {
               transition: { duration: 0.25 },
             },
             selectedRoleInfo && React.createElement("div", {
-              className: "flex items-center gap-3 mb-5 p-3 rounded-lg bg-zinc-800/60 border border-zinc-700",
+              className: "flex items-center gap-3 mb-5 p-3 rounded-lg bg-zinc-50 border border-zinc-200",
             },
               React.createElement(FuturisticIcon, { name: selectedRoleInfo.iconName, className: "h-8 w-8 shrink-0 " + selectedRoleInfo.accent }),
               React.createElement("div", null,
-                React.createElement("div", { className: "text-sm font-medium text-zinc-200" }, selectedRoleInfo.label),
+                React.createElement("div", { className: "text-sm font-medium text-zinc-900" }, selectedRoleInfo.label),
                 React.createElement("button", {
                   type: "button",
                   onClick: function() { setStep(1); },
-                  className: "text-xs text-zinc-500 hover:text-zinc-300 underline",
+                  className: "text-xs text-zinc-500 hover:text-zinc-800 underline",
                 }, "Alterar perfil"))),
             React.createElement(Card, { title: "Dados da conta", description: "Preencha suas informações para continuar." },
               React.createElement("form", { onSubmit: handleSubmit, className: "space-y-5" },
@@ -184,6 +189,21 @@ export default function CadastroPage() {
                   React.createElement(Input, { label: "Complemento", value: addressComplement, onChange: function(e) { setAddressComplement(e.target.value); } }),
                   React.createElement(Input, { label: "Senha", type: "password", autoComplete: "new-password", value: password, onChange: function(e) { setPassword(e.target.value); }, required: true }),
                   React.createElement(Input, { label: "Confirmar senha", type: "password", autoComplete: "new-password", value: confirmPassword, onChange: function(e) { setConfirmPassword(e.target.value); }, required: true })),
+                React.createElement("label", { className: "flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700" },
+                  React.createElement("input", {
+                    type: "checkbox",
+                    checked: acceptedTerms,
+                    onChange: function(e) { setAcceptedTerms(e.target.checked); },
+                    required: true,
+                    className: "mt-0.5 h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500",
+                  }),
+                  React.createElement("span", null,
+                    "Li e aceito os ",
+                    React.createElement("a", { href: "/termos", target: "_blank", rel: "noreferrer", className: "underline hover:text-zinc-900" }, "Termos e Condições"),
+                    " e a ",
+                    React.createElement("a", { href: "/privacidade", target: "_blank", rel: "noreferrer", className: "underline hover:text-zinc-900" }, "Política de Privacidade"),
+                    "."))
+                ,
                 error ? React.createElement("p", { className: "text-sm text-rose-400" }, error) : null,
                 success ? React.createElement("p", { className: "text-sm text-emerald-400" }, success) : null,
                 React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? "Criando conta..." : "Criar conta"),

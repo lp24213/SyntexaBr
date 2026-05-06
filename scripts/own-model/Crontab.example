@@ -1,0 +1,4 @@
+# Exemplo: ajustar caminhos e variáveis; crontab -e
+# */5 * * * * SYNTEXA_API_BASE=https://api.example.com SYNTEXA_ADMIN_TOKEN=... SYNTEXA_ROLLBACK_MODEL=syntexa_native /opt/syntexa/syntexabr/scripts/own-model/guard_with_flock.sh "$SYNTEXA_API_BASE" "$SYNTEXA_ADMIN_TOKEN" "$SYNTEXA_ROLLBACK_MODEL"
+# 0 * * * * SYNTEXA_API_BASE=... SYNTEXA_ADMIN_TOKEN=... SYNTEXA_OPS_SNAPSHOT_DIR=/var/lib/syntexa/snaps /opt/syntexa/syntexabr/scripts/own-model/snapshot_ops_bundle.sh "$SYNTEXA_API_BASE" "$SYNTEXA_ADMIN_TOKEN" "$SYNTEXA_OPS_SNAPSHOT_DIR"
+# 0 3 * * * cd /opt/syntexa/syntexabr && ENVIRONMENT=production DEFAULT_LLM=syntexa_native OWN_MODEL_STRICT_NO_FALLBACK=1 ./scripts/own-model/periodic_readiness_check.sh

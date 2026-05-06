@@ -191,6 +191,27 @@ def notify_chat_completion(
     logger.warning("Falha ao notificar chat completion: %s", exc)
 
 
+def notify_chat_runtime_unavailable(
+  *,
+  error_text: str,
+  user: models.User | None = None,
+  provider: str | None = None,
+) -> None:
+  subject = "ALERTA: runtime IA indisponível (produção)"
+  to = str(getattr(settings, "ops_alert_email", "") or "").strip() or None
+  html = f"""
+  <h1>Falha de runtime da IA</h1>
+  <p><strong>Provedor:</strong> {provider or "desconhecido"}</p>
+  <p><strong>Usuário:</strong> {user.email if user else "anônimo"}</p>
+  <p><strong>Erro:</strong> {error_text[:2000]}</p>
+  <p>Este alerta indica indisponibilidade real do modelo próprio em modo de produção/estrito.</p>
+  """
+  try:
+    _send_email(subject, html, to=to)
+  except Exception as exc:
+    logger.warning("Falha ao enviar alerta de runtime indisponível: %s", exc)
+
+
 def notify_feedback_created(
   feedback: models.Feedback, log_row: models.ConversationLog, user: models.User
 ) -> None:

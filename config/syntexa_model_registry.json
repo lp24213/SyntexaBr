@@ -1,0 +1,19 @@
+{
+  "active": "syntexa_native",
+  "models": [
+    {
+      "name": "syntexa_native",
+      "stage": "native_hybrid",
+      "params_millions": 0,
+      "checkpoint_uri": null,
+      "description": "Motor NLP híbrido proprietário (Fase 1) — sem pesos de terceiros."
+    },
+    {
+      "name": "syntexa_small",
+      "stage": "training_pipeline",
+      "params_millions": 350,
+      "checkpoint_uri": "azure-blob://syntexa-checkpoints/small/latest",
+      "description": "Placeholder — preencher após train_small_model.py na VM GPU."
+    }
+  ]
+}

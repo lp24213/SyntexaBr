@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { AppShell } from "../../../components/shell";
 import {
+  getAdminMe,
   institutionalListClients,
   institutionalCreateClient,
   institutionalUpdateClient,
@@ -14,22 +15,33 @@ import { FuturisticIcon } from "../../../components/icons/futuristic-icons";
 
 // ─── Guard: apenas admin ────────────────────────────────────────────────────
 function AdminGuard({ children }) {
-  const [allowed, setAllowed] = React.useState(null);
+  const [state, setState] = React.useState("checking");
   React.useEffect(() => {
-    const isAdmin = typeof window !== "undefined" && window.localStorage.getItem("syntexa_is_admin") === "1";
-    setAllowed(isAdmin);
+    (async function () {
+      try {
+        const token = typeof window !== "undefined" ? window.localStorage.getItem("syntexa_token") : "";
+        if (!token) {
+          setState("denied");
+          return;
+        }
+        const me = await getAdminMe(token);
+        setState(me && me.is_admin ? "ok" : "denied");
+      } catch {
+        setState("denied");
+      }
+    })();
   }, []);
 
-  if (allowed === null) return React.createElement("div", { className: "flex min-h-screen items-center justify-center" },
+  if (state === "checking") return React.createElement("div", { className: "flex min-h-screen items-center justify-center" },
     React.createElement("span", { className: "text-zinc-500 text-sm" }, "Verificando acesso..."));
 
-  if (!allowed) return React.createElement(AppShell, null,
+  if (state !== "ok") return React.createElement(AppShell, null,
     React.createElement("div", { className: "flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center px-4" },
       React.createElement("div", { className: "flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-500/30 bg-violet-500/10" },
         React.createElement(FuturisticIcon, { name: "lock", className: "h-10 w-10 text-violet-300" })),
-      React.createElement("h1", { className: "text-xl font-bold text-white" }, "Acesso restrito"),
-      React.createElement("p", { className: "text-zinc-400 text-sm max-w-sm" }, "Esta área é exclusiva para administradores do sistema."),
-      React.createElement("a", { href: "/login", className: "mt-2 rounded-xl bg-zinc-700 hover:bg-zinc-600 px-6 py-2 text-sm text-white transition-colors" }, "Fazer login")));
+      React.createElement("h1", { className: "text-xl font-bold text-zinc-900" }, "Acesso restrito"),
+      React.createElement("p", { className: "text-zinc-500 text-sm max-w-sm" }, "Esta área é exclusiva para administradores do sistema."),
+      React.createElement("a", { href: "/login", className: "mt-2 rounded-xl bg-violet-600 hover:bg-violet-500 px-6 py-2 text-sm text-white transition-colors" }, "Fazer login")));
 
   return children;
 }
@@ -38,7 +50,7 @@ function AdminGuard({ children }) {
 const TYPE_LABEL = { escola: "Escola", municipio: "Município", estado: "Estado", universidade: "Universidade", federal: "Federal" };
 const PLAN_LABEL = { basico: "Básico", avancado: "Avançado", enterprise: "Enterprise" };
 const TYPE_COLOR = { escola: "bg-blue-500/15 text-blue-300", municipio: "bg-violet-500/15 text-violet-300", estado: "bg-amber-500/15 text-amber-300", universidade: "bg-emerald-500/15 text-emerald-300", federal: "bg-rose-500/15 text-rose-300" };
-const PLAN_COLOR = { basico: "bg-zinc-700/60 text-zinc-300", avancado: "bg-sky-500/15 text-sky-300", enterprise: "bg-yellow-500/15 text-yellow-300" };
+const PLAN_COLOR = { basico: "bg-zinc-200 text-zinc-800", avancado: "bg-sky-500/15 text-sky-700", enterprise: "bg-yellow-500/15 text-yellow-800" };
 
 function fmtDate(iso) {
   if (!iso) return "—";
@@ -54,7 +66,7 @@ function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
   return React.createElement("button", {
     onClick: () => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); },
-    className: "ml-2 rounded px-2 py-0.5 text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-300 transition-colors",
+    className: "ml-2 rounded px-2 py-0.5 text-xs bg-zinc-200 hover:bg-zinc-300 text-zinc-800 transition-colors",
   }, copied ? React.createElement("span", { className: "inline-flex items-center gap-1" }, React.createElement(FuturisticIcon, { name: "check", className: "h-3.5 w-3.5" }), "OK") : "Copiar");
 }
 
@@ -81,8 +93,8 @@ function CreateForm({ onCreated, onCancel }) {
     finally { setLoading(false); }
   }
 
-  const inp = "w-full rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none";
-  const lbl = "block text-xs text-zinc-400 mb-1";
+  const inp = "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-violet-400 focus:outline-none";
+  const lbl = "block text-xs text-zinc-600 mb-1";
 
   return React.createElement("form", { onSubmit: submit, className: "space-y-4" },
     React.createElement("div", { className: "grid grid-cols-1 gap-4 sm:grid-cols-2" },
@@ -123,7 +135,7 @@ function CreateForm({ onCreated, onCancel }) {
       React.createElement("textarea", { className: inp + " resize-none h-20", value: form.notes, onChange: e => set("notes", e.target.value), placeholder: "Ex: Contrato assinado em 01/04/2026, 3 laboratórios, 480 alunos." })),
     error && React.createElement("p", { className: "text-rose-400 text-xs" }, error),
     React.createElement("div", { className: "flex gap-3 justify-end" },
-      React.createElement("button", { type: "button", onClick: onCancel, className: "rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:text-white hover:border-zinc-500 transition-colors" }, "Cancelar"),
+      React.createElement("button", { type: "button", onClick: onCancel, className: "rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-colors" }, "Cancelar"),
       React.createElement("button", { type: "submit", disabled: loading, className: "inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 px-5 py-2 text-sm font-medium text-white transition-colors" },
         loading ? "Criando..." : React.createElement(React.Fragment, null, React.createElement(FuturisticIcon, { name: "plus", className: "h-4 w-4" }), "Criar licença"))));
 }
@@ -143,19 +155,19 @@ function ClientCard({ client, onUpdate }) {
   }
 
   return React.createElement("div", {
-    className: `rounded-xl border ${client.active && !expired ? "border-zinc-700/60" : "border-rose-800/40"} bg-zinc-900/50 p-4 space-y-3`,
+    className: `rounded-xl border ${client.active && !expired ? "border-zinc-200" : "border-rose-300"} bg-white shadow-sm p-4 space-y-3`,
   },
     // Header
     React.createElement("div", { className: "flex flex-wrap items-start gap-2 justify-between" },
       React.createElement("div", { className: "flex-1 min-w-0" },
         React.createElement("div", { className: "flex flex-wrap items-center gap-2 mb-1" },
-          React.createElement("span", { className: `rounded-full px-2 py-0.5 text-xs font-medium border-0 ${TYPE_COLOR[client.client_type] || "bg-zinc-700 text-zinc-300"}` }, TYPE_LABEL[client.client_type] || client.client_type),
-          React.createElement("span", { className: `rounded-full px-2 py-0.5 text-xs font-medium ${PLAN_COLOR[client.plan] || "bg-zinc-700 text-zinc-300"}` }, PLAN_LABEL[client.plan] || client.plan),
-          !client.active && React.createElement("span", { className: "rounded-full px-2 py-0.5 text-xs bg-zinc-800 text-zinc-500" }, "Inativo"),
+          React.createElement("span", { className: `rounded-full px-2 py-0.5 text-xs font-medium border-0 ${TYPE_COLOR[client.client_type] || "bg-zinc-200 text-zinc-800"}` }, TYPE_LABEL[client.client_type] || client.client_type),
+          React.createElement("span", { className: `rounded-full px-2 py-0.5 text-xs font-medium ${PLAN_COLOR[client.plan] || "bg-zinc-200 text-zinc-800"}` }, PLAN_LABEL[client.plan] || client.plan),
+          !client.active && React.createElement("span", { className: "rounded-full px-2 py-0.5 text-xs bg-zinc-200 text-zinc-600" }, "Inativo"),
           expired && client.active && React.createElement("span", { className: "rounded-full px-2 py-0.5 text-xs bg-rose-900/50 text-rose-400" }, "Expirado"),
           seenRecently && React.createElement("span", { className: "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs bg-emerald-900/40 text-emerald-400" },
             React.createElement(FuturisticIcon, { name: "online", className: "h-3 w-3 text-emerald-400" }), "Online")),
-        React.createElement("h3", { className: "font-semibold text-white text-sm truncate" }, client.name),
+        React.createElement("h3", { className: "font-semibold text-zinc-900 text-sm truncate" }, client.name),
         client.city && React.createElement("p", { className: "text-xs text-zinc-500" }, `${client.city}${client.state ? ` — ${client.state}` : ""}`)),
       React.createElement("button", {
         onClick: () => setExpanded(x => !x),
@@ -163,7 +175,7 @@ function ClientCard({ client, onUpdate }) {
       }, expanded ? "▲ Fechar" : "▼ Detalhes")),
 
     // Chave de licença
-    React.createElement("div", { className: "rounded-lg bg-zinc-800/80 px-3 py-2 flex items-center gap-2 flex-wrap" },
+    React.createElement("div", { className: "rounded-lg bg-zinc-100 px-3 py-2 flex items-center gap-2 flex-wrap" },
       React.createElement("span", { className: "text-xs text-zinc-500 shrink-0" }, "Licença:"),
       React.createElement("code", { className: "font-mono text-xs text-amber-300 flex-1 break-all" }, client.license_key),
       React.createElement(CopyBtn, { text: client.license_key })),
@@ -177,10 +189,10 @@ function ClientCard({ client, onUpdate }) {
       React.createElement("p", null, React.createElement("span", { className: "text-zinc-500" }, "Criado em: "), fmtDate(client.created_at)),
       React.createElement("p", null, React.createElement("span", { className: "text-zinc-500" }, "Expira em: "), React.createElement("span", { className: expired ? "text-rose-400" : "text-zinc-300" }, fmtDate(client.expires_at))),
       client.last_seen_at && React.createElement("p", null, React.createElement("span", { className: "text-zinc-500" }, "Último sinal: "), fmtDate(client.last_seen_at)),
-      client.notes && React.createElement("p", { className: "mt-1 rounded bg-zinc-800/60 px-2 py-1 text-zinc-400 italic" }, client.notes),
+      client.notes && React.createElement("p", { className: "mt-1 rounded bg-zinc-100 px-2 py-1 text-zinc-600 italic" }, client.notes),
 
       // Ações
-      React.createElement("div", { className: "flex flex-wrap gap-2 mt-3 pt-3 border-t border-zinc-800" },
+      React.createElement("div", { className: "flex flex-wrap gap-2 mt-3 pt-3 border-t border-zinc-200" },
         client.active && !expired && React.createElement("button", {
           disabled: !!loading,
           onClick: () => act(() => institutionalDeactivateClient(client.id), "desativar"),
@@ -275,10 +287,11 @@ function InstitucionalAdminPage() {
       // Header
       React.createElement("div", { className: "flex flex-wrap items-center justify-between gap-4" },
         React.createElement("div", null,
-          React.createElement("h1", { className: "text-2xl font-bold text-white flex items-center gap-2" },
+          React.createElement("h1", { className: "text-2xl font-bold text-zinc-900 flex items-center gap-2" },
             React.createElement(FuturisticIcon, { name: "building", className: "h-7 w-7 text-violet-300 shrink-0" }),
             "Painel Institucional"),
-          React.createElement("p", { className: "text-sm text-zinc-400 mt-1" }, "Gerencie licenças para escolas, municípios e governos.")),
+          React.createElement("p", { className: "text-sm text-zinc-400 mt-1" }, "Gerencie licenças para escolas, municípios e governos."),
+          React.createElement("p", { className: "mt-1 text-xs text-zinc-500" }, "As chaves de licença funcionam como códigos de API de liberação para os computadores institucionais.")),
         React.createElement("button", {
           onClick: () => setShowCreate(true),
           className: "rounded-xl bg-violet-600 hover:bg-violet-500 px-5 py-2.5 text-sm font-medium text-white transition-colors shadow-lg shadow-violet-900/30",
@@ -287,31 +300,31 @@ function InstitucionalAdminPage() {
       // KPIs
       React.createElement("div", { className: "grid grid-cols-2 sm:grid-cols-5 gap-3" },
         [
-          ["Total", stats.total, "text-zinc-300"],
+          ["Total", stats.total, "text-zinc-800"],
           ["Ativas", stats.active, "text-emerald-400"],
           ["Expiradas", stats.expired, "text-rose-400"],
           ["Inativas", stats.inactive, "text-zinc-500"],
           ["Online (24h)", stats.online, "text-sky-400"],
         ].map(([label, val, color]) =>
-          React.createElement("div", { key: label, className: "rounded-xl border border-zinc-700/50 bg-zinc-900/50 p-3 text-center" },
+          React.createElement("div", { key: label, className: "rounded-xl border border-zinc-200 bg-white p-3 text-center shadow-sm" },
             React.createElement("div", { className: `text-2xl font-bold ${color}` }, val),
             React.createElement("div", { className: "text-xs text-zinc-500 mt-0.5" }, label)))),
 
       // Formulário de criação
-      showCreate && React.createElement("div", { className: "rounded-xl border border-violet-800/50 bg-zinc-900/70 p-5 shadow-xl" },
-        React.createElement("h2", { className: "text-base font-semibold text-white mb-4" }, "Nova licença institucional"),
+      showCreate && React.createElement("div", { className: "rounded-xl border border-violet-200 bg-zinc-50 p-5 shadow-xl" },
+        React.createElement("h2", { className: "text-base font-semibold text-zinc-900 mb-4" }, "Nova licença institucional"),
         React.createElement(CreateForm, { onCreated: handleCreated, onCancel: () => setShowCreate(false) })),
 
       // Filtros
       React.createElement("div", { className: "flex flex-wrap gap-3" },
         React.createElement("input", {
-          className: "flex-1 min-w-48 rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none",
+          className: "flex-1 min-w-48 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-violet-400 focus:outline-none",
           placeholder: "Buscar por nome, cidade ou chave…",
           value: search,
           onChange: e => setSearch(e.target.value),
         }),
         React.createElement("select", {
-          className: "rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-2 text-sm text-zinc-300 focus:outline-none",
+          className: "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 focus:outline-none",
           value: filterType,
           onChange: e => setFilterType(e.target.value),
         },
@@ -329,8 +342,8 @@ function InstitucionalAdminPage() {
                 filtered.map(c => React.createElement(ClientCard, { key: c.id, client: c, onUpdate: handleUpdate }))),
 
       // Guia rápido
-      React.createElement("div", { className: "rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 space-y-3" },
-        React.createElement("h3", { className: "text-sm font-semibold text-white flex items-center gap-2" },
+      React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-white p-5 space-y-3 shadow-sm" },
+        React.createElement("h3", { className: "text-sm font-semibold text-zinc-900 flex items-center gap-2" },
           React.createElement(FuturisticIcon, { name: "book", className: "h-4 w-4 text-zinc-400" }),
           "Como funciona"),
         React.createElement("ol", { className: "list-decimal list-inside space-y-1.5 text-xs text-zinc-400" },
@@ -346,7 +359,9 @@ function InstitucionalAdminPage() {
           React.createElement("li", { className: "flex flex-wrap items-center gap-1" }, "Use ",
             React.createElement("strong", { className: "inline-flex items-center gap-1 text-zinc-200" },
               React.createElement(FuturisticIcon, { name: "doc", className: "h-3.5 w-3.5 text-zinc-300" }), "Guia de instalação"),
-            " para baixar um arquivo .txt com todas as instruções para entregar ao TI da instituição.")))));
+            " para baixar um arquivo .txt com todas as instruções para entregar ao TI da instituição."),
+          React.createElement("li", null, "Para mobile corporativo (Android/iOS), use o runbook em ",
+            React.createElement("a", { href: "/admin/mobile-release", className: "text-sky-400 hover:underline" }, "/admin/mobile-release"), ".")))));
 }
 
 export default function Page() {

@@ -42,19 +42,19 @@ const LABS = [
 ];
 
 const CATEGORY_COLORS = {
-  "Física": "border-sky-500/30 hover:border-sky-400/60 text-sky-300",
-  "Matemática": "border-violet-500/30 hover:border-violet-400/60 text-violet-300",
-  "Química": "border-emerald-500/30 hover:border-emerald-400/60 text-emerald-300",
-  "Engenharia": "border-amber-500/30 hover:border-amber-400/60 text-amber-300",
-  "Programação": "border-rose-500/30 hover:border-rose-400/60 text-rose-300",
+  "Física": "border-sky-200 hover:border-sky-300 text-sky-700",
+  "Matemática": "border-violet-200 hover:border-violet-300 text-violet-700",
+  "Química": "border-emerald-200 hover:border-emerald-300 text-emerald-700",
+  "Engenharia": "border-amber-200 hover:border-amber-300 text-amber-700",
+  "Programação": "border-rose-200 hover:border-rose-300 text-rose-700",
 };
 
 const CATEGORY_BADGE = {
-  "Física": "bg-sky-500/10 text-sky-300 border-sky-500/20",
-  "Matemática": "bg-violet-500/10 text-violet-300 border-violet-500/20",
-  "Química": "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
-  "Engenharia": "bg-amber-500/10 text-amber-300 border-amber-500/20",
-  "Programação": "bg-rose-500/10 text-rose-300 border-rose-500/20",
+  "Física": "bg-sky-50 text-sky-700 border-sky-200",
+  "Matemática": "bg-violet-50 text-violet-700 border-violet-200",
+  "Química": "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "Engenharia": "bg-amber-50 text-amber-700 border-amber-200",
+  "Programação": "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 // ─── Physics: Projectile Simulator ────────────────────────────────────────
@@ -91,7 +91,7 @@ function ProjetilLab() {
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = "#020617";
+      ctx.fillStyle = "#f1f5f9";
       ctx.fillRect(0, 0, W, H);
 
       // Grid
@@ -167,7 +167,7 @@ function ProjetilLab() {
     if (canvas) {
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#020617";
+      ctx.fillStyle = "#f1f5f9";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
   };
@@ -175,26 +175,26 @@ function ProjetilLab() {
   useEffect(() => { reset(); return () => { if (animRef.current) cancelAnimationFrame(animRef.current); }; }, []);
 
   return React.createElement("div", { className: "space-y-4" },
-    React.createElement("canvas", { ref: canvasRef, width: 600, height: 320, className: "w-full rounded-xl border border-white/8 bg-[#020617]" }),
+    React.createElement("canvas", { ref: canvasRef, width: 600, height: 320, className: "w-full rounded-xl border border-zinc-200 bg-[#f1f5f9]" }),
     React.createElement("div", { className: "grid grid-cols-2 gap-4 sm:grid-cols-4" },
       [["Velocidade inicial (m/s)", v0, setV0, 5, 100, 1], ["Ângulo (°)", angle, setAngle, 1, 89, 1]].map(([label, val, setter, min, max, step]) =>
         React.createElement("div", { key: label },
-          React.createElement("label", { className: "mb-1 block text-xs text-white/50" }, label, ": ", React.createElement("span", { className: "text-white/80" }, val)),
+          React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, label, ": ", React.createElement("span", { className: "text-zinc-700" }, val)),
           React.createElement("input", { type: "range", min, max, step, value: val, onChange: e => setter(Number(e.target.value)), className: "w-full accent-sky-500" })
         )
       ),
       info && React.createElement("div", { className: "col-span-2 grid grid-cols-3 gap-2" },
         [["Alcance", info.range + " m"], ["Alt. máx.", info.maxH + " m"], ["Tempo voo", info.tFlight + " s"]].map(([k, v]) =>
           React.createElement("div", { key: k, className: "rounded-xl border border-sky-500/15 bg-sky-500/5 p-2 text-center" },
-            React.createElement("p", { className: "text-[10px] text-white/40" }, k),
-            React.createElement("p", { className: "text-sm font-bold text-sky-300" }, v)
+            React.createElement("p", { className: "text-[10px] text-zinc-500" }, k),
+            React.createElement("p", { className: "text-sm font-bold text-sky-700" }, v)
           )
         )
       )
     ),
     React.createElement("div", { className: "flex gap-2" },
-      React.createElement("button", { onClick: runSimulation, disabled: running, className: "inline-flex items-center gap-1.5 rounded-xl bg-sky-600/80 border border-sky-500/40 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" }, React.createElement(PlayIcon, null), "Lançar"),
-      React.createElement("button", { onClick: reset, className: "inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-4 py-2 text-sm text-white/60 hover:text-white" }, React.createElement(ResetIcon, null), "Resetar")
+      React.createElement("button", { onClick: runSimulation, disabled: running, className: "inline-flex items-center gap-1.5 rounded-xl bg-sky-600 border border-sky-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" }, React.createElement(PlayIcon, null), "Lançar"),
+      React.createElement("button", { onClick: reset, className: "inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-4 py-2 text-sm text-zinc-500 hover:text-zinc-900" }, React.createElement(ResetIcon, null), "Resetar")
     )
   );
 }
@@ -222,7 +222,7 @@ function MolaLab() {
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = "#020617";
+      ctx.fillStyle = "#f1f5f9";
       ctx.fillRect(0, 0, W, H);
 
       // Wall
@@ -296,18 +296,18 @@ function MolaLab() {
   useEffect(() => { return () => { if (animRef.current) cancelAnimationFrame(animRef.current); }; }, []);
 
   return React.createElement("div", { className: "space-y-4" },
-    React.createElement("canvas", { ref: canvasRef, width: 600, height: 280, className: "w-full rounded-xl border border-white/8 bg-[#020617]" }),
+    React.createElement("canvas", { ref: canvasRef, width: 600, height: 280, className: "w-full rounded-xl border border-zinc-200 bg-[#f1f5f9]" }),
     React.createElement("div", { className: "grid grid-cols-3 gap-4" },
       [["Constante k (N/m)", k, setK, 5, 100, 5], ["Massa (kg)", mass, setMass, 0.5, 10, 0.5], ["Amortecimento (b)", damping, setDamping, 0, 2, 0.1]].map(([label, val, setter, min, max, step]) =>
         React.createElement("div", { key: label },
-          React.createElement("label", { className: "mb-1 block text-xs text-white/50" }, label, ": ", React.createElement("span", { className: "text-violet-300 font-mono" }, val)),
+          React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, label, ": ", React.createElement("span", { className: "text-violet-300 font-mono" }, val)),
           React.createElement("input", { type: "range", min, max, step, value: val, onChange: e => setter(Number(e.target.value)), className: "w-full accent-violet-500" })
         )
       )
     ),
     React.createElement("div", { className: "flex gap-2" },
-      React.createElement("button", { onClick: running ? stop : run, className: `inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium transition-all ${running ? "bg-red-600/70 border-red-500/40 text-white" : "bg-violet-600/80 border-violet-500/40 text-white"}` }, running ? "Pausar" : React.createElement(React.Fragment, null, React.createElement(PlayIcon, null), "Iniciar")),
-      React.createElement("p", { className: "self-center text-xs text-white/40" }, `ω = ${(k / mass) ** 0.5 > 0 ? Math.sqrt(k / mass).toFixed(2) : 0} rad/s`)
+      React.createElement("button", { onClick: running ? stop : run, className: `inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium transition-all ${running ? "bg-red-600/70 border-red-500/40 text-zinc-900" : "bg-violet-600/80 border-violet-500/40 text-zinc-900"}` }, running ? "Pausar" : React.createElement(React.Fragment, null, React.createElement(PlayIcon, null), "Iniciar")),
+      React.createElement("p", { className: "self-center text-xs text-zinc-500" }, `ω = ${(k / mass) ** 0.5 > 0 ? Math.sqrt(k / mass).toFixed(2) : 0} rad/s`)
     )
   );
 }
@@ -340,7 +340,7 @@ function FuncaoLab() {
     } catch (e) { setError("Função inválida: " + e.message); return; }
 
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "#020617";
+    ctx.fillStyle = "#f1f5f9";
     ctx.fillRect(0, 0, W, H);
 
     const xs = xMin, xe = xMax;
@@ -405,26 +405,26 @@ function FuncaoLab() {
   useEffect(() => { plot(); }, [plot]);
 
   return React.createElement("div", { className: "space-y-4" },
-    React.createElement("canvas", { ref: canvasRef, width: 600, height: 320, className: "w-full rounded-xl border border-white/8 bg-[#020617]" }),
+    React.createElement("canvas", { ref: canvasRef, width: 600, height: 320, className: "w-full rounded-xl border border-zinc-200 bg-[#f1f5f9]" }),
     React.createElement("div", { className: "flex flex-wrap gap-3" },
       React.createElement("div", { className: "flex-1 min-w-[200px]" },
-        React.createElement("label", { className: "mb-1 block text-xs text-white/50" }, "f(x) ="),
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "f(x) ="),
         React.createElement("input", { value: funcStr, onChange: e => setFuncStr(e.target.value), onKeyDown: e => e.key === "Enter" && plot(), className: "w-full rounded-xl border border-violet-500/30 bg-[rgba(15,23,42,0.9)] px-3 py-2 text-sm font-mono text-violet-200 focus:outline-none focus:border-violet-400/60", placeholder: "sin(x), x**2, cos(x)*x ..." })
       ),
       React.createElement("div", null,
-        React.createElement("label", { className: "mb-1 block text-xs text-white/50" }, "x mín"),
-        React.createElement("input", { type: "number", value: xMin, onChange: e => setXMin(Number(e.target.value)), className: "w-20 rounded-xl border border-white/10 bg-[rgba(15,23,42,0.9)] px-2 py-2 text-sm text-white focus:outline-none" })
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "x mín"),
+        React.createElement("input", { type: "number", value: xMin, onChange: e => setXMin(Number(e.target.value)), className: "w-20 rounded-xl border border-zinc-200 bg-[rgba(15,23,42,0.9)] px-2 py-2 text-sm text-zinc-900 focus:outline-none" })
       ),
       React.createElement("div", null,
-        React.createElement("label", { className: "mb-1 block text-xs text-white/50" }, "x máx"),
-        React.createElement("input", { type: "number", value: xMax, onChange: e => setXMax(Number(e.target.value)), className: "w-20 rounded-xl border border-white/10 bg-[rgba(15,23,42,0.9)] px-2 py-2 text-sm text-white focus:outline-none" })
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "x máx"),
+        React.createElement("input", { type: "number", value: xMax, onChange: e => setXMax(Number(e.target.value)), className: "w-20 rounded-xl border border-zinc-200 bg-[rgba(15,23,42,0.9)] px-2 py-2 text-sm text-zinc-900 focus:outline-none" })
       ),
-      React.createElement("button", { onClick: plot, className: "self-end rounded-xl bg-violet-600/80 border border-violet-500/40 px-4 py-2 text-sm font-medium text-white" }, "Plotar")
+      React.createElement("button", { onClick: plot, className: "self-end rounded-xl bg-violet-600/80 border border-violet-500/40 px-4 py-2 text-sm font-medium text-zinc-900" }, "Plotar")
     ),
     error && React.createElement("p", { className: "text-xs text-red-400" }, error),
     React.createElement("div", { className: "flex flex-wrap gap-1.5" },
       ["sin(x)", "cos(x)", "x**2", "1/x", "sqrt(abs(x))", "exp(-x**2)", "x*sin(x)"].map(fn =>
-        React.createElement("button", { key: fn, onClick: () => setFuncStr(fn), className: "rounded-lg border border-white/8 px-2.5 py-1 text-xs font-mono text-white/50 hover:text-violet-300 hover:border-violet-500/30 transition-all" }, fn)
+        React.createElement("button", { key: fn, onClick: () => setFuncStr(fn), className: "rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-mono text-zinc-500 hover:text-violet-300 hover:border-violet-500/30 transition-all" }, fn)
       )
     )
   );
@@ -464,45 +464,45 @@ function CalculoLab() {
   return React.createElement("div", { className: "space-y-4" },
     React.createElement("div", { className: "flex flex-wrap gap-2" },
       React.createElement("div", { className: "flex-1 min-w-[240px]" },
-        React.createElement("label", { className: "mb-1 block text-xs text-white/50" }, "Expressão"),
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "Expressão"),
         React.createElement("input", { value: expr, onChange: e => setExpr(e.target.value), onKeyDown: e => e.key === "Enter" && compute(), className: "w-full rounded-xl border border-violet-500/30 bg-[rgba(15,23,42,0.9)] px-3 py-2 text-sm font-mono text-violet-200 focus:outline-none focus:border-violet-400/60", placeholder: "d/dx sin(x), ∫ x² dx, x²-5x+6=0 ..." })
       ),
       React.createElement("div", null,
-        React.createElement("label", { className: "mb-1 block text-xs text-white/50" }, "Tipo"),
-        React.createElement("select", { value: computeType, onChange: e => setComputeType(e.target.value), className: "rounded-xl border border-white/10 bg-[rgba(15,23,42,0.9)] px-2 py-2 text-sm text-white focus:outline-none" },
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "Tipo"),
+        React.createElement("select", { value: computeType, onChange: e => setComputeType(e.target.value), className: "rounded-xl border border-zinc-200 bg-[rgba(15,23,42,0.9)] px-2 py-2 text-sm text-zinc-900 focus:outline-none" },
           TYPES.map(t => React.createElement("option", { key: t, value: t }, t))
         )
       ),
       React.createElement("div", null,
-        React.createElement("label", { className: "mb-1 block text-xs text-white/50" }, "Variável"),
-        React.createElement("input", { value: variable, onChange: e => setVariable(e.target.value), className: "w-16 rounded-xl border border-white/10 bg-[rgba(15,23,42,0.9)] px-2 py-2 text-sm font-mono text-white focus:outline-none" })
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "Variável"),
+        React.createElement("input", { value: variable, onChange: e => setVariable(e.target.value), className: "w-16 rounded-xl border border-zinc-200 bg-[rgba(15,23,42,0.9)] px-2 py-2 text-sm font-mono text-zinc-900 focus:outline-none" })
       ),
-      React.createElement("button", { onClick: compute, disabled: loading || !expr.trim(), className: "self-end rounded-xl bg-violet-600/80 border border-violet-500/40 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" }, loading ? "..." : "Calcular")
+      React.createElement("button", { onClick: compute, disabled: loading || !expr.trim(), className: "self-end rounded-xl bg-violet-600/80 border border-violet-500/40 px-4 py-2 text-sm font-medium text-zinc-900 disabled:opacity-50" }, loading ? "..." : "Calcular")
     ),
     React.createElement("div", { className: "flex flex-wrap gap-1.5" },
       EXAMPLES.map(([e, t, v]) =>
-        React.createElement("button", { key: e, onClick: () => { setExpr(e); setComputeType(t); setVariable(v); }, className: "rounded-lg border border-white/8 px-2 py-1 text-xs font-mono text-white/40 hover:text-violet-300 hover:border-violet-500/30 transition-all" }, e)
+        React.createElement("button", { key: e, onClick: () => { setExpr(e); setComputeType(t); setVariable(v); }, className: "rounded-lg border border-zinc-200 px-2 py-1 text-xs font-mono text-zinc-500 hover:text-violet-300 hover:border-violet-500/30 transition-all" }, e)
       )
     ),
     error && React.createElement("p", { className: "text-xs text-red-400" }, error),
     result && React.createElement(motion.div, { className: "rounded-2xl border border-violet-500/15 bg-[rgba(15,23,42,0.9)] p-5 space-y-3", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } },
       result.steps && result.steps.length > 0 && React.createElement("div", null,
         React.createElement("p", { className: "mb-2 text-xs font-medium text-violet-300 uppercase tracking-wider" }, "Passos"),
-        React.createElement("ol", { className: "space-y-1" }, result.steps.map((s, i) => React.createElement("li", { key: i, className: "flex gap-2 text-sm text-white/70" },
+        React.createElement("ol", { className: "space-y-1" }, result.steps.map((s, i) => React.createElement("li", { key: i, className: "flex gap-2 text-sm text-zinc-600" },
           React.createElement("span", { className: "text-violet-400/60 font-mono shrink-0" }, i + 1 + "."), s)))
       ),
       result.result && React.createElement("div", { className: "rounded-xl border border-violet-500/20 bg-violet-500/8 p-3" },
-        React.createElement("p", { className: "text-xs text-white/40 mb-0.5" }, "Resultado"),
+        React.createElement("p", { className: "text-xs text-zinc-500 mb-0.5" }, "Resultado"),
         React.createElement("p", { className: "font-mono text-lg text-violet-200" }, result.result)
       ),
-      result.interpretation && React.createElement("p", { className: "text-sm text-white/60 italic" }, result.interpretation),
-      result.ai_solution && React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-4" },
-        React.createElement("p", { className: "mb-2 text-xs text-white/40 uppercase tracking-wider" }, "Resolução detalhada"),
-        React.createElement("div", { className: "whitespace-pre-wrap text-sm text-white/75 leading-relaxed" }, result.ai_solution)
+      result.interpretation && React.createElement("p", { className: "text-sm text-zinc-500 italic" }, result.interpretation),
+      result.ai_solution && React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-4" },
+        React.createElement("p", { className: "mb-2 text-xs text-zinc-500 uppercase tracking-wider" }, "Resolução detalhada"),
+        React.createElement("div", { className: "whitespace-pre-wrap text-sm text-zinc-900/75 leading-relaxed" }, result.ai_solution)
       ),
-      result.explanation && React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-4" },
-        React.createElement("p", { className: "mb-1 text-xs text-white/40 uppercase tracking-wider" }, "Explicação pedagógica"),
-        React.createElement("p", { className: "text-sm text-white/70 leading-relaxed" }, result.explanation)
+      result.explanation && React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-4" },
+        React.createElement("p", { className: "mb-1 text-xs text-zinc-500 uppercase tracking-wider" }, "Explicação pedagógica"),
+        React.createElement("p", { className: "text-sm text-zinc-600 leading-relaxed" }, result.explanation)
       )
     )
   );
@@ -530,18 +530,18 @@ function QuimicaLab() {
 
   return React.createElement("div", { className: "space-y-4" },
     React.createElement("div", { className: "rounded-2xl border border-emerald-500/15 bg-[rgba(15,23,42,0.9)] p-5" },
-      React.createElement("p", { className: "mb-3 text-xs text-white/40 uppercase tracking-wider" }, "Balanceador de Equações Químicas"),
+      React.createElement("p", { className: "mb-3 text-xs text-zinc-500 uppercase tracking-wider" }, "Balanceador de Equações Químicas"),
       React.createElement("div", { className: "flex gap-2" },
-        React.createElement("input", { value: equation, onChange: e => setEquation(e.target.value), onKeyDown: e => e.key === "Enter" && balance(), className: "flex-1 rounded-xl border border-emerald-500/25 bg-[rgba(8,15,30,0.8)] px-3 py-2 text-sm font-mono text-emerald-200 focus:outline-none focus:border-emerald-400/50", placeholder: "H2 + O2 → H2O" }),
-        React.createElement("button", { onClick: balance, disabled: loading || !equation.trim(), className: "rounded-xl bg-emerald-600/80 border border-emerald-500/40 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" }, loading ? "..." : "Balancear")
+        React.createElement("input", { value: equation, onChange: e => setEquation(e.target.value), onKeyDown: e => e.key === "Enter" && balance(), className: "flex-1 rounded-xl border border-emerald-500/25 bg-zinc-50 px-3 py-2 text-sm font-mono text-emerald-200 focus:outline-none focus:border-emerald-400/50", placeholder: "H2 + O2 → H2O" }),
+        React.createElement("button", { onClick: balance, disabled: loading || !equation.trim(), className: "rounded-xl bg-emerald-600/80 border border-emerald-500/40 px-4 py-2 text-sm font-medium text-zinc-900 disabled:opacity-50" }, loading ? "..." : "Balancear")
       ),
       React.createElement("div", { className: "mt-3 flex flex-wrap gap-1.5" },
-        EXAMPLES.map(ex => React.createElement("button", { key: ex, onClick: () => setEquation(ex), className: "rounded-lg border border-white/8 px-2 py-1 text-xs font-mono text-white/40 hover:text-emerald-300 hover:border-emerald-500/30 transition-all" }, ex))
+        EXAMPLES.map(ex => React.createElement("button", { key: ex, onClick: () => setEquation(ex), className: "rounded-lg border border-zinc-200 px-2 py-1 text-xs font-mono text-zinc-500 hover:text-emerald-300 hover:border-emerald-500/30 transition-all" }, ex))
       )
     ),
     result && React.createElement(motion.div, { className: "rounded-2xl border border-emerald-500/10 bg-[rgba(15,23,42,0.9)] p-5", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } },
       (result.ai_solution || result.explanation || result.interpretation) &&
-        React.createElement("div", { className: "whitespace-pre-wrap text-sm text-white/75 leading-relaxed" },
+        React.createElement("div", { className: "whitespace-pre-wrap text-sm text-zinc-900/75 leading-relaxed" },
           result.ai_solution || result.explanation || result.interpretation)
     )
   );
@@ -562,7 +562,7 @@ function CircuitoLab() {
     const ctx = canvas.getContext("2d");
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "#020617";
+    ctx.fillStyle = "#f1f5f9";
     ctx.fillRect(0, 0, W, H);
 
     let rTotal, i1, i2, iTot, v1, v2;
@@ -640,14 +640,14 @@ function CircuitoLab() {
   useEffect(() => { calc(); }, [calc]);
 
   return React.createElement("div", { className: "space-y-4" },
-    React.createElement("canvas", { ref: canvasRef, width: 500, height: 260, className: "w-full rounded-xl border border-white/8 bg-[#020617]" }),
+    React.createElement("canvas", { ref: canvasRef, width: 500, height: 260, className: "w-full rounded-xl border border-zinc-200 bg-[#f1f5f9]" }),
     React.createElement("div", { className: "flex gap-2" },
-      ["serie", "paralelo"].map(m => React.createElement("button", { key: m, onClick: () => setMode(m), className: `rounded-xl px-3 py-1.5 text-xs font-medium transition-all capitalize ${mode === m ? "bg-amber-600/70 border border-amber-500/40 text-white" : "border border-white/10 text-white/50 hover:text-white"}` }, m === "serie" ? "Série" : "Paralelo"))
+      ["serie", "paralelo"].map(m => React.createElement("button", { key: m, onClick: () => setMode(m), className: `rounded-xl px-3 py-1.5 text-xs font-medium transition-all capitalize ${mode === m ? "bg-amber-600/70 border border-amber-500/40 text-zinc-900" : "border border-zinc-200 text-zinc-500 hover:text-zinc-900"}` }, m === "serie" ? "Série" : "Paralelo"))
     ),
     React.createElement("div", { className: "grid grid-cols-3 gap-4" },
       [["R1 (Ω)", r1, setR1, 10, 1000, 10], ["R2 (Ω)", r2, setR2, 10, 1000, 10], ["Tensão (V)", v, setV, 1, 50, 1]].map(([label, val, setter, min, max, step]) =>
         React.createElement("div", { key: label },
-          React.createElement("label", { className: "mb-1 block text-xs text-white/50" }, label, ": ", React.createElement("span", { className: "text-amber-300 font-mono" }, val)),
+          React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, label, ": ", React.createElement("span", { className: "text-amber-300 font-mono" }, val)),
           React.createElement("input", { type: "range", min, max, step, value: val, onChange: e => setter(Number(e.target.value)), className: "w-full accent-amber-500" })
         )
       )
@@ -694,18 +694,18 @@ fibonacci(10)
   return React.createElement("div", { className: "space-y-3" },
     React.createElement("div", { className: "flex items-center justify-between" },
       React.createElement("div", { className: "flex gap-1.5" },
-        ["python", "javascript"].map(lang => React.createElement("button", { key: lang, onClick: () => setLanguage(lang), className: `rounded-xl px-3 py-1 text-xs font-medium transition-all ${language === lang ? "bg-rose-600/70 border border-rose-500/40 text-white" : "border border-white/10 text-white/50 hover:text-white"}` }, lang))
+        ["python", "javascript"].map(lang => React.createElement("button", { key: lang, onClick: () => setLanguage(lang), className: `rounded-xl px-3 py-1 text-xs font-medium transition-all ${language === lang ? "bg-rose-600/70 border border-rose-500/40 text-zinc-900" : "border border-zinc-200 text-zinc-500 hover:text-zinc-900"}` }, lang))
       ),
       React.createElement("div", { className: "flex flex-wrap gap-1.5" },
-        (EXAMPLES[language] || []).map(([label]) => React.createElement("button", { key: label, onClick: () => setCode(EXAMPLES[language].find(e => e[0] === label)[1]), className: "rounded-lg border border-white/8 px-2 py-1 text-xs text-white/40 hover:text-rose-300 hover:border-rose-500/25 transition-all" }, label))
+        (EXAMPLES[language] || []).map(([label]) => React.createElement("button", { key: label, onClick: () => setCode(EXAMPLES[language].find(e => e[0] === label)[1]), className: "rounded-lg border border-zinc-200 px-2 py-1 text-xs text-zinc-500 hover:text-rose-300 hover:border-rose-500/25 transition-all" }, label))
       )
     ),
-    React.createElement("textarea", { value: code, onChange: e => setCode(e.target.value), rows: 10, className: "w-full rounded-xl border border-white/10 bg-[rgba(8,15,30,0.9)] px-4 py-3 font-mono text-sm text-white/85 leading-relaxed focus:outline-none focus:border-rose-500/30 resize-y" }),
-    React.createElement("button", { onClick: run, disabled: loading || !code.trim(), className: "inline-flex items-center gap-1.5 rounded-xl bg-rose-600/80 border border-rose-500/40 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" },
-      loading ? React.createElement(React.Fragment, null, React.createElement("span", { className: "h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" }), "Executando...") : React.createElement(React.Fragment, null, React.createElement(PlayIcon, null), "Executar")
+    React.createElement("textarea", { value: code, onChange: e => setCode(e.target.value), rows: 10, className: "w-full rounded-xl border border-zinc-200 bg-[rgba(8,15,30,0.9)] px-4 py-3 font-mono text-sm text-zinc-800 leading-relaxed focus:outline-none focus:border-rose-500/30 resize-y" }),
+    React.createElement("button", { onClick: run, disabled: loading || !code.trim(), className: "inline-flex items-center gap-1.5 rounded-xl bg-rose-600/80 border border-rose-500/40 px-4 py-2 text-sm font-medium text-zinc-900 disabled:opacity-50" },
+      loading ? React.createElement(React.Fragment, null, React.createElement("span", { className: "h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" }), "Executando...") : React.createElement(React.Fragment, null, React.createElement(PlayIcon, null), "Executar")
     ),
     result && React.createElement(motion.div, { className: "space-y-2", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } },
-      result.stdout && React.createElement("div", { className: "rounded-xl border border-emerald-500/15 bg-[rgba(8,15,30,0.8)] p-4" },
+      result.stdout && React.createElement("div", { className: "rounded-xl border border-emerald-500/15 bg-zinc-50 p-4" },
         React.createElement("p", { className: "mb-1 text-xs text-emerald-400/70 uppercase tracking-wider" }, "Saída"),
         React.createElement("pre", { className: "font-mono text-sm text-emerald-300 whitespace-pre-wrap" }, result.stdout)
       ),
@@ -713,9 +713,9 @@ fibonacci(10)
         React.createElement("p", { className: "mb-1 text-xs text-red-400/70 uppercase tracking-wider" }, "Erro"),
         React.createElement("pre", { className: "font-mono text-sm text-red-300 whitespace-pre-wrap" }, result.stderr || result.error)
       ),
-      (result.code_analysis || result.debug_analysis) && React.createElement("div", { className: "rounded-xl border border-white/8 bg-[rgba(15,23,42,0.7)] p-4" },
-        React.createElement("p", { className: "mb-2 text-xs text-white/40 uppercase tracking-wider" }, result.debug_analysis ? "Análise de erro" : "Análise de código"),
-        React.createElement("div", { className: "whitespace-pre-wrap text-sm text-white/70 leading-relaxed" }, result.code_analysis || result.debug_analysis)
+      (result.code_analysis || result.debug_analysis) && React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-[rgba(15,23,42,0.7)] p-4" },
+        React.createElement("p", { className: "mb-2 text-xs text-zinc-500 uppercase tracking-wider" }, result.debug_analysis ? "Análise de erro" : "Análise de código"),
+        React.createElement("div", { className: "whitespace-pre-wrap text-sm text-zinc-600 leading-relaxed" }, result.code_analysis || result.debug_analysis)
       )
     )
   );
@@ -747,7 +747,7 @@ function EstatisticaLab() {
     const ctx = canvas.getContext("2d");
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "#020617"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#f1f5f9"; ctx.fillRect(0, 0, W, H);
 
     const mn = Math.min(...nums), mx = Math.max(...nums);
     const bins = 8;
@@ -776,13 +776,13 @@ function EstatisticaLab() {
 
   return React.createElement("div", { className: "space-y-4" },
     React.createElement("div", null,
-      React.createElement("label", { className: "mb-1 block text-xs text-white/50" }, "Dados (separados por espaço ou vírgula)"),
+      React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "Dados (separados por espaço ou vírgula)"),
       React.createElement("div", { className: "flex gap-2" },
         React.createElement("input", { value: data, onChange: e => setData(e.target.value), className: "flex-1 rounded-xl border border-violet-500/25 bg-[rgba(15,23,42,0.9)] px-3 py-2 text-sm font-mono text-violet-200 focus:outline-none", placeholder: "12 15 18 22 25 ..." }),
-        React.createElement("button", { onClick: analyze, disabled: loading, className: "rounded-xl bg-violet-600/80 border border-violet-500/40 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" }, loading ? "..." : "Analisar")
+        React.createElement("button", { onClick: analyze, disabled: loading, className: "rounded-xl bg-violet-600/80 border border-violet-500/40 px-4 py-2 text-sm font-medium text-zinc-900 disabled:opacity-50" }, loading ? "..." : "Analisar")
       )
     ),
-    React.createElement("canvas", { ref: canvasRef, width: 500, height: 200, className: "w-full rounded-xl border border-white/8 bg-[#020617]" }),
+    React.createElement("canvas", { ref: canvasRef, width: 500, height: 200, className: "w-full rounded-xl border border-zinc-200 bg-[#f1f5f9]" }),
     result && !result.error && React.createElement(motion.div, { className: "grid grid-cols-2 gap-2 sm:grid-cols-4", initial: { opacity: 0 }, animate: { opacity: 1 } },
       result.steps && result.steps.slice(2).map((s, i) =>
         React.createElement("div", { key: i, className: "rounded-xl border border-violet-500/15 bg-violet-500/5 p-3" },
@@ -867,25 +867,25 @@ function PenduloLab() {
   };
 
   return React.createElement("div", { className: "space-y-4" },
-    React.createElement("canvas", { ref: canvasRef, width: 400, height: 320, className: "w-full rounded-xl border border-white/8" }),
+    React.createElement("canvas", { ref: canvasRef, width: 400, height: 320, className: "w-full rounded-xl border border-zinc-200" }),
     React.createElement("div", { className: "grid gap-4 sm:grid-cols-3" },
-      React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-3" },
-        React.createElement("p", { className: "text-xs text-white/40 mb-1.5" }, `Comprimento: ${length} px`),
+      React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-3" },
+        React.createElement("p", { className: "text-xs text-zinc-500 mb-1.5" }, `Comprimento: ${length} px`),
         React.createElement("input", { type: "range", min: 60, max: 220, value: length, onChange: e => { setLength(+e.target.value); reset(); }, className: "w-full accent-sky-400" })
       ),
-      React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-3" },
-        React.createElement("p", { className: "text-xs text-white/40 mb-1.5" }, `Amortecimento: ${damping.toFixed(3)}`),
+      React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-3" },
+        React.createElement("p", { className: "text-xs text-zinc-500 mb-1.5" }, `Amortecimento: ${damping.toFixed(3)}`),
         React.createElement("input", { type: "range", min: 0, max: 0.05, step: 0.001, value: damping, onChange: e => setDamping(+e.target.value), className: "w-full accent-sky-400" })
       ),
-      React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-3" },
-        React.createElement("p", { className: "text-xs text-white/40 mb-1" }, "Período teórico"),
+      React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-3" },
+        React.createElement("p", { className: "text-xs text-zinc-500 mb-1" }, "Período teórico"),
         React.createElement("p", { className: "text-lg font-bold text-sky-300" }, `T = ${period.toFixed(3)} s`),
-        React.createElement("p", { className: "text-xs text-white/25 mt-0.5" }, "T = 2π √(L/g)")
+        React.createElement("p", { className: "text-xs text-zinc-400 mt-0.5" }, "T = 2π √(L/g)")
       )
     ),
     React.createElement("div", { className: "flex gap-3" },
-      React.createElement("button", { onClick: toggle, className: `flex-1 rounded-xl border py-2 text-sm font-medium transition-all ${running ? "border-sky-500/30 bg-sky-500/10 text-sky-300" : "border-white/10 bg-white/5 text-white hover:bg-white/8"}` }, running ? "⏸ Pausar" : "▶ Iniciar"),
-      React.createElement("button", { onClick: reset, className: "rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white/60 hover:bg-white/8" }, "↺ Reset")
+      React.createElement("button", { onClick: toggle, className: `flex-1 rounded-xl border py-2 text-sm font-medium transition-all ${running ? "border-sky-500/30 bg-sky-500/10 text-sky-300" : "border-zinc-200 bg-zinc-50 text-zinc-900 hover:bg-white"}` }, running ? "Pausar" : "Iniciar"),
+      React.createElement("button", { onClick: reset, className: "rounded-xl border border-zinc-200 bg-zinc-100 px-4 py-2 text-sm text-zinc-500 hover:bg-white" }, "Reset")
     )
   );
 }
@@ -961,7 +961,7 @@ function OndasLab() {
   const isBeat = Math.abs(f1 - f2) < 0.3;
 
   return React.createElement("div", { className: "space-y-4" },
-    React.createElement("canvas", { ref: canvasRef, width: 600, height: 280, className: "w-full rounded-xl border border-white/8" }),
+    React.createElement("canvas", { ref: canvasRef, width: 600, height: 280, className: "w-full rounded-xl border border-zinc-200" }),
     isBeat && React.createElement("div", { className: "rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs text-amber-300" },
       "Batimento detectado: as frequências são próximas — observe a modulação de amplitude na superposição."
     ),
@@ -972,20 +972,29 @@ function OndasLab() {
         { label: `f₂ = ${f2.toFixed(1)} Hz`, val: f2, set: setF2, min: 0.2, max: 3, step: 0.1, color: "accent-violet-400" },
         { label: `A₂ = ${a2.toFixed(1)}`, val: a2, set: setA2, min: 0.1, max: 2, step: 0.1, color: "accent-violet-400" },
       ].map(ctrl =>
-        React.createElement("div", { key: ctrl.label, className: "rounded-xl border border-white/8 bg-white/3 p-3" },
-          React.createElement("p", { className: "text-xs text-white/40 mb-1.5" }, ctrl.label),
+        React.createElement("div", { key: ctrl.label, className: "rounded-xl border border-zinc-200 bg-zinc-50 p-3" },
+          React.createElement("p", { className: "text-xs text-zinc-500 mb-1.5" }, ctrl.label),
           React.createElement("input", { type: "range", min: ctrl.min, max: ctrl.max, step: ctrl.step, value: ctrl.val, onChange: e => ctrl.set(+e.target.value), className: `w-full ${ctrl.color}` })
         )
       )
     ),
-    React.createElement("button", { onClick: toggle, className: `w-full rounded-xl border py-2 text-sm font-medium transition-all ${running ? "border-green-500/30 bg-green-500/10 text-green-300" : "border-white/10 bg-white/5 text-white hover:bg-white/8"}` }, running ? "⏸ Pausar animação" : "▶ Animar ondas")
+    React.createElement("button", { onClick: toggle, className: `w-full rounded-xl border py-2 text-sm font-medium transition-all ${running ? "border-green-500/30 bg-green-500/10 text-green-300" : "border-zinc-200 bg-zinc-50 text-zinc-900 hover:bg-white"}` }, running ? "Pausar animação" : "Animar ondas")
   );
 }
 
 // ─── CS: Sorting Algorithm Visualizer ────────────────────────────────────────
 
+/** Valores determinísticos (SSR = cliente). Math.random() no 1.º render quebra hidratação (#418). */
+function makeSortLabInitialArray() {
+  var a = [];
+  for (var i = 0; i < 30; i++) {
+    a.push(5 + ((i * 7919 + 13) % 95));
+  }
+  return a;
+}
+
 function AlgoritmosLab() {
-  const [array, setArray] = useState(() => Array.from({ length: 30 }, () => Math.floor(Math.random() * 95) + 5));
+  const [array, setArray] = useState(makeSortLabInitialArray);
   const [algo, setAlgo] = useState("bubble");
   const [running, setRunning] = useState(false);
   const [highlights, setHighlights] = useState([]);
@@ -1074,7 +1083,7 @@ function AlgoritmosLab() {
 
   return React.createElement("div", { className: "space-y-4" },
     // Bar chart
-    React.createElement("div", { className: "rounded-xl border border-white/8 bg-black/30 p-3 h-40 flex items-end gap-px" },
+    React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-100 p-3 h-40 flex items-end gap-px" },
       array.map((v, i) => {
         const isHighlight = highlights.includes(i);
         const isSorted = sorted.includes(i);
@@ -1087,31 +1096,31 @@ function AlgoritmosLab() {
     ),
     // Controls
     React.createElement("div", { className: "grid gap-3 sm:grid-cols-3" },
-      React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-3" },
-        React.createElement("p", { className: "text-xs text-white/40 mb-2" }, "Algoritmo"),
+      React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-3" },
+        React.createElement("p", { className: "text-xs text-zinc-500 mb-2" }, "Algoritmo"),
         React.createElement("div", { className: "flex gap-1.5 flex-wrap" },
           [["bubble", "Bubble"], ["insertion", "Insertion"], ["merge", "Merge"]].map(([id, label]) =>
             React.createElement("button", {
               key: id, onClick: () => { if (!running) setAlgo(id); },
-              className: `rounded-lg border px-2.5 py-1 text-xs transition-colors ${algo === id ? "border-rose-500/30 bg-rose-500/10 text-rose-300" : "border-white/8 text-white/40 hover:text-white/60"}`,
+              className: `rounded-lg border px-2.5 py-1 text-xs transition-colors ${algo === id ? "border-rose-500/30 bg-rose-500/10 text-rose-300" : "border-zinc-200 text-zinc-500 hover:text-zinc-600"}`,
             }, label)
           )
         )
       ),
-      React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-3" },
-        React.createElement("p", { className: "text-xs text-white/40 mb-1.5" }, `Velocidade: ${speed}ms`),
+      React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-3" },
+        React.createElement("p", { className: "text-xs text-zinc-500 mb-1.5" }, `Velocidade: ${speed}ms`),
         React.createElement("input", { type: "range", min: 5, max: 200, value: speed, onChange: e => setSpeed(+e.target.value), className: "w-full accent-rose-400" })
       ),
-      React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-3 flex flex-col justify-between" },
-        React.createElement("p", { className: "text-xs text-white/30" }, "Complexidade"),
-        React.createElement("p", { className: "text-xs text-white/60 font-mono" },
+      React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-3 flex flex-col justify-between" },
+        React.createElement("p", { className: "text-xs text-zinc-400" }, "Complexidade"),
+        React.createElement("p", { className: "text-xs text-zinc-500 font-mono" },
           algo === "bubble" ? "O(n²) pior caso" : algo === "insertion" ? "O(n²) pior, O(n) melhor" : "O(n log n) garantido"
         )
       )
     ),
     React.createElement("div", { className: "flex gap-3" },
-      React.createElement("button", { onClick: run, className: `flex-1 rounded-xl border py-2 text-sm font-medium transition-all ${running ? "border-amber-500/30 bg-amber-500/10 text-amber-300" : "border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20"}` }, running ? "⏸ Parar" : "▶ Ordenar"),
-      React.createElement("button", { onClick: newArray, disabled: running, className: "rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-sm text-white/60 hover:bg-white/8 disabled:opacity-30" }, "↺ Novo array")
+      React.createElement("button", { onClick: run, className: `flex-1 rounded-xl border py-2 text-sm font-medium transition-all ${running ? "border-amber-500/30 bg-amber-500/10 text-amber-300" : "border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20"}` }, running ? "Parar" : "Ordenar"),
+      React.createElement("button", { onClick: newArray, disabled: running, className: "rounded-xl border border-zinc-200 bg-zinc-100 px-4 py-2 text-sm text-zinc-500 hover:bg-white disabled:opacity-30" }, "Novo array")
     )
   );
 }
@@ -1222,32 +1231,32 @@ function FourierLab() {
   const waveNames = { square: "Quadrada", sawtooth: "Dente-de-serra", triangle: "Triangular" };
 
   return React.createElement("div", { className: "space-y-4" },
-    React.createElement("canvas", { ref: canvasRef, width: 600, height: 260, className: "w-full rounded-xl border border-white/8" }),
+    React.createElement("canvas", { ref: canvasRef, width: 600, height: 260, className: "w-full rounded-xl border border-zinc-200" }),
     React.createElement("div", { className: "grid gap-3 sm:grid-cols-3" },
-      React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-3" },
-        React.createElement("p", { className: "text-xs text-white/40 mb-2" }, "Tipo de onda"),
+      React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-3" },
+        React.createElement("p", { className: "text-xs text-zinc-500 mb-2" }, "Tipo de onda"),
         React.createElement("div", { className: "flex gap-1.5" },
           Object.entries(waveNames).map(([id, label]) =>
             React.createElement("button", {
               key: id, onClick: () => { setWave(id); cancelAnimationFrame(animRef.current); setRunning(false); },
-              className: `rounded-lg border px-2.5 py-1 text-xs transition-colors ${wave === id ? "border-violet-500/40 bg-violet-500/15 text-violet-300" : "border-white/8 text-white/40 hover:text-white/60"}`,
+              className: `rounded-lg border px-2.5 py-1 text-xs transition-colors ${wave === id ? "border-violet-500/40 bg-violet-500/15 text-violet-300" : "border-zinc-200 text-zinc-500 hover:text-zinc-600"}`,
             }, label)
           )
         )
       ),
-      React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-3" },
-        React.createElement("p", { className: "text-xs text-white/40 mb-1.5" }, `Harmônicos: ${terms} (n = 1, 3, … ${2 * terms - 1})`),
+      React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-3" },
+        React.createElement("p", { className: "text-xs text-zinc-500 mb-1.5" }, `Harmônicos: ${terms} (n = 1, 3, … ${2 * terms - 1})`),
         React.createElement("input", { type: "range", min: 1, max: 20, value: terms, onChange: e => setTerms(+e.target.value), className: "w-full accent-violet-400" })
       ),
-      React.createElement("div", { className: "rounded-xl border border-white/8 bg-white/3 p-3 space-y-1" },
-        React.createElement("p", { className: "text-xs text-white/30" }, "Fórmula"),
+      React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-3 space-y-1" },
+        React.createElement("p", { className: "text-xs text-zinc-400" }, "Fórmula"),
         React.createElement("p", { className: "font-mono text-xs text-violet-200" },
           wave === "square" ? "f(x) = Σ (4/nπ) sin(nx)" : wave === "sawtooth" ? "f(x) = Σ (2/nπ)(-1)ⁿ sin(nx)" : "f(x) = Σ (8/n²π²) sin(nx)"
         ),
-        React.createElement("p", { className: "text-[10px] text-white/20" }, "n ímpar")
+        React.createElement("p", { className: "text-[10px] text-zinc-400" }, "n ímpar")
       )
     ),
-    React.createElement("button", { onClick: toggle, className: `w-full rounded-xl border py-2 text-sm font-medium transition-all ${running ? "border-violet-500/30 bg-violet-500/10 text-violet-300" : "border-white/10 bg-white/5 text-white hover:bg-white/8"}` }, running ? "⏸ Pausar animação" : "▶ Animar onda")
+    React.createElement("button", { onClick: toggle, className: `w-full rounded-xl border py-2 text-sm font-medium transition-all ${running ? "border-violet-500/30 bg-violet-500/10 text-violet-300" : "border-zinc-200 bg-zinc-50 text-zinc-900 hover:bg-white"}` }, running ? "Pausar animação" : "Animar onda")
   );
 }
 
@@ -1278,15 +1287,15 @@ export default function LaboratoriosPage() {
   if (activeLab) {
     const lab = LABS.find(l => l.id === activeLab);
     const LabComp = LAB_COMPONENTS[activeLab];
-    const borderColor = CATEGORY_COLORS[lab?.category] || "border-white/15";
+    const borderColor = CATEGORY_COLORS[lab?.category] || "border-zinc-200";
 
     return React.createElement(AppShell, null,
       React.createElement("div", { className: "py-6 space-y-5" },
         React.createElement(motion.div, { className: "flex items-center justify-between flex-wrap gap-3", initial: { opacity: 0 }, animate: { opacity: 1 } },
           React.createElement("div", { className: "flex items-center gap-3" },
-            React.createElement("button", { onClick: () => setActiveLab(null), className: "inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/60 hover:text-white" }, React.createElement(BackIcon, null), "Laboratórios"),
+            React.createElement("button", { onClick: () => setActiveLab(null), className: "inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500 hover:text-zinc-900" }, React.createElement(BackIcon, null), "Laboratórios"),
             lab && React.createElement(FuturisticIcon, { name: lab.iconName, className: "h-7 w-7 text-sky-400/85" }),
-            React.createElement("span", { className: "font-semibold text-white" }, lab?.label),
+            React.createElement("span", { className: "font-semibold text-zinc-900" }, lab?.label),
             React.createElement("span", { className: `rounded-full border px-2.5 py-0.5 text-xs ${CATEGORY_BADGE[lab?.category] || ""}` }, lab?.category)
           )
         ),
@@ -1300,20 +1309,20 @@ export default function LaboratoriosPage() {
   return React.createElement(AppShell, null,
     React.createElement("div", { className: "py-8 space-y-8" },
       React.createElement(motion.div, { className: "text-center", initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4 } },
-        React.createElement("button", { onClick: () => window.location.href = "/educacao", className: "inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 mb-6" }, React.createElement(BackIcon, null), "Educação & Pesquisa"),
-        React.createElement("div", { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60" },
+        React.createElement("button", { onClick: () => window.location.href = "/educacao", className: "inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-700 mb-6" }, React.createElement(BackIcon, null), "Educação & Pesquisa"),
+        React.createElement("div", { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs text-zinc-500" },
           React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" }),
           "Laboratórios Científicos Interativos"
         ),
-        React.createElement("h1", { className: "text-3xl font-bold text-white sm:text-4xl" }, "Laboratórios"),
-        React.createElement("p", { className: "mt-2 text-sm text-white/50" }, "Simulações interativas, motor de cálculo simbólico e sandbox de código")
+        React.createElement("h1", { className: "text-3xl font-bold text-zinc-900 sm:text-4xl" }, "Laboratórios"),
+        React.createElement("p", { className: "mt-2 text-sm text-zinc-500" }, "Simulações interativas, motor de cálculo simbólico e sandbox de código")
       ),
       React.createElement("div", { className: "flex flex-wrap gap-2 justify-center" },
-        categories.map(cat => React.createElement("button", { key: cat, onClick: () => setFilter(cat), className: `rounded-xl px-3.5 py-1.5 text-sm transition-all ${filter === cat ? "bg-white/10 text-white border border-white/20" : "border border-white/8 text-white/50 hover:text-white hover:border-white/15"}` }, cat))
+        categories.map(cat => React.createElement("button", { key: cat, onClick: () => setFilter(cat), className: `rounded-xl px-3.5 py-1.5 text-sm transition-all ${filter === cat ? "bg-zinc-100 text-zinc-900 border border-zinc-200" : "border border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:border-zinc-200"}` }, cat))
       ),
       React.createElement("div", { className: "grid gap-4 sm:grid-cols-2 lg:grid-cols-4" },
         filtered.map((lab, idx) => {
-          const colorClass = CATEGORY_COLORS[lab.category] || "border-white/10 hover:border-white/25 text-white/60";
+          const colorClass = CATEGORY_COLORS[lab.category] || "border-zinc-200 hover:border-zinc-300 text-zinc-500";
           return React.createElement(motion.button, {
             key: lab.id,
             onClick: () => setActiveLab(lab.id),
@@ -1327,8 +1336,8 @@ export default function LaboratoriosPage() {
               React.createElement("span", { className: `rounded-full border px-2 py-0.5 text-[10px] ${CATEGORY_BADGE[lab.category] || ""}` }, lab.category)
             ),
             React.createElement("div", null,
-              React.createElement("p", { className: `font-semibold text-white group-hover:${colorClass.split(" ")[2] || "text-white"} transition-colors` }, lab.label),
-              React.createElement("p", { className: "mt-0.5 text-xs text-white/40 leading-relaxed" }, lab.desc)
+              React.createElement("p", { className: `font-semibold text-zinc-900 group-hover:${colorClass.split(" ")[2] || "text-zinc-900"} transition-colors` }, lab.label),
+              React.createElement("p", { className: "mt-0.5 text-xs text-zinc-500 leading-relaxed" }, lab.desc)
             )
           );
         })

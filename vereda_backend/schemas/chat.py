@@ -1,20 +1,27 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal, List, Optional
 
 
 class ChatMessage(BaseModel):
-    role: Literal["system", "user", "assistant"]
-    content: str
+    """Compatível com OpenAI: campos extra (tool_calls, etc.) preservados no model_dump."""
+
+    model_config = ConfigDict(extra="allow")
+
+    role: Literal["system", "user", "assistant", "tool"]
+    content: str = ""
+    name: Optional[str] = None
+    tool_call_id: Optional[str] = None
 
 
 class ChatRequest(BaseModel):
     model: str = "vereda-small-echo"
     messages: List[ChatMessage]
     temperature: float = 0.7
-    max_tokens: int = Field(default=1024, ge=16, le=8192)
+    max_tokens: int = Field(default=8192, ge=16, le=16384)
     stream: bool = False
     session_id: Optional[int] = None
+    locale: Optional[str] = None
 
 
 class ChatChoice(BaseModel):

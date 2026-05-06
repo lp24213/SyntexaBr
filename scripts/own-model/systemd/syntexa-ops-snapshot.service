@@ -1,0 +1,12 @@
+[Unit]
+Description=Syntexa ops snapshot (readiness, SLO, policy, registry)
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/syntexa/ops.env
+ExecStart=/bin/bash /opt/syntexa/syntexabr/scripts/own-model/snapshot_ops_bundle.sh \
+  ${SYNTEXA_API_BASE} ${SYNTEXA_ADMIN_TOKEN} ${SYNTEXA_OPS_SNAPSHOT_DIR:-/var/lib/syntexa/ops-snapshots}
+
+[Install]
+WantedBy=multi-user.target

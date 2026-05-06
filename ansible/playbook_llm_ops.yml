@@ -1,0 +1,43 @@
+---
+# Opcional: cron de guard + snapshots. Não altera playbook.yml.
+# ansible-playbook -i inventory.ini playbook_llm_ops.yml -e syntexa_install_llm_guard_cron=true
+- name: Syntexa LLM ops (diretórios + cron opcional)
+  hosts: all
+  become: yes
+  vars:
+    syntexa_repo: /opt/syntexa/syntexabr
+    ops_env_file: /etc/syntexa/ops.env
+    snapshot_dir: /var/lib/syntexa/ops-snapshots
+  tasks:
+    - name: Diretório de snapshots
+      file:
+        path: "{{ snapshot_dir }}"
+        state: directory
+        mode: "0750"
+
+    - name: Aviso ops.env
+      debug:
+        msg: "Crie {{ ops_env_file }} (ver config/ops_snapshot.env.example no repo) com SYNTEXA_API_BASE, SYNTEXA_ADMIN_TOKEN, SYNTEXA_ROLLBACK_MODEL."
+
+    - name: Cron guard (5 min) com flock + env file
+      cron:
+        name: syntexa_llm_guard
+        minute: "*/5"
+        job: >-
+          bash -lc 'set -a; [ -f {{ ops_env_file }} ] && . {{ ops_env_file }}; set +a;
+          {{ syntexa_repo }}/scripts/own-model/guard_with_flock.sh
+          "$SYNTEXA_API_BASE" "$SYNTEXA_ADMIN_TOKEN" "$SYNTEXA_ROLLBACK_MODEL"'
+        user: root
+      when: syntexa_install_llm_guard_cron | default(false)
+
+    - name: Cron snapshot horário
+      cron:
+        name: syntexa_ops_snapshot
+        minute: "12"
+        hour: "*"
+        job: >-
+          bash -lc 'set -a; [ -f {{ ops_env_file }} ] && . {{ ops_env_file }}; set +a;
+          {{ syntexa_repo }}/scripts/own-model/snapshot_ops_bundle.sh
+          "$SYNTEXA_API_BASE" "$SYNTEXA_ADMIN_TOKEN" "{{ snapshot_dir }}"'
+        user: root
+      when: syntexa_install_snapshot_cron | default(false)

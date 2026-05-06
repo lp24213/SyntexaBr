@@ -2,7 +2,7 @@
 # Uso: .\deploy-syntexa.ps1 [comando]
 #
 # === DEPLOY (envia codigo, extrai no servidor, pip, sobe uvicorn, testa /health) ===
-#   .\deploy-syntexa.ps1 deploy-back    -> so backend Hetzner (no fim: [OK] API no ar)
+#   .\deploy-syntexa.ps1 deploy-back    -> backend na VM Azure /opt/syntexa (no fim: [OK] API no ar)
 #   .\deploy-syntexa.ps1 deploy         -> Cloudflare Pages + deploy-back
 # === SSH (so login Linux em /opt/syntexa — NAO e deploy, NAO publica nada) ===
 #   .\deploy-syntexa.ps1 ssh
@@ -13,9 +13,9 @@
 #   dev-back     - So o backend (uvicorn --reload)
 #   migrate      - Migra banco SQLite (adiciona colunas novas)
 #   install      - Instala dependencias locais (pip + npm)
-#   deploy       - Deploy completo (Cloudflare Pages + Hetzner)
+#   deploy       - Deploy completo (Cloudflare Pages + backend na VM Azure)
 #   deploy-front - So frontend (build + Cloudflare Pages)
-#   deploy-back  - So backend (Hetzner via SSH/SCP)
+#   deploy-back  - So backend (VM Azure via SSH/SCP para /opt/syntexa)
 #   fix-proxy    - nginx + HTTPS (Let's Encrypt) para api.syntexabr.com.br -> :8000
 #   ssh          - Abre sessao SSH interativa no servidor
 #   logs         - Le backend.log do servidor em tempo real
@@ -27,10 +27,40 @@ Param([string]$Cmd = "help")
 $ErrorActionPreference = "Stop"
 
 # --- Configuracao ---
-$SshKeyPath = "C:\Users\luisp\.ssh\id_ed25519"
-$RemoteUser = "root"
-$RemoteHost = "91.98.123.197"
-$RemoteBase = "/opt/syntexa"
+# Pode sobrescrever por variáveis de ambiente (recomendado):
+#   $env:SYNTEXA_SSH_KEY="C:\caminho\chave.pem"
+#   $env:SYNTEXA_REMOTE_USER="azureuser"
+#   $env:SYNTEXA_REMOTE_HOST="74.163.97.52"
+#   $env:SYNTEXA_REMOTE_BASE="/opt/syntexa"
+$SshKeyPath = $env:SYNTEXA_SSH_KEY
+if (-not $SshKeyPath) {
+    # id_ed25519 costuma ser o par publicado na VM Azure (deploy); id_rsa pode ser outro par (falha se nao estiver no servidor).
+    $tryEd  = "C:\Users\luisp\.ssh\id_ed25519"
+    $tryRsa = "C:\Users\luisp\.ssh\id_rsa"
+    if (Test-Path -LiteralPath $tryEd) { $SshKeyPath = $tryEd }
+    elseif (Test-Path -LiteralPath $tryRsa) { $SshKeyPath = $tryRsa }
+    else { $SshKeyPath = $tryEd }
+}
+
+$RemoteUser = $env:SYNTEXA_REMOTE_USER
+if (-not $RemoteUser) { $RemoteUser = "azureuser" }
+
+$RemoteHost = $env:SYNTEXA_REMOTE_HOST
+if (-not $RemoteHost) {
+    $HostFile = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) "azure-vm-host.txt"
+    if (Test-Path -LiteralPath $HostFile) {
+        try {
+            $h = (Get-Content -LiteralPath $HostFile -Raw).Trim()
+            if ($h -match '^[0-9a-fA-F:.]+$') { $RemoteHost = $h }
+        } catch {}
+    }
+}
+if (-not $RemoteHost) { $RemoteHost = "74.163.97.52" }
+
+$RemoteBase = $env:SYNTEXA_REMOTE_BASE
+if (-not $RemoteBase) { $RemoteBase = "/opt/syntexa" }
+# Troca de VM / reinstall: aceita nova host key automaticamente (após ssh-keygen -R <IP> se a antiga conflitar).
+$SshExtraOpts = "-o StrictHostKeyChecking=accept-new"
 $Root       = Split-Path -Parent $MyInvocation.MyCommand.Path
 $FrontDir   = Join-Path $Root "frontend"
 $Wrangler   = Join-Path $FrontDir "node_modules\.bin\wrangler.cmd"
@@ -66,6 +96,31 @@ function ConvertTo-BashScriptLf {
     param([string]$Script)
     if ([string]::IsNullOrEmpty($Script)) { return $Script }
     return ($Script -replace "`r`n", "`n") -replace "`r", "`n"
+}
+
+# Assina o .exe portátil após copy-artifacts — evita winCodeSign do electron-builder (symlinks em %LOCALAPPDATA% exigem Modo de desenvolvedor).
+function Sign-SyntexaWindowsPortable {
+    param([string]$RepoRoot, [string]$PfxPath)
+    if (-not (Test-Path -LiteralPath $PfxPath)) { return }
+    $desktopStatic = Join-Path $RepoRoot "vereda_backend\static\desktop"
+    $exe = Get-ChildItem -Path $desktopStatic -Filter "SyntexaAI-Setup-*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $exe) {
+        Write-Host "      [aviso] Nenhum SyntexaAI-Setup-*.exe em static/desktop para assinar." -ForegroundColor Yellow
+        return
+    }
+    try {
+        if ($env:SYNTEXA_WIN_PFX_PASSWORD) {
+            $sec = ConvertTo-SecureString -String $env:SYNTEXA_WIN_PFX_PASSWORD -AsPlainText -Force
+            $pfxData = Get-PfxData -FilePath $PfxPath -Password $sec -ErrorAction Stop
+            $cert = $pfxData.EndEntityCertificates[0]
+        } else {
+            $cert = Get-PfxCertificate -FilePath $PfxPath -ErrorAction Stop
+        }
+        Set-AuthenticodeSignature -LiteralPath $exe.FullName -Certificate $cert -TimestampServer "http://timestamp.digicert.com" -ErrorAction Stop | Out-Null
+        Write-Host "      [ok] Authenticode: $($exe.Name)" -ForegroundColor DarkGray
+    } catch {
+        Write-Host "      [aviso] Falha ao assinar .exe (o binário segue sem assinatura): $($_.Exception.Message)" -ForegroundColor Yellow
+    }
 }
 
 # ======================================================================
@@ -173,7 +228,7 @@ if ($Cmd -eq "ssh") {
     Write-Host ""
     Write-Host "SSH -> ${RemoteUser}@${RemoteHost}" -ForegroundColor Cyan
     Write-Host "  (exit para sair)" -ForegroundColor Yellow
-    ssh -i $SshKeyPath -o ServerAliveInterval=30 -t "${RemoteUser}@${RemoteHost}" "cd $RemoteBase && exec bash --login"
+    ssh -i $SshKeyPath $SshExtraOpts -o ServerAliveInterval=30 -t "${RemoteUser}@${RemoteHost}" "cd $RemoteBase && exec bash --login"
     exit 0
 }
 
@@ -184,7 +239,7 @@ if ($Cmd -eq "logs") {
     Check-SshKey
     Write-Host ""
     Write-Host "LOGS DO BACKEND (Ctrl+C para sair)" -ForegroundColor Cyan
-    ssh -i $SshKeyPath -o ServerAliveInterval=30 "${RemoteUser}@${RemoteHost}" "tail -f $RemoteBase/backend.log"
+    ssh -i $SshKeyPath $SshExtraOpts -o ServerAliveInterval=30 "${RemoteUser}@${RemoteHost}" "tail -f $RemoteBase/backend.log"
     exit 0
 }
 
@@ -203,20 +258,23 @@ if ($Cmd -eq "status") {
         Write-Host "  [FALHA] Site: https://syntexabr.com.br" -ForegroundColor Red
     }
 
-    $a = Invoke-WebRequest -Uri "https://api.syntexabr.com.br/health" -UseBasicParsing -TimeoutSec 10 -ErrorAction SilentlyContinue
-    if ($a -and $a.StatusCode -eq 200) {
+    $apiCode = "000"
+    try {
+        $apiCode = (& curl.exe -4 -sS -o NUL -w "%{http_code}" "https://api.syntexabr.com.br/health" 2>$null)
+    } catch { $apiCode = "000" }
+    if ($apiCode -eq "200") {
         Write-Host "  [OK]    API : https://api.syntexabr.com.br/health" -ForegroundColor Green
     } else {
-        Write-Host "  [FALHA] API : https://api.syntexabr.com.br/health" -ForegroundColor Red
+        Write-Host "  [FALHA] API : https://api.syntexabr.com.br/health (HTTP $apiCode; use curl -4 se IPv6 antigo)" -ForegroundColor Red
     }
 
     Write-Host ""
     Write-Host "  Processo uvicorn:" -ForegroundColor Cyan
-    ssh -i $SshKeyPath -o ServerAliveInterval=30 "${RemoteUser}@${RemoteHost}" "ps aux | grep uvicorn | grep -v grep || echo '  (nenhum processo uvicorn)'"
+    ssh -i $SshKeyPath $SshExtraOpts -o ServerAliveInterval=30 "${RemoteUser}@${RemoteHost}" "ps aux | grep uvicorn | grep -v grep || echo '  (nenhum processo uvicorn)'"
 
     Write-Host ""
     Write-Host "  Ultimas 20 linhas do backend.log:" -ForegroundColor Cyan
-    ssh -i $SshKeyPath -o ServerAliveInterval=30 "${RemoteUser}@${RemoteHost}" "tail -n 20 $RemoteBase/backend.log 2>/dev/null || echo '  (backend.log vazio)'"
+    ssh -i $SshKeyPath $SshExtraOpts -o ServerAliveInterval=30 "${RemoteUser}@${RemoteHost}" "tail -n 20 $RemoteBase/backend.log 2>/dev/null || echo '  (backend.log vazio)'"
     exit 0
 }
 
@@ -244,7 +302,7 @@ else
 fi
 "@
     $script = ConvertTo-BashScriptLf $script
-    ssh -i $SshKeyPath -o ServerAliveInterval=30 "${RemoteUser}@${RemoteHost}" $script
+    ssh -i $SshKeyPath $SshExtraOpts -o ServerAliveInterval=30 "${RemoteUser}@${RemoteHost}" $script
     exit 0
 }
 
@@ -263,8 +321,8 @@ if ($Cmd -eq "fix-proxy") {
         $em = $env:CERTBOT_EMAIL.Trim() -replace '"', '\"'
         $prefix = "export CERTBOT_EMAIL=`"$em`"; "
     }
-    $remoteFix = $prefix + "set -e; chmod +x $RemoteBase/scripts/setup_nginx_api.sh 2>/dev/null || true; bash $RemoteBase/scripts/setup_nginx_api.sh"
-    ssh -i $SshKeyPath -o ServerAliveInterval=120 "${RemoteUser}@${RemoteHost}" $remoteFix
+    $remoteFix = $prefix + "set -e; chmod +x $RemoteBase/scripts/setup_nginx_api.sh 2>/dev/null || true; sudo bash $RemoteBase/scripts/setup_nginx_api.sh"
+    ssh -i $SshKeyPath $SshExtraOpts -o ServerAliveInterval=120 "${RemoteUser}@${RemoteHost}" $remoteFix
     if ($LASTEXITCODE -ne 0) { throw "fix-proxy falhou" }
     Write-Host ""
     Write-Host "[OK] Proxy aplicado. Teste no PC: curl.exe -sS https://api.syntexabr.com.br/health" -ForegroundColor Green
@@ -272,58 +330,172 @@ if ($Cmd -eq "fix-proxy") {
 }
 
 # ======================================================================
-# DEPLOY-FRONT - Build + Cloudflare Pages
+# DEPLOY-FRONT - Worker (gateway) + Build + Cloudflare Pages
 # ======================================================================
 if ($Cmd -eq "deploy-front") {
     Write-Host ""
-    Write-Host "DEPLOY FRONTEND -> Cloudflare Pages" -ForegroundColor Cyan
+    Write-Host "Publica apenas o build do site (frontend/out/). Testes E2E em e2e/ NAO sobem para o CDN." -ForegroundColor DarkGray
+    Write-Host "DEPLOY CLOUDFLARE: Gateway Worker + Pages" -ForegroundColor Cyan
     Check-Wrangler
-    Set-Location $FrontDir
-    Remove-Item Env:NEXT_PUBLIC_API_BASE -ErrorAction SilentlyContinue
-    if (-not $env:NEXT_PUBLIC_DESKTOP_WIN_URL) { $env:NEXT_PUBLIC_DESKTOP_WIN_URL = "" }
-    if (-not $env:NEXT_PUBLIC_DESKTOP_MAC_URL) { $env:NEXT_PUBLIC_DESKTOP_MAC_URL = "" }
-    npm install
-    if ($LASTEXITCODE -ne 0) { throw "npm install falhou" }
-    npm run build
-    if ($LASTEXITCODE -ne 0) { throw "npm run build falhou" }
-    & $Wrangler pages deploy out --project-name syntexa-frontend --commit-dirty=true
-    if ($LASTEXITCODE -ne 0) { throw "wrangler pages deploy falhou" }
+    if ($env:SYNTEXA_SKIP_DESKTOP -eq "1") {
+        Write-Host "  [skip] SYNTEXA_SKIP_DESKTOP=1 — sem build Electron (pacotes /download/ ficam como na última cópia)." -ForegroundColor Yellow
+    } else {
+        Write-Host "  [0/4] Electron (Windows + Linux) -> frontend/public/download ..." -ForegroundColor Yellow
+        $DesktopDir = Join-Path $Root "desktop"
+        Push-Location $DesktopDir
+        try {
+            Write-Host "      npm install (desktop)..." -ForegroundColor DarkGray
+            # Cache de download do Electron: por defeito fica em AppData\Local\electron\Cache; em C: quase cheio falha a meio. Permite D: ou SYNTEXA_ELECTRON_CACHE.
+            $electronCache = $env:SYNTEXA_ELECTRON_CACHE
+            if (-not $electronCache) {
+                if (Test-Path -LiteralPath "D:\") { $electronCache = "D:\.syntexa-electron-cache" }
+                else { $electronCache = Join-Path $env:LOCALAPPDATA "electron\Cache" }
+            }
+            New-Item -ItemType Directory -Path $electronCache -Force | Out-Null
+            $env:ELECTRON_CACHE = $electronCache
+            Write-Host "      ELECTRON_CACHE=$electronCache" -ForegroundColor DarkGray
+            Get-ChildItem -LiteralPath $electronCache -Filter "*.part*" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+            npm install
+            if ($LASTEXITCODE -ne 0) { throw "desktop npm install falhou" }
+            # Saída em %TEMP%: OneDrive/antivírus costumam bloquear desktop/dist (app.asar em uso).
+            $ElectronDist = Join-Path ([System.IO.Path]::GetTempPath()) ("syntexa-electron-" + [DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))
+            New-Item -ItemType Directory -Path $ElectronDist -Force | Out-Null
+            Write-Host "      electron-builder -> $ElectronDist" -ForegroundColor DarkGray
+            # Sem CSC_LINK: evita extrair winCodeSign (7z + symlinks sem privilégio falham). Assinatura: Sign-SyntexaWindowsPortable após copy-artifacts.
+            $env:CSC_IDENTITY_AUTO_DISCOVERY = "false"
+            npx.cmd electron-builder --win --linux --config.directories.output="$ElectronDist"
+            $ebCode = $LASTEXITCODE
+            Remove-Item Env:CSC_IDENTITY_AUTO_DISCOVERY -ErrorAction SilentlyContinue
+            if ($ebCode -ne 0) { throw "electron-builder falhou (código $ebCode). Ative Modo de desenvolvedor no Windows para instalador NSIS ou use build portable." }
+            node copy-artifacts.js "$ElectronDist"
+            if ($LASTEXITCODE -ne 0) { throw "copy-artifacts.js falhou" }
+            Sign-SyntexaWindowsPortable -RepoRoot $Root -PfxPath (Join-Path $Root "Syntexa-codesign.pfx")
+            try { Remove-Item -LiteralPath $ElectronDist -Recurse -Force -ErrorAction SilentlyContinue } catch {}
+            Remove-Item Env:ELECTRON_CACHE -ErrorAction SilentlyContinue
+        } finally {
+            Pop-Location
+        }
+    }
+
+    Write-Host "  [1/4] wrangler deploy (syntexa-gateway)..." -ForegroundColor Yellow
+    # Usar wrangler pinado em frontend/package.json — npx puxa versao nova que pode quebrar (miniflare).
+    Push-Location $Root
+    try {
+        & $Wrangler deploy
+        if ($LASTEXITCODE -ne 0) { throw "wrangler deploy (gateway) falhou" }
+    } finally {
+        Pop-Location
+    }
+
+    # Build em pasta temporária: OneDrive costuma travar `frontend/out` (EBUSY) quando o Next apaga/recria a pasta.
+    # Pasta nova a cada run: evita falha se a anterior ficou bloqueada por antivirus/Node.
+    # Se C: estiver sem espaço, defina antes: $env:SYNTEXA_FRONTEND_BUILD_PARENT = 'D:\tmp' (disco com vários GB livres).
+    $buildParent = $env:SYNTEXA_FRONTEND_BUILD_PARENT
+    if (-not $buildParent -or -not (Test-Path -LiteralPath $buildParent)) { $buildParent = $env:TEMP }
+    $TempBuild = Join-Path $buildParent ("syntexa-frontend-deploy-" + [DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))
+    Write-Host "  [2/4] Build Next.js em pasta temporaria (evita lock OneDrive)..." -ForegroundColor Yellow
+    Write-Host "      $TempBuild" -ForegroundColor DarkGray
+    New-Item -ItemType Directory -Path $TempBuild -Force | Out-Null
+    # Pacotes >25 MiB vão para a VM (vereda_backend/static/desktop → /v1/desktop/binary), não para o Pages.
+    $pubDl = Join-Path $FrontDir "public\download"
+    if (Test-Path -LiteralPath $pubDl) {
+        Get-ChildItem -LiteralPath $pubDl -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+    }
+    & robocopy.exe $FrontDir $TempBuild /MIR /XD node_modules .next out test-results .wrangler /NFL /NDL /NJH /NJS | Out-Null
+    $rc = $LASTEXITCODE
+    if ($rc -ge 8) { throw "robocopy falhou (codigo $rc)" }
+    # Evita erro do Wrangler com metadados de submodule do workspace.
+    Remove-Item -LiteralPath (Join-Path $TempBuild ".git") -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $TempBuild ".gitmodules") -Force -ErrorAction SilentlyContinue
+
+    Push-Location $TempBuild
+    try {
+        $env:NEXT_PUBLIC_API_BASE = "https://api.syntexabr.com.br"
+        if (-not $env:NEXT_PUBLIC_DESKTOP_WIN_URL) { $env:NEXT_PUBLIC_DESKTOP_WIN_URL = "" }
+        if (-not $env:NEXT_PUBLIC_DESKTOP_MAC_URL) { $env:NEXT_PUBLIC_DESKTOP_MAC_URL = "" }
+        $macDmgPath = Join-Path $TempBuild "public\download\SyntexaAI-macos-universal.dmg"
+        if (Test-Path -LiteralPath $macDmgPath) {
+            $env:NEXT_PUBLIC_SHOW_MAC_DESKTOP = "1"
+        } else {
+            Remove-Item Env:NEXT_PUBLIC_SHOW_MAC_DESKTOP -ErrorAction SilentlyContinue
+        }
+        Write-Host "  npm install (temp)..." -ForegroundColor Yellow
+        npm install
+        if ($LASTEXITCODE -ne 0) { throw "npm install (temp) falhou" }
+        Write-Host "  npm run build (NEXT_PUBLIC_API_BASE=$env:NEXT_PUBLIC_API_BASE)..." -ForegroundColor Yellow
+        npm run build
+        if ($LASTEXITCODE -ne 0) { throw "npm run build falhou" }
+        Write-Host "  [3/4] wrangler pages deploy..." -ForegroundColor Yellow
+        $WranglerTemp = Join-Path $TempBuild "node_modules\.bin\wrangler.cmd"
+        if (-not (Test-Path -LiteralPath $WranglerTemp)) { throw "wrangler nao encontrado em $TempBuild (apos npm install)" }
+        $DeployBranch = "main"
+        $DeployCommitHash = [DateTime]::UtcNow.ToString("yyyyMMddHHmmss")
+        $DeployCommitMessage = "Syntexa frontend deploy"
+        & $WranglerTemp pages deploy out --project-name syntexa-frontend --branch $DeployBranch --commit-hash $DeployCommitHash --commit-message $DeployCommitMessage --commit-dirty=true
+        if ($LASTEXITCODE -ne 0) { throw "wrangler pages deploy falhou" }
+    } finally {
+        Pop-Location
+        Remove-Item Env:NEXT_PUBLIC_API_BASE -ErrorAction SilentlyContinue
+        Remove-Item Env:NEXT_PUBLIC_SHOW_MAC_DESKTOP -ErrorAction SilentlyContinue
+    }
     Set-Location $Root
-    Write-Host "[OK] Frontend publicado no Cloudflare Pages." -ForegroundColor Green
+    Write-Host "[OK] Gateway Worker + Pages publicados." -ForegroundColor Green
     exit 0
 }
 
 # ======================================================================
-# DEPLOY-BACK - Backend no Hetzner
+# DEPLOY-BACK - Backend na VM de producao (Azure)
 # ======================================================================
 if ($Cmd -eq "deploy-back") {
     Write-Host ""
-    Write-Host "DEPLOY BACKEND -> Hetzner ($RemoteHost)" -ForegroundColor Cyan
+    Write-Host "DEPLOY BACKEND -> VM ($RemoteHost)" -ForegroundColor Cyan
+    try {
+        & ssh-keygen -R "${RemoteHost}" 2>$null | Out-Null
+        Write-Host "  (ssh-keygen -R $RemoteHost - limpa host key antiga se existir)" -ForegroundColor DarkGray
+    } catch {}
+    if (Test-Path -LiteralPath (Join-Path $Root "azure-vm-host.txt")) {
+        Write-Host "  (host de azure-vm-host.txt; sobrescreva com SYNTEXA_REMOTE_HOST se precisar)" -ForegroundColor DarkGray
+    }
     Check-SshKey
     Set-Location $Root
 
-    ssh -i $SshKeyPath "${RemoteUser}@${RemoteHost}" "mkdir -p $RemoteBase"
+    # /opt/syntexa costuma ser root: garantir pasta gravavel pelo usuario SSH (ex.: azureuser)
+    $prepRemote = "sudo mkdir -p $RemoteBase && sudo chown -R " + $RemoteUser + ":" + $RemoteUser + " $RemoteBase"
+    ssh -i $SshKeyPath $SshExtraOpts "${RemoteUser}@${RemoteHost}" $prepRemote
+    if ($LASTEXITCODE -ne 0) {
+        throw "SSH prep falhou (sudo na VM). Ajuste permissoes em $RemoteBase ou use um usuario com escrita."
+    }
 
     $tarList = @("vereda_backend", "vereda_ai", "llm-server", "requirements.txt", "scripts")
-    if (Test-Path "$Root\.env") { $tarList += ".env" }
-    Remove-Item "$Root\$TarName" -ErrorAction SilentlyContinue
-    $tarArgs = @("-czf", $TarName) + $tarList
+    # Não incluir .env por defeito: o .env de desenvolvimento no PC sobrescreve produção e pode derrubar uvicorn (systemd exit 2).
+    if ($env:SYNTEXA_DEPLOY_INCLUDE_ENV -eq "1" -and (Test-Path "$Root\.env")) { $tarList += ".env" }
+    # Tar fora do OneDrive: pasta do repo pode falhar com "Write error" / disco; %TEMP% costuma ter espaço.
+    $tarParent = [System.IO.Path]::GetTempPath()
+    if ($env:SYNTEXA_DEPLOY_TAR_DIR -and (Test-Path -LiteralPath $env:SYNTEXA_DEPLOY_TAR_DIR)) {
+        $tarParent = $env:SYNTEXA_DEPLOY_TAR_DIR.TrimEnd('\', '/')
+    }
+    $tarPath = Join-Path $tarParent $TarName
+    Remove-Item -LiteralPath $tarPath -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $Root $TarName) -Force -ErrorAction SilentlyContinue
+    $tarArgs = @("-czf", $tarPath) + $tarList
+    Write-Host "      (tar.gz -> $tarPath)" -ForegroundColor DarkGray
     & tar @tarArgs
-    if ($LASTEXITCODE -ne 0) { throw "tar falhou" }
+    if ($LASTEXITCODE -ne 0) { throw "tar falhou (disco cheio? Libere espaço ou defina SYNTEXA_DEPLOY_TAR_DIR=D:\pasta)" }
 
     Write-Host "  Enviando pacote..." -ForegroundColor Yellow
-    scp -i $SshKeyPath -o ServerAliveInterval=30 "$Root\$TarName" "${RemoteUser}@${RemoteHost}:$RemoteBase/"
+    scp -i $SshKeyPath $SshExtraOpts -o ServerAliveInterval=30 $tarPath "${RemoteUser}@${RemoteHost}:$RemoteBase/"
     if ($LASTEXITCODE -ne 0) { throw "SCP falhou" }
 
     # Sem script bash embutido no PS (here-string/pipe corrompe no Windows). O tar ja inclui scripts/ — executa o .sh no servidor.
-    $remoteCmd = "cd $RemoteBase && tar -xzf $TarName && bash scripts/remote_deploy_back.sh"
-    & ssh.exe -i $SshKeyPath -o ServerAliveInterval=120 "${RemoteUser}@${RemoteHost}" $remoteCmd
+    # --overwrite: tar criado no Windows (bsdtar/pax) + GNU tar na VM sem isto falha com "Cannot open: File exists".
+    $remoteCmd = "cd $RemoteBase && tar --overwrite -xzf $TarName && bash scripts/remote_deploy_back.sh"
+    & ssh.exe -i $SshKeyPath $SshExtraOpts -o ServerAliveInterval=120 "${RemoteUser}@${RemoteHost}" $remoteCmd
     $sshExit = $LASTEXITCODE
     if ($sshExit -ne 0) {
-        throw "Deploy remoto falhou (SSH codigo $sshExit). No servidor: cd $RemoteBase && tar -xzf $TarName && bash scripts/remote_deploy_back.sh"
+        throw "Deploy remoto falhou (SSH codigo $sshExit). No servidor: cd $RemoteBase && tar --overwrite -xzf $TarName && bash scripts/remote_deploy_back.sh"
     }
-    Remove-Item "$Root\$TarName" -ErrorAction SilentlyContinue
-    Write-Host "[OK] Backend Hetzner atualizado." -ForegroundColor Green
+    Remove-Item -LiteralPath $tarPath -Force -ErrorAction SilentlyContinue
+    Write-Host "[OK] Backend atualizado na VM." -ForegroundColor Green
     exit 0
 }
 
@@ -332,7 +504,7 @@ if ($Cmd -eq "deploy-back") {
 # ======================================================================
 if ($Cmd -eq "deploy") {
     Write-Host ""
-    Write-Host "DEPLOY COMPLETO: Frontend (Cloudflare) + Backend (Hetzner)" -ForegroundColor Cyan
+    Write-Host "DEPLOY COMPLETO: Frontend (Cloudflare) + Backend (VM)" -ForegroundColor Cyan
     $deploySelf = Join-Path $PSScriptRoot "deploy-syntexa.ps1"
     & $deploySelf deploy-front
     if ($LASTEXITCODE -ne 0) { throw "Deploy frontend falhou" }
@@ -359,10 +531,10 @@ Write-Host "    .\deploy-syntexa.ps1 migrate       Migra banco SQLite local"
 Write-Host "    .\deploy-syntexa.ps1 install       Instala pip + npm"
 Write-Host ""
 # Aspas simples: evita que [OK] em aspas duplas vire classe de caracteres do PowerShell
-Write-Host '  PRODUCAO (deploy real - no fim do deploy-back aparece OK da API):' -ForegroundColor Yellow
-Write-Host "    .\deploy-syntexa.ps1 deploy        Cloudflare + Hetzner"
-Write-Host "    .\deploy-syntexa.ps1 deploy-front  So Cloudflare Pages"
-Write-Host "    .\deploy-syntexa.ps1 deploy-back   So Hetzner (tar + scp + remoto)"
+Write-Host '  PRODUCAO (Azure API + Cloudflare Worker + Pages):' -ForegroundColor Yellow
+Write-Host "    .\deploy-syntexa.ps1 deploy-front  Gateway (wrangler) + build + Pages [principal]"
+Write-Host "    .\deploy-syntexa.ps1 deploy        deploy-front + backend na VM (legado)"
+Write-Host "    .\deploy-syntexa.ps1 deploy-back   So VM (tar + scp + remoto)"
 Write-Host "    .\deploy-syntexa.ps1 fix-proxy     nginx + HTTPS para api.syntexabr.com.br"
 Write-Host ""
 Write-Host '  SERVIDOR (SSH so terminal; nao substitui deploy-back):' -ForegroundColor Yellow

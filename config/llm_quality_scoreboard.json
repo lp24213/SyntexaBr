@@ -1,0 +1,34 @@
+{
+  "generated_at": 1777723669,
+  "source_report": "docs\\DOMAIN_BENCHMARK_REPORT.json",
+  "providers": {
+    "syntexa_native": {
+      "global_score": 0.5579,
+      "avg_latency_ms": 1.94,
+      "domains": {
+        "matematica": 0.619,
+        "fisica": 0.5497,
+        "quimica": 0.5497,
+        "biologia": 0.5497,
+        "politica": 0.5497,
+        "literatura": 0.5497,
+        "programacao": 0.5381
+      },
+      "sample_size": 7
+    },
+    "future_syntexa": {
+      "global_score": 0.5579,
+      "avg_latency_ms": 1.81,
+      "domains": {
+        "matematica": 0.619,
+        "fisica": 0.5497,
+        "quimica": 0.5496,
+        "biologia": 0.5497,
+        "politica": 0.5497,
+        "literatura": 0.5497,
+        "programacao": 0.5381
+      },
+      "sample_size": 7
+    }
+  }
+}

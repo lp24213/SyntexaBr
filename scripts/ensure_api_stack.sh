@@ -5,6 +5,14 @@ set -euo pipefail
 ROOT="${ROOT:-/opt/syntexa}"
 cd "$ROOT"
 
+echo "=== [0] carregar .env (REDIS_URL, etc.) ==="
+if [[ -f "$ROOT/.env" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$ROOT/.env" 2>/dev/null || true
+  set +a
+fi
+
 echo "=== [1] systemd: syntexa-backend ==="
 if [[ ! -f "$ROOT/scripts/syntexa-backend.service" ]]; then
   echo "ERRO: falta $ROOT/scripts/syntexa-backend.service — faça deploy-back primeiro."
@@ -19,6 +27,18 @@ sleep 2
 systemctl restart syntexa-backend
 sleep 3
 systemctl --no-pager -l status syntexa-backend || true
+
+echo "=== [1b] worker ARQ (opcional; exige REDIS_URL) ==="
+if [[ -n "${REDIS_URL:-}" ]] && [[ -f "$ROOT/scripts/syntexa-worker.service" ]]; then
+  install -m 644 "$ROOT/scripts/syntexa-worker.service" /etc/systemd/system/syntexa-worker.service
+  systemctl daemon-reload
+  systemctl enable syntexa-worker 2>/dev/null || true
+  systemctl restart syntexa-worker 2>/dev/null || true
+  sleep 2
+  systemctl --no-pager -l status syntexa-worker --lines=10 || true
+else
+  echo "  (sem worker: defina REDIS_URL e inclua syntexa-worker.service no deploy)"
+fi
 
 echo "=== [2] nginx (443 -> uvicorn) ==="
 systemctl enable nginx 2>/dev/null || true

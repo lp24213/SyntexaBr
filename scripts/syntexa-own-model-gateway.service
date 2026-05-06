@@ -1,0 +1,22 @@
+[Unit]
+Description=Syntexa Own Model Gateway (Node)
+Documentation=file:///opt/syntexa/docs/OWN_MODEL_OPERATIONS.md
+After=network-online.target syntexa-own-model.service
+Wants=network-online.target
+Requires=syntexa-own-model.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/syntexa
+Environment=OWN_MODEL_GATEWAY_PORT=9010
+Environment=OWN_MODEL_UPSTREAM=http://127.0.0.1:9000
+ExecStart=/usr/bin/node /opt/syntexa/production-node/own-model-gateway/server.js
+Restart=always
+RestartSec=4
+StandardOutput=append:/opt/syntexa/own-model-gateway.log
+StandardError=append:/opt/syntexa/own-model-gateway.log
+
+[Install]
+WantedBy=multi-user.target

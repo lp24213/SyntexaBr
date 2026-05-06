@@ -1,0 +1,18 @@
+# Só o que o Dockerfile precisa — senão o upload do `az acr build` fica gigante e parece travado
+.git
+.gitignore
+**/.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+frontend
+llm-server
+terraform
+ansible
+docs
+scripts
+*.ps1
+*.md
+.env
+.env.*
+node_modules

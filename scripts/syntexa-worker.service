@@ -1,0 +1,24 @@
+[Unit]
+Description=Syntexa ARQ Worker (Redis job queue)
+Documentation=file:///opt/syntexa/README.md
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/syntexa
+EnvironmentFile=-/opt/syntexa/.env
+Environment=PYTHONPATH=/opt/syntexa
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/syntexa/.venv/bin/arq vereda_backend.workers.settings.WorkerSettings
+Restart=always
+RestartSec=4
+StandardOutput=append:/opt/syntexa/worker.log
+StandardError=append:/opt/syntexa/worker.log
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+

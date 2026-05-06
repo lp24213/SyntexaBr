@@ -13,9 +13,9 @@ const SCIENCE_AREAS = [
     id: "astronomia",
     label: "Astronomia & Cosmologia",
     iconName: "telescope",
-    color: "from-indigo-500/20 to-purple-500/20",
-    border: "border-indigo-500/30",
-    badge: "text-indigo-300 border-indigo-500/20 bg-indigo-500/10",
+    color: "from-indigo-50 to-purple-50",
+    border: "border-indigo-200",
+    badge: "text-indigo-700 border-indigo-200 bg-indigo-50",
     tags: ["Astrofísica", "Cosmologia", "Buracos Negros", "Exoplanetas", "Big Bang"],
     desc: "Da mecânica celeste à cosmologia moderna — buracos negros, galáxias e o início do universo.",
   },
@@ -23,9 +23,9 @@ const SCIENCE_AREAS = [
     id: "inteligencia_artificial",
     label: "Inteligência Artificial & ML",
     iconName: "brain",
-    color: "from-cyan-500/20 to-blue-500/20",
-    border: "border-cyan-500/30",
-    badge: "text-cyan-300 border-cyan-500/20 bg-cyan-500/10",
+    color: "from-cyan-50 to-blue-50",
+    border: "border-cyan-200",
+    badge: "text-cyan-700 border-cyan-200 bg-cyan-50",
     tags: ["Deep Learning", "NLP", "Transformers", "RL", "Visão Computacional"],
     desc: "Redes neurais, LLMs, aprendizado por reforço e ética em IA — da teoria à implementação.",
   },
@@ -33,9 +33,9 @@ const SCIENCE_AREAS = [
     id: "seguranca_digital",
     label: "Segurança Digital & Criptografia",
     iconName: "lock",
-    color: "from-red-500/20 to-orange-500/20",
-    border: "border-red-500/30",
-    badge: "text-red-300 border-red-500/20 bg-red-500/10",
+    color: "from-red-50 to-orange-50",
+    border: "border-red-200",
+    badge: "text-red-700 border-red-200 bg-red-50",
     tags: ["Criptografia", "Pentest Ético", "LGPD", "OWASP", "Zero Trust"],
     desc: "Criptografia, segurança ofensiva/defensiva, LGPD, GDPR e privacidade digital por design.",
   },
@@ -43,9 +43,9 @@ const SCIENCE_AREAS = [
     id: "computacao_quantica",
     label: "Computação Quântica",
     iconName: "quantum",
-    color: "from-violet-500/20 to-pink-500/20",
-    border: "border-violet-500/30",
-    badge: "text-violet-300 border-violet-500/20 bg-violet-500/10",
+    color: "from-violet-50 to-pink-50",
+    border: "border-violet-200",
+    badge: "text-violet-700 border-violet-200 bg-violet-50",
     tags: ["Qubits", "Qiskit", "Entrelaçamento", "Shor", "Grover"],
     desc: "Superposição, entrelaçamento, algoritmos quânticos e o futuro da computação.",
   },
@@ -53,9 +53,9 @@ const SCIENCE_AREAS = [
     id: "bioinformatica",
     label: "Bioinformática & Genômica",
     iconName: "dna",
-    color: "from-green-500/20 to-emerald-500/20",
-    border: "border-green-500/30",
-    badge: "text-green-300 border-green-500/20 bg-green-500/10",
+    color: "from-green-50 to-emerald-50",
+    border: "border-green-200",
+    badge: "text-green-700 border-green-200 bg-green-50",
     tags: ["Sequenciamento", "BLAST", "Proteômica", "CRISPR", "Bioconductor"],
     desc: "Análise genômica, sequenciamento NGS, estrutura de proteínas e biologia computacional.",
   },
@@ -63,9 +63,9 @@ const SCIENCE_AREAS = [
     id: "neurociencias",
     label: "Neurociências",
     iconName: "brain",
-    color: "from-amber-500/20 to-yellow-500/20",
-    border: "border-amber-500/30",
-    badge: "text-amber-300 border-amber-500/20 bg-amber-500/10",
+    color: "from-amber-50 to-yellow-50",
+    border: "border-amber-200",
+    badge: "text-amber-700 border-amber-200 bg-amber-50",
     tags: ["Neuroimagem", "Plasticidade", "BCI", "fMRI", "Neuropsicologia"],
     desc: "Da sinapse ao pensamento — neuroanatomia, cognição, aprendizado e interfaces cérebro-máquina.",
   },
@@ -73,9 +73,9 @@ const SCIENCE_AREAS = [
     id: "ciencias_ambientais",
     label: "Ciências Ambientais & Clima",
     iconName: "globe",
-    color: "from-teal-500/20 to-green-500/20",
-    border: "border-teal-500/30",
-    badge: "text-teal-300 border-teal-500/20 bg-teal-500/10",
+    color: "from-teal-50 to-green-50",
+    border: "border-teal-200",
+    badge: "text-teal-700 border-teal-200 bg-teal-50",
     tags: ["Mudança Climática", "IPCC", "Biodiversidade", "Energias Renováveis", "Carbono"],
     desc: "Mudanças climáticas, biodiversidade, ciclos biogeoquímicos e soluções sustentáveis.",
   },
@@ -83,9 +83,9 @@ const SCIENCE_AREAS = [
     id: "saude",
     label: "Ciências da Saúde",
     iconName: "cross",
-    color: "from-pink-500/20 to-rose-500/20",
-    border: "border-pink-500/30",
-    badge: "text-pink-300 border-pink-500/20 bg-pink-500/10",
+    color: "from-pink-50 to-rose-50",
+    border: "border-pink-200",
+    badge: "text-pink-700 border-pink-200 bg-pink-50",
     tags: ["Epidemiologia", "Farmacologia", "Saúde Pública", "Anatomia", "Fisiologia"],
     desc: "Saúde pública, epidemiologia, farmacologia e ciências biomédicas para educação.",
   },
@@ -143,7 +143,7 @@ function renderText(text) {
         elements.push(
           React.createElement("pre", {
             key: key++,
-            className: "my-2 overflow-x-auto rounded-xl border border-white/8 bg-black/40 p-3 text-xs text-green-300 font-mono",
+            className: "my-2 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700 font-mono",
           }, codeBlock.join("\n"))
         );
         codeBlock = null;
@@ -153,22 +153,22 @@ function renderText(text) {
     if (codeBlock !== null) { codeBlock.push(raw); continue; }
     if (!raw.trim()) { elements.push(React.createElement("br", { key: key++ })); continue; }
     if (raw.startsWith("### ")) {
-      elements.push(React.createElement("p", { key: key++, className: "mt-3 mb-1 font-semibold text-white/90 text-sm" }, raw.slice(4)));
+      elements.push(React.createElement("p", { key: key++, className: "mt-3 mb-1 font-semibold text-zinc-800 text-sm" }, raw.slice(4)));
     } else if (raw.startsWith("## ")) {
-      elements.push(React.createElement("p", { key: key++, className: "mt-4 mb-1 font-bold text-white text-base" }, raw.slice(3)));
+      elements.push(React.createElement("p", { key: key++, className: "mt-4 mb-1 font-bold text-zinc-900 text-base" }, raw.slice(3)));
     } else if (raw.startsWith("# ")) {
-      elements.push(React.createElement("p", { key: key++, className: "mt-4 mb-2 font-bold text-white text-lg" }, raw.slice(2)));
+      elements.push(React.createElement("p", { key: key++, className: "mt-4 mb-2 font-bold text-zinc-900 text-lg" }, raw.slice(2)));
     } else if (raw.startsWith("- ") || raw.startsWith("* ")) {
       elements.push(
-        React.createElement("p", { key: key++, className: "pl-3 text-white/80 text-sm" },
-          React.createElement("span", { className: "mr-2 text-white/40" }, "·"),
+        React.createElement("p", { key: key++, className: "pl-3 text-zinc-700 text-sm" },
+          React.createElement("span", { className: "mr-2 text-zinc-500" }, "·"),
           raw.slice(2)
         )
       );
     } else if (/^\d+\. /.test(raw)) {
-      elements.push(React.createElement("p", { key: key++, className: "pl-3 text-white/80 text-sm" }, raw));
+      elements.push(React.createElement("p", { key: key++, className: "pl-3 text-zinc-700 text-sm" }, raw));
     } else {
-      elements.push(React.createElement("p", { key: key++, className: "text-white/80 text-sm leading-relaxed" }, raw));
+      elements.push(React.createElement("p", { key: key++, className: "text-zinc-700 text-sm leading-relaxed" }, raw));
     }
   }
   return React.createElement("div", { className: "space-y-0.5" }, ...elements);
@@ -179,9 +179,13 @@ function ScienceChatPanel({ area, level, language, onBack }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
-  const [sessionId] = useState(getOrCreateSessionId);
+  const [sessionId, setSessionId] = useState("anon-ssr");
   const abortRef = useRef(null);
   const bottomRef = useRef(null);
+
+  useEffect(() => {
+    setSessionId(getOrCreateSessionId());
+  }, []);
 
   useEffect(() => {
     const saved = loadHistory(sessionId, area.id);
@@ -256,14 +260,14 @@ function ScienceChatPanel({ area, level, language, onBack }) {
         { className: "flex items-center gap-3" },
         React.createElement("button", {
           onClick: onBack,
-          className: "rounded-xl border border-white/10 bg-white/5 p-2 text-white/60 hover:bg-white/10 hover:text-white transition-colors",
+          className: "rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
         }, "←"),
         React.createElement(FuturisticIcon, { name: area.iconName, className: "h-8 w-8 text-sky-400/85" }),
         React.createElement(
           "div",
           null,
-          React.createElement("h2", { className: "font-semibold text-white text-sm" }, area.label),
-          React.createElement("p", { className: "text-xs text-white/40 mt-0.5" }, `Sessão anônima · ${sessionId.slice(0, 12)}`)
+          React.createElement("h2", { className: "font-semibold text-zinc-900 text-sm" }, area.label),
+          React.createElement("p", { className: "text-xs text-zinc-500 mt-0.5" }, `Sessão anônima · ${sessionId.slice(0, 12)}`)
         )
       ),
       React.createElement(
@@ -271,7 +275,7 @@ function ScienceChatPanel({ area, level, language, onBack }) {
         { className: "flex gap-2" },
         React.createElement("button", {
           onClick: clear,
-          className: "rounded-xl border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white/50 hover:bg-white/8 transition-colors",
+          className: "rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-1.5 text-xs text-zinc-500 hover:bg-white transition-colors",
         }, "Limpar")
       )
     ),
@@ -283,8 +287,8 @@ function ScienceChatPanel({ area, level, language, onBack }) {
       messages.length === 0 && React.createElement(
         "div",
         { className: "flex flex-col items-center justify-center py-16 text-center gap-3" },
-        React.createElement(FuturisticIcon, { name: area.iconName, className: "h-14 w-14 opacity-40 text-white/30" }),
-        React.createElement("p", { className: "text-white/30 text-sm max-w-xs" }, area.desc),
+        React.createElement(FuturisticIcon, { name: area.iconName, className: "h-14 w-14 opacity-40 text-zinc-400" }),
+        React.createElement("p", { className: "text-zinc-400 text-sm max-w-xs" }, area.desc),
         React.createElement(
           "div",
           { className: "flex flex-wrap gap-1.5 justify-center mt-2" },
@@ -294,7 +298,7 @@ function ScienceChatPanel({ area, level, language, onBack }) {
               {
                 key: t,
                 onClick: () => setInput("Explique " + t),
-                className: `rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-white/8 ${area.badge}`,
+                className: `rounded-full border px-2.5 py-1 text-xs transition-colors hover:bg-white ${area.badge}`,
               },
               t
             )
@@ -314,18 +318,18 @@ function ScienceChatPanel({ area, level, language, onBack }) {
             "div",
             {
               className: msg.role === "user"
-                ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-white/8 border border-white/10 px-4 py-3 text-sm text-white"
-                : "max-w-[88%] rounded-2xl rounded-tl-sm border border-white/8 bg-[rgba(15,23,42,0.6)] px-4 py-3",
+                ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-white border border-zinc-200 px-4 py-3 text-sm text-zinc-900"
+                : "max-w-[88%] rounded-2xl rounded-tl-sm border border-zinc-200 bg-zinc-100 px-4 py-3",
             },
             msg.role === "user"
-              ? React.createElement("p", { className: "text-sm text-white" }, msg.content)
+              ? React.createElement("p", { className: "text-sm text-zinc-900" }, msg.content)
               : React.createElement(
                   "div",
                   null,
                   React.createElement(MathText, { text: msg.content || "" }),
                   msg.streaming && React.createElement(
                     "span",
-                    { className: "inline-block w-1.5 h-3 ml-1 bg-white/40 rounded-sm animate-pulse" }
+                    { className: "inline-block w-1.5 h-3 ml-1 bg-zinc-1000 rounded-sm animate-pulse" }
                   )
                 )
           )
@@ -345,7 +349,7 @@ function ScienceChatPanel({ area, level, language, onBack }) {
         placeholder: `Pergunte sobre ${area.label}… (Enter para enviar)`,
         disabled: streaming,
         rows: 2,
-        className: "flex-1 resize-none rounded-2xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-white/20 transition-colors disabled:opacity-50",
+        className: "flex-1 resize-none rounded-2xl border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none focus:border-zinc-200 transition-colors disabled:opacity-50",
       }),
       React.createElement(
         "button",
@@ -355,7 +359,7 @@ function ScienceChatPanel({ area, level, language, onBack }) {
           className: `rounded-2xl px-4 py-2 text-sm font-medium transition-all ${
             streaming
               ? "border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20"
-              : "border border-white/10 bg-white/6 text-white hover:bg-white/10 disabled:opacity-30"
+              : "border border-zinc-200 bg-zinc-50 text-zinc-900 hover:bg-zinc-100 disabled:opacity-30"
           }`,
         },
         streaming ? "Parar" : "Enviar"
@@ -383,12 +387,12 @@ export default function CienciaPage() {
         { initial: { opacity: 0, y: -12 }, animate: { opacity: 1, y: 0 }, className: "mb-8 text-center" },
         React.createElement(
           "div",
-          { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/4 px-3 py-1 text-xs text-white/50" },
+          { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs text-zinc-500" },
           React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" }),
           "Acesso público · Sessão 100% anônima"
         ),
-        React.createElement("h1", { className: "text-3xl font-bold text-white mb-2" }, "Ciência & Tecnologia"),
-        React.createElement("p", { className: "text-white/50 text-sm max-w-xl mx-auto" },
+        React.createElement("h1", { className: "text-3xl font-bold text-zinc-900 mb-2" }, "Ciência & Tecnologia"),
+        React.createElement("p", { className: "text-zinc-500 text-sm max-w-xl mx-auto" },
           "Portal de alto nível para pesquisa científica, segurança digital, IA, computação quântica e mais. " +
           "Nenhum dado é armazenado — sessões efêmeras protegidas por padrão."
         )
@@ -400,7 +404,7 @@ export default function CienciaPage() {
         { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.1 },
           className: "mb-8 flex flex-wrap items-center gap-3 justify-center" },
 
-        React.createElement("span", { className: "text-xs text-white/30" }, "Nível:"),
+        React.createElement("span", { className: "text-xs text-zinc-400" }, "Nível:"),
         LEVELS.map((l) =>
           React.createElement(
             "button",
@@ -409,16 +413,16 @@ export default function CienciaPage() {
               onClick: () => setLevel(l.id),
               className: `rounded-xl border px-3 py-1.5 text-xs transition-colors ${
                 level === l.id
-                  ? "border-white/20 bg-white/10 text-white"
-                  : "border-white/8 bg-transparent text-white/40 hover:text-white/60"
+                  ? "border-zinc-200 bg-zinc-100 text-zinc-900"
+                  : "border-zinc-200 bg-transparent text-zinc-500 hover:text-zinc-600"
               }`,
             },
             l.label
           )
         ),
 
-        React.createElement("span", { className: "text-xs text-white/20" }, "|"),
-        React.createElement("span", { className: "text-xs text-white/30" }, "Idioma:"),
+        React.createElement("span", { className: "text-xs text-zinc-400" }, "|"),
+        React.createElement("span", { className: "text-xs text-zinc-400" }, "Idioma:"),
         LANGUAGES.map((lg) =>
           React.createElement(
             "button",
@@ -427,8 +431,8 @@ export default function CienciaPage() {
               onClick: () => setLanguage(lg.id),
               className: `rounded-xl border px-3 py-1.5 text-xs transition-colors ${
                 language === lg.id
-                  ? "border-white/20 bg-white/10 text-white"
-                  : "border-white/8 bg-transparent text-white/40 hover:text-white/60"
+                  ? "border-zinc-200 bg-zinc-100 text-zinc-900"
+                  : "border-zinc-200 bg-transparent text-zinc-500 hover:text-zinc-600"
               }`,
             },
             lg.label
@@ -449,7 +453,7 @@ export default function CienciaPage() {
               animate: { opacity: 1, y: 0 },
               transition: { delay: 0.08 * idx },
               onClick: () => setActiveArea(area),
-              className: `rounded-2xl border ${area.border} bg-gradient-to-br ${area.color} p-5 text-left transition-all hover:scale-[1.01] hover:border-white/20`,
+              className: `rounded-2xl border ${area.border} bg-gradient-to-br ${area.color} p-5 text-left transition-all hover:scale-[1.01] hover:border-zinc-200`,
             },
             React.createElement(
               "div",
@@ -458,8 +462,8 @@ export default function CienciaPage() {
               React.createElement(
                 "div",
                 { className: "flex-1" },
-                React.createElement("h3", { className: "font-semibold text-white text-sm mb-0.5" }, area.label),
-                React.createElement("p", { className: "text-xs text-white/45 leading-relaxed" }, area.desc)
+                React.createElement("h3", { className: "font-semibold text-zinc-900 text-sm mb-0.5" }, area.label),
+                React.createElement("p", { className: "text-xs text-zinc-900/45 leading-relaxed" }, area.desc)
               )
             ),
             React.createElement(
@@ -481,8 +485,8 @@ export default function CienciaPage() {
       !activeArea && React.createElement(
         motion.div,
         { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.7 },
-          className: "mt-8 rounded-2xl border border-white/6 bg-white/2 p-4 text-center" },
-        React.createElement("p", { className: "text-xs text-white/25" },
+          className: "mt-8 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-center" },
+        React.createElement("p", { className: "text-xs text-zinc-400" },
           "Privacidade garantida — nenhuma mensagem, IP ou dado pessoal é armazenado. " +
           "Sessões são efêmeras e ficam apenas na memória do seu navegador. " +
           "Conforme LGPD (Lei 13.709/2018) e princípios de Privacy by Design."

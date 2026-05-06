@@ -26,6 +26,41 @@ def detect_mode(content: str) -> Optional[str]:
     return None
 
 
+def infer_auto_mode(content: str) -> Optional[str]:
+    """
+    Inferência automática de modo por domínio, sem trigger explícito.
+    Mantém critérios conservadores para não sobrepor pedidos gerais.
+    """
+    t = (content or "").strip().lower()
+    if len(t) < 12:
+        return None
+    if re.search(
+        r"\b(stf|stj|jurisprud|lei\b|art\.?\s*\d+|peti[cç][aã]o|habeas|recurso|clt|cpc|cp)\b",
+        t,
+        re.I,
+    ):
+        return "juridico"
+    if re.search(
+        r"\b(hip[oó]tese|metodologia|revis[aã]o sistem[aá]tica|meta[- ]?an[aá]lise|paper|doi|ensaio)\b",
+        t,
+        re.I,
+    ):
+        return "cientifico"
+    if re.search(
+        r"\b(arquitetura|microservi[cç]os|backend|api|refator|deploy|kubernetes|docker|pipeline|ci/cd)\b",
+        t,
+        re.I,
+    ):
+        return "copiloto"
+    if re.search(
+        r"\b(viabilidade|cen[aá]rio|estrat[eé]gia|go[- ]to[- ]market|matriz swot|risco geopol[ií]tico|macroecon)\b",
+        t,
+        re.I,
+    ):
+        return "estrategico"
+    return None
+
+
 def _strip_mode_trigger(content: str, mode: str) -> str:
     """Remove a frase que ativou o modo para extrair o tema/pergunta."""
     patterns = [
@@ -85,7 +120,7 @@ def run_copiloto(
     llm_engine: Any,
     history: Optional[List[dict]] = None,
     temperature: float = 0.5,
-    max_tokens: int = 1024,
+    max_tokens: int = 4096,
 ) -> str:
     """Pipeline MODO COPILOTO: arquitetura, módulos, stack, riscos, roadmap (código próprio)."""
     theme = _strip_mode_trigger(user_query, "copiloto")
@@ -104,7 +139,7 @@ def run_lab(
     llm_engine: Any,
     history: Optional[List[dict]] = None,
     temperature: float = 0.4,
-    max_tokens: int = 1024,
+    max_tokens: int = 4096,
 ) -> str:
     """Pipeline MODO LAB: hipóteses, variáveis, métodos, experimentos (código próprio)."""
     theme = _strip_mode_trigger(user_query, "lab")
@@ -123,7 +158,7 @@ def run_cientifico(
     llm_engine: Any,
     history: Optional[List[dict]] = None,
     temperature: float = 0.4,
-    max_tokens: int = 1024,
+    max_tokens: int = 4096,
 ) -> str:
     """Pipeline MODO CIENTÍFICO: hipótese, revisão, evidência, limitações, conclusão."""
     theme = _strip_mode_trigger(user_query, "cientifico")
@@ -142,7 +177,7 @@ def run_juridico(
     llm_engine: Any,
     history: Optional[List[dict]] = None,
     temperature: float = 0.3,
-    max_tokens: int = 1024,
+    max_tokens: int = 4096,
 ) -> str:
     """Pipeline MODO JURÍDICO: legislação vigente, jurisprudência, análise técnica."""
     theme = _strip_mode_trigger(user_query, "juridico")
@@ -161,7 +196,7 @@ def run_estrategico(
     llm_engine: Any,
     history: Optional[List[dict]] = None,
     temperature: float = 0.5,
-    max_tokens: int = 1024,
+    max_tokens: int = 4096,
 ) -> str:
     """Pipeline MODO ESTRATÉGICO: impacto macroeconômico, risco geopolítico, viabilidade técnica."""
     theme = _strip_mode_trigger(user_query, "estrategico")

@@ -21,8 +21,13 @@ from vereda_backend.db import models
 from vereda_backend.db.session import get_db
 from vereda_backend.schemas.chat import ChatMessage, ChatRequest
 from vereda_backend.services.chat_engine import create_chat_completion
-from vereda_backend.services.media_engine import generate_tts_from_text
+from vereda_backend.services.media_engine import (
+    generate_music_from_prompt,
+    generate_tts_from_text,
+    generate_video_from_prompt,
+)
 from vereda_backend.image.generator import generate_image_backend
+from vereda_backend.multimodal.smart_export import run_smart_export
 from vereda_backend.image.ocr import extract_text
 from vereda_backend.multimodal.router import process_bytes
 from vereda_backend.queues.media_jobs import run_pdf_export_sync, run_xlsx_export_sync
@@ -42,6 +47,11 @@ class XlsxExportBody(BaseModel):
     sheet_title: str = Field(default="Dados", max_length=31)
     rows: List[List[Any]] = Field(default_factory=list)
     header: bool = True
+    document_title: Optional[str] = Field(
+        default=None,
+        max_length=200,
+        description="Faixa de título opcional no topo da folha (openpyxl).",
+    )
 
 
 class DocxExportBody(BaseModel):
@@ -57,6 +67,11 @@ class TxtExportBody(BaseModel):
 class SmartExportBody(BaseModel):
     user_message: str = Field(..., min_length=2, max_length=12000)
     generate_audio: bool = True
+    assistant_reply: str | None = Field(
+        default=None,
+        max_length=500_000,
+        description="Última resposta do assistente no chat — usada como corpo do PDF/planilha quando o pedido é só comando de exportação.",
+    )
 
 
 @router.get("/capabilities")
@@ -130,12 +145,12 @@ async def multimodal_transcribe(
 async def multimodal_voice_conversation(
     request: Request,
     file: UploadFile = File(...),
-    max_tokens: int = Form(4096),
+    max_tokens: int = Form(8192),
     db: Session = Depends(get_db),
     current_user: models.User | None = Depends(get_current_user_optional),
 ) -> Dict[str, Any]:
     """
-    STT (Azure/local) → chat (motor atual) → TTS (Azure preferencial, senão edge-tts).
+    STT → mesmas intenções que o chat em texto (imagem, vídeo, áudio, ficheiros reais) → TTS quando fizer sentido.
     """
     data = await file.read()
     if len(data) > 25 * 1024 * 1024:
@@ -151,36 +166,129 @@ async def multimodal_voice_conversation(
             status_code=400,
             detail=stt_out.get("detail") or "Transcrição vazia.",
         )
-    req = ChatRequest(
-        model="syntexa-large",
-        messages=[ChatMessage(role="user", content=transcript)],
-        max_tokens=min(max(16, max_tokens), 8192),
-    )
-    try:
+
+    routed = route_voice_intent(transcript)
+    intent = str(routed.get("intent") or "chat")
+    payload = routed.get("payload") if isinstance(routed.get("payload"), dict) else {}
+
+    def _chat_reply() -> Dict[str, Any]:
+        req = ChatRequest(
+            model="syntexa-large",
+            messages=[ChatMessage(role="user", content=transcript)],
+            max_tokens=min(max(16, max_tokens), 8192),
+        )
         chat_resp = create_chat_completion(
             db,
             req,
             current_user,
             get_client_ip(request),
         )
+        reply = ""
+        if chat_resp.choices:
+            reply = (chat_resp.choices[0].message.content or "").strip()
+        if not reply:
+            reply = "Não obtive uma resposta do modelo."
+        tts_out = generate_tts_from_text(reply)
+        return {
+            "ok": True,
+            "transcript": transcript,
+            "reply": reply,
+            "stt": stt_out,
+            "tts": tts_out,
+            "voice_intent": intent,
+        }
+
+    if intent == "generate_image":
+        prompt = str(payload.get("prompt") or transcript).strip()
+        try:
+            img = generate_image_backend(prompt)
+            ok = bool(img.get("ok")) or bool(
+                img.get("image_base64") or img.get("url") or img.get("image_url")
+            )
+            if not ok:
+                raise RuntimeError("imagem_sem_payload")
+            reply = "Imagem gerada."
+            tts_out = generate_tts_from_text(reply)
+            return {
+                "ok": True,
+                "transcript": transcript,
+                "reply": reply,
+                "stt": stt_out,
+                "tts": tts_out,
+                "voice_intent": "generate_image",
+                "image_base64": img.get("image_base64"),
+                "mime": img.get("mime") or "image/png",
+                "image_url": img.get("url") or img.get("image_url"),
+                "provider": img.get("provider"),
+            }
+        except Exception as exc:
+            _log.warning("Voz → imagem falhou: %s", exc)
+
+    if intent == "generate_video":
+        prompt = str(payload.get("prompt") or transcript).strip()
+        try:
+            vid = generate_video_from_prompt(prompt)
+            url = vid.get("url") or vid.get("video_url") or ""
+            reply = "Vídeo gerado." if url else "Pedido de vídeo registado."
+            tts_out = generate_tts_from_text(reply)
+            return {
+                "ok": True,
+                "transcript": transcript,
+                "reply": reply,
+                "stt": stt_out,
+                "tts": tts_out,
+                "voice_intent": "generate_video",
+                "video_url": url,
+                "media": {"type": "video", "url": url},
+            }
+        except Exception as exc:
+            _log.warning("Voz → vídeo falhou: %s", exc)
+
+    if intent == "generate_music":
+        prompt = str(payload.get("prompt") or transcript).strip()
+        try:
+            mus = generate_music_from_prompt(prompt)
+            url = mus.get("audio_url") or mus.get("url") or ""
+            reply = "Áudio gerado." if url else "Pedido de áudio registado."
+            tts_out = generate_tts_from_text(reply)
+            return {
+                "ok": True,
+                "transcript": transcript,
+                "reply": reply,
+                "stt": stt_out,
+                "tts": tts_out,
+                "voice_intent": "generate_music",
+                "audio_url": url,
+                "media": {"type": "audio", "url": url},
+            }
+        except Exception as exc:
+            _log.warning("Voz → música falhou: %s", exc)
+
+    try:
+        sxp = run_smart_export(transcript, generate_audio=True, assistant_reply=None)
+    except Exception as exc:
+        _log.exception("Voz → smart_export")
+        sxp = {"ok": False}
+    if isinstance(sxp, dict) and sxp.get("ok"):
+        summary = str(sxp.get("summary") or "").strip()
+        tts_out = generate_tts_from_text((summary or "Ficheiros gerados.")[:3500])
+        return {
+            "ok": True,
+            "transcript": transcript,
+            "reply": summary or "Ficheiros gerados.",
+            "stt": stt_out,
+            "tts": tts_out,
+            "voice_intent": str(sxp.get("intent") or "smart_export"),
+            "files": sxp.get("files") or [],
+        }
+
+    try:
+        return _chat_reply()
     except Exception as exc:
         _log.exception("voice conversation chat")
         raise HTTPException(
             status_code=503, detail="Falha ao gerar resposta de texto."
         ) from exc
-    reply = ""
-    if chat_resp.choices:
-        reply = (chat_resp.choices[0].message.content or "").strip()
-    if not reply:
-        reply = "Não obtive uma resposta do modelo."
-    tts_out = generate_tts_from_text(reply)
-    return {
-        "ok": True,
-        "transcript": transcript,
-        "reply": reply,
-        "stt": stt_out,
-        "tts": tts_out,
-    }
 
 
 @router.post("/voice/intent")
@@ -214,7 +322,12 @@ def multimodal_export_pdf(body: PdfExportBody) -> Response:
 @router.post("/export/xlsx")
 def multimodal_export_xlsx(body: XlsxExportBody) -> Response:
     try:
-        raw = run_xlsx_export_sync(body.sheet_title, body.rows, body.header)
+        raw = run_xlsx_export_sync(
+            body.sheet_title,
+            body.rows,
+            body.header,
+            document_title=body.document_title,
+        )
     except Exception as exc:
         _log.exception("xlsx export")
         raise HTTPException(status_code=503, detail="Falha ao gerar planilha.") from exc
@@ -245,7 +358,11 @@ def multimodal_export_docx(body: DocxExportBody) -> Response:
 def multimodal_smart_export(body: SmartExportBody) -> Dict[str, Any]:
     from vereda_backend.multimodal.smart_export import run_smart_export
 
-    out = run_smart_export(body.user_message, generate_audio=body.generate_audio)
+    out = run_smart_export(
+        body.user_message,
+        generate_audio=body.generate_audio,
+        assistant_reply=body.assistant_reply,
+    )
     if not out.get("ok"):
         raise HTTPException(
             status_code=400,

@@ -95,7 +95,7 @@ var DOMAINS = [
 function CheckIcon() {
   return React.createElement(
     "svg",
-    { className: "h-3.5 w-3.5 shrink-0 text-white/40", viewBox: "0 0 24 24", fill: "none" },
+    { className: "h-3.5 w-3.5 shrink-0 text-zinc-500", viewBox: "0 0 24 24", fill: "none" },
     React.createElement("path", { d: "M5 13l4 4L19 7", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round" })
   );
 }
@@ -129,12 +129,12 @@ export default function PortalPage() {
         },
         React.createElement(
           "div",
-          { className: "mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-white/60" },
+          { className: "mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-1.5 text-xs text-zinc-500" },
           React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" }),
           "SyntexaBR — Mapa da Plataforma"
         ),
-        React.createElement("h1", { className: "mb-3 text-3xl font-bold tracking-tight text-white sm:text-4xl" }, "Portal SyntexaBR"),
-        React.createElement("p", { className: "mx-auto max-w-xl text-base text-white/50" },
+        React.createElement("h1", { className: "mb-3 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl" }, "Portal SyntexaBR"),
+        React.createElement("p", { className: "mx-auto max-w-xl text-base text-zinc-500" },
           "Entenda a separação de domínios e escolha a área certa para você.")
       ),
 
@@ -144,9 +144,9 @@ export default function PortalPage() {
         { className: "mb-8 flex justify-center" },
         React.createElement(
           "div",
-          { className: "inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/70" },
+          { className: "inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-xs text-zinc-600" },
           "Sessão ativa — papel: ",
-          React.createElement("span", { className: "font-semibold text-white" }, role)
+          React.createElement("span", { className: "font-semibold text-zinc-900" }, role)
         )
       ),
 
@@ -159,7 +159,7 @@ export default function PortalPage() {
             motion.div,
             {
               key: domain.id,
-              className: "flex flex-col rounded-2xl border bg-gradient-to-b " + domain.bg + " bg-[rgba(15,23,42,0.96)] p-6 transition-all duration-200 " + domain.color,
+              className: "flex flex-col rounded-2xl border bg-gradient-to-b " + domain.bg + " from-white to-zinc-50 p-6 transition-all duration-200 " + domain.color,
               initial: { opacity: 0, y: 20 },
               animate: { opacity: 1, y: 0 },
               transition: { duration: 0.35, delay: idx * 0.07 },
@@ -172,10 +172,10 @@ export default function PortalPage() {
               React.createElement(
                 "div",
                 null,
-                React.createElement("div", { className: "mb-1 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5" },
-                  React.createElement(FuturisticIcon, { name: domain.iconName, className: "h-7 w-7 text-sky-400/85" })),
-                React.createElement("h2", { className: "text-lg font-semibold text-white" }, domain.title),
-                React.createElement("p", { className: "text-xs text-white/40" }, domain.subtitle)
+                React.createElement("div", { className: "mb-1 flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-white" },
+                  React.createElement(FuturisticIcon, { name: domain.iconName, className: "h-7 w-7 text-sky-500/85" })),
+                React.createElement("h2", { className: "text-lg font-semibold text-zinc-900" }, domain.title),
+                React.createElement("p", { className: "text-xs text-zinc-500" }, domain.subtitle)
               ),
               React.createElement(
                 "span",
@@ -184,7 +184,7 @@ export default function PortalPage() {
               )
             ),
 
-            React.createElement("p", { className: "mb-4 text-sm text-white/55 leading-relaxed flex-1" }, domain.description),
+            React.createElement("p", { className: "mb-4 flex-1 text-sm leading-relaxed text-zinc-600" }, domain.description),
 
             // Feature list
             React.createElement(
@@ -193,7 +193,7 @@ export default function PortalPage() {
               domain.items.map(function (item) {
                 return React.createElement(
                   "li",
-                  { key: item, className: "flex items-start gap-2 text-xs text-white/55" },
+                  { key: item, className: "flex items-start gap-2 text-xs text-zinc-600" },
                   React.createElement(CheckIcon, null),
                   item
                 );
@@ -211,8 +211,8 @@ export default function PortalPage() {
                     key: link.href,
                     href: link.href,
                     className: link.primary
-                      ? "rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 px-4 py-2 text-xs font-medium text-white transition-colors"
-                      : "rounded-xl border border-white/10 px-4 py-2 text-xs font-medium text-white/60 hover:text-white transition-colors",
+                      ? "rounded-xl border border-zinc-200 bg-white px-4 py-2 text-xs font-medium text-zinc-900 transition-colors hover:bg-zinc-50"
+                      : "rounded-xl border border-zinc-200 px-4 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900",
                   },
                   link.label
                 );
@@ -226,25 +226,25 @@ export default function PortalPage() {
       React.createElement(
         motion.div,
         {
-          className: "mt-10 rounded-xl border border-white/8 bg-white/3 p-5",
+          className: "mt-10 rounded-xl border border-zinc-200 bg-zinc-50 p-5",
           initial: { opacity: 0 },
           animate: { opacity: 1 },
           transition: { delay: 0.5 },
         },
-        React.createElement("h3", { className: "mb-3 text-sm font-semibold text-white/70 flex items-center gap-2" },
-          React.createElement(FuturisticIcon, { name: "shield", className: "h-4 w-4 text-white/50" }),
+        React.createElement("h3", { className: "mb-3 text-sm font-semibold text-zinc-600 flex items-center gap-2" },
+          React.createElement(FuturisticIcon, { name: "shield", className: "h-4 w-4 text-zinc-500" }),
           "Separação de Jurisdição"),
         React.createElement(
           "div",
-          { className: "grid gap-3 text-xs text-white/50 sm:grid-cols-3" },
+          { className: "grid gap-3 text-xs text-zinc-500 sm:grid-cols-3" },
           React.createElement("div", null,
-            React.createElement("div", { className: "mb-1 font-medium text-white/70" }, "Público / Aberto"),
+            React.createElement("div", { className: "mb-1 font-medium text-zinc-600" }, "Público / Aberto"),
             "Chat tradicional e toda a área Educação pública. Sessões anônimas, sem login, sem dados armazenados."),
           React.createElement("div", null,
-            React.createElement("div", { className: "mb-1 font-medium text-white/70" }, "Autenticado"),
+            React.createElement("div", { className: "mb-1 font-medium text-zinc-600" }, "Autenticado"),
             "Professores e pesquisadores com login. Ferramentas avançadas com identidade protegida por JWT."),
           React.createElement("div", null,
-            React.createElement("div", { className: "mb-1 font-medium text-white/70" }, "Offline / Institucional"),
+            React.createElement("div", { className: "mb-1 font-medium text-zinc-600" }, "Offline / Institucional"),
             "Sistema governamental instalado localmente. Sem tráfego para o site público. Dados internos à instituição.")
         )
       )

@@ -1,0 +1,103 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto", "colorMode": "background" },
+      "targets": [{ "expr": "syntexa_runtime_ready", "refId": "A" }],
+      "title": "Runtime Ready",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto", "colorMode": "background" },
+      "targets": [{ "expr": "syntexa_runtime_strict_no_fallback", "refId": "A" }],
+      "title": "Strict No Fallback",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto", "colorMode": "background" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(syntexa_chat_latency_ms_bucket[5m])))", "refId": "A" }],
+      "title": "Chat Latency P95 (5m)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "values": false }, "textMode": "auto", "colorMode": "background" },
+      "targets": [{ "expr": "sum(rate(syntexa_chat_requests_total{status=\"error\"}[5m])) / clamp_min(sum(rate(syntexa_chat_requests_total[5m])), 0.001)", "refId": "A" }],
+      "title": "Chat Error Rate (5m)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "id": 5,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true } },
+      "targets": [
+        { "expr": "sum(rate(syntexa_chat_requests_total{status=\"success\"}[5m]))", "legendFormat": "success_rps", "refId": "A" },
+        { "expr": "sum(rate(syntexa_chat_requests_total{status=\"error\"}[5m]))", "legendFormat": "error_rps", "refId": "B" }
+      ],
+      "title": "Chat Throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true } },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(syntexa_chat_latency_ms_bucket[5m])))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(syntexa_chat_latency_ms_bucket[5m])))", "legendFormat": "p95", "refId": "B" }
+      ],
+      "title": "Chat Latency Quantiles",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "id": 7,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true } },
+      "targets": [
+        { "expr": "sum(rate(syntexa_chat_tokens_total{token_type=\"total\"}[5m]))", "legendFormat": "tokens_per_sec", "refId": "A" }
+      ],
+      "title": "Token Throughput",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["syntexa", "own-model", "runtime", "sre"],
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "Syntexa Own Model Overview",
+  "uid": "syntexa-own-model-overview",
+  "version": 2
+}

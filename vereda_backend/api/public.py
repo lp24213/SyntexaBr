@@ -1,6 +1,7 @@
 import json
 import hashlib
 import logging
+import time
 from datetime import datetime
 from typing import Generator, List, Optional, Tuple
 
@@ -17,9 +18,17 @@ from vereda_backend.schemas.chat import (
 )
 from vereda_backend.core.security import get_current_user_optional
 from vereda_backend.services.chat_engine import create_chat_completion, stream_chat_completion
+from vereda_backend.services.conversation_store import (
+    ensure_conversation,
+    ensure_v2_session,
+    persist_assistant_output,
+    persist_input_message_batch,
+)
+from vereda_backend.core.syntexa_intel import detect_language, detect_sentiment, detect_subject
+from vereda_backend.core.syntexa_intel import remember_user_preference
 from vereda_backend.services.media_engine import (
     analyze_video_basic,
-    describe_image_with_ollama,
+    describe_image_with_vision_llm,
     transcribe_audio_local,
 )
 from vereda_backend.services.tools import analyze_image_basic
@@ -59,7 +68,7 @@ def _attachments_context(file_list: List) -> str:
                 info = analyze_image_basic(f)
                 size = info.get("size", {})
                 mean = info.get("mean_rgb", {})
-                vision = describe_image_with_ollama(f)
+                vision = describe_image_with_vision_llm(f)
                 lines.append(
                     f"- imagem {filename}: {size.get('width')}x{size.get('height')}, "
                     f"cor média RGB=({mean.get('r')}, {mean.get('g')}, {mean.get('b')})."
@@ -154,6 +163,27 @@ async def _public_chat_impl(
         db.commit()
         db.refresh(session)
     sid = session.id
+    last_user = next((m for m in reversed(request.messages) if m.role == "user"), None)
+    seed_text = (last_user.content if last_user else "") if last_user else ""
+    language = detect_language(seed_text)
+    subject = detect_subject(seed_text)
+    sentiment = detect_sentiment(seed_text)
+    v2_session = ensure_v2_session(
+        db,
+        user_id=optional_user.id if optional_user else None,
+        is_anonymous=optional_user is None,
+        language=language,
+        source="public-chat",
+    )
+    v2_conversation = ensure_conversation(
+        db,
+        session_id=v2_session.id,
+        user_id=optional_user.id if optional_user else None,
+        title=(seed_text or session_title)[:120],
+        language=language,
+        subject=subject,
+        sentiment=sentiment,
+    )
     for msg in request.messages:
         db.add(
             models.ConversationLog(
@@ -164,20 +194,56 @@ async def _public_chat_impl(
             )
         )
     db.commit()
-    try:
-        response = create_chat_completion(
-            db=db,
-            req=request,
-            user=optional_user,
-            client_ip=_client_ip(http_request),
+    persist_input_message_batch(
+        db,
+        conversation_id=v2_conversation.id,
+        user_id=optional_user.id if optional_user else None,
+        messages=request.messages,
+    )
+    if optional_user and seed_text:
+        remember_user_preference(
+            db,
+            user_id=optional_user.id,
+            key=f"last_topic:{subject}",
+            value=seed_text[:2000],
+            language=language,
+            subject=subject,
+            sentiment=sentiment,
         )
-    except Exception as exc:
-        logger.exception("Erro interno em public-chat: %s", exc)
+    db.commit()
+    retries = 4
+    backoff_s = 0.5
+    response = None
+    for attempt in range(retries):
+        try:
+            response = create_chat_completion(
+                db=db,
+                req=request,
+                user=optional_user,
+                client_ip=_client_ip(http_request),
+            )
+            break
+        except Exception as exc:
+            if attempt >= retries - 1:
+                logger.exception("Erro interno em public-chat: %s", exc)
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Servico de IA indisponivel no momento.",
+                )
+            logger.warning(
+                "Falha transitória public-chat (tentativa %s/%s): %s",
+                attempt + 1,
+                retries,
+                exc,
+            )
+            time.sleep(backoff_s * (2**attempt))
+    if response is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Servico de IA indisponivel no momento.",
         )
     if response.choices:
+        usage = response.usage
         db.add(
             models.ConversationLog(
                 user_id=None,
@@ -185,6 +251,18 @@ async def _public_chat_impl(
                 role="assistant",
                 content=response.choices[0].message.content,
             )
+        )
+        persist_assistant_output(
+            db,
+            conversation_id=v2_conversation.id,
+            user_id=optional_user.id if optional_user else None,
+            content=response.choices[0].message.content,
+            model_used=response.model or request.model,
+            provider="ollama" if "ollama" in request.model.lower() else "syntexa",
+            prompt_tokens=usage.prompt_tokens if usage else None,
+            completion_tokens=usage.completion_tokens if usage else None,
+            total_tokens=usage.total_tokens if usage else None,
+            latency_ms=None,
         )
         db.commit()
     return response
@@ -216,6 +294,7 @@ def _stream_events(
     sid: int,
     optional_user: Optional[models.User] = None,
     client_ip: str = "unknown",
+    v2_conversation_id: Optional[int] = None,
 ) -> Generator[str, None, None]:
     """Gera eventos SSE para resposta imediata (streaming)."""
     full_content: List[str] = []
@@ -236,6 +315,19 @@ def _stream_events(
                     content=full_text,
                 )
             )
+            if v2_conversation_id:
+                persist_assistant_output(
+                    db,
+                    conversation_id=v2_conversation_id,
+                    user_id=optional_user.id if optional_user else None,
+                    content=full_text,
+                    model_used=request.model,
+                    provider="ollama" if "ollama" in request.model.lower() else "syntexa",
+                    prompt_tokens=None,
+                    completion_tokens=len(full_text.split()),
+                    total_tokens=None,
+                    latency_ms=None,
+                )
             db.commit()
 
 
@@ -266,6 +358,27 @@ async def _public_chat_stream_impl(
         db.commit()
         db.refresh(session)
     sid = session.id
+    last_user = next((m for m in reversed(request.messages) if m.role == "user"), None)
+    seed_text = (last_user.content if last_user else "") if last_user else ""
+    language = detect_language(seed_text)
+    subject = detect_subject(seed_text)
+    sentiment = detect_sentiment(seed_text)
+    v2_session = ensure_v2_session(
+        db,
+        user_id=optional_user.id if optional_user else None,
+        is_anonymous=optional_user is None,
+        language=language,
+        source="public-chat/stream",
+    )
+    v2_conversation = ensure_conversation(
+        db,
+        session_id=v2_session.id,
+        user_id=optional_user.id if optional_user else None,
+        title=(seed_text or session_title)[:120],
+        language=language,
+        subject=subject,
+        sentiment=sentiment,
+    )
     for msg in request.messages:
         db.add(
             models.ConversationLog(
@@ -276,9 +389,26 @@ async def _public_chat_stream_impl(
             )
         )
     db.commit()
+    persist_input_message_batch(
+        db,
+        conversation_id=v2_conversation.id,
+        user_id=optional_user.id if optional_user else None,
+        messages=request.messages,
+    )
+    if optional_user and seed_text:
+        remember_user_preference(
+            db,
+            user_id=optional_user.id,
+            key=f"last_topic:{subject}",
+            value=seed_text[:2000],
+            language=language,
+            subject=subject,
+            sentiment=sentiment,
+        )
+    db.commit()
     return StreamingResponse(
-        _stream_events(db, request, sid, optional_user, ip),
-        media_type="text/event-stream",
+        _stream_events(db, request, sid, optional_user, ip, v2_conversation.id),
+        media_type="text/event-stream; charset=utf-8",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",

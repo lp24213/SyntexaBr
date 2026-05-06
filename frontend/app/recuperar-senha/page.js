@@ -70,7 +70,7 @@ export default function RecuperarSenhaPage() {
     null,
     React.createElement(
       "div",
-      { className: "flex min-h-[calc(100vh-5rem)] items-center justify-center" },
+      { className: "flex min-h-[calc(100vh-5rem)] items-start justify-center py-8" },
       React.createElement(
         motion.div,
         { className: "w-full max-w-md", initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.25 } },

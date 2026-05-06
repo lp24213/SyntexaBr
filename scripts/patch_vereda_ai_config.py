@@ -5,6 +5,7 @@ import pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "vereda_ai" / "core" / "config.py"
 
+# Mantido alinhado a vereda_ai/core/config.py — não reintroduzir Ollama como padrão.
 CONFIG_CONTENT = r'''from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -18,14 +19,10 @@ class Settings(BaseSettings):
         default="sqlite:///./vereda_ai.db",
         validation_alias="VEREDA_DATABASE_URL",
     )
-    default_llm: str = Field(default="ollama", validation_alias="DEFAULT_LLM")
+    default_llm: str = Field(default="syntexa_native", validation_alias="DEFAULT_LLM")
     local_llm_endpoint: str | None = Field(
         default=None, validation_alias="LOCAL_LLM_ENDPOINT"
     )
-    ollama_endpoint: str | None = Field(
-        default=None, validation_alias="OLLAMA_ENDPOINT"
-    )
-    ollama_model: str = Field(default="mistral", validation_alias="OLLAMA_MODEL")
 
     model_config = SettingsConfigDict(
         env_file=".env",

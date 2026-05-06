@@ -1,0 +1,120 @@
+{
+  "timestamp_utc": "2026-04-20T17:59:36.929123Z",
+  "base": "https://api.syntexabr.com.br",
+  "tests": {
+    "public_chat": {
+      "ok": false,
+      "status": 503,
+      "url": "https://api.syntexabr.com.br/v1/public-chat",
+      "body_preview": "{\"detail\":\"Não foi possível concluir agora. Tente novamente em alguns instantes.\"}",
+      "binary_sig": null,
+      "json": {
+        "detail": "Não foi possível concluir agora. Tente novamente em alguns instantes."
+      }
+    },
+    "multimodal_ocr": {
+      "ok": true,
+      "status": 200,
+      "url": "https://api.syntexabr.com.br/v1/multimodal/ocr",
+      "body_preview": "{\"ok\":true,\"text\":\"\",\"method\":\"vision_llm\",\"chars\":0,\"note\":\"OCR local avançado indisponível neste instante; resultado fornecido pelo núcleo visual Syntexa.\"}",
+      "binary_sig": null,
+      "json": {
+        "ok": true,
+        "text": "",
+        "method": "vision_llm",
+        "chars": 0,
+        "note": "OCR local avançado indisponível neste instante; resultado fornecido pelo núcleo visual Syntexa."
+      }
+    },
+    "multimodal_analyze": {
+      "ok": true,
+      "status": 200,
+      "url": "https://api.syntexabr.com.br/v1/multimodal/analyze",
+      "body_preview": "{\"ok\":true,\"detected_kind\":\"image\",\"filename\":\"tiny.png\",\"size\":68,\"content_type\":\"image/png\",\"vision\":{\"ok\":false,\"detail\":\"imagem inválida ou corrompida\"},\"ocr\":{\"ok\":true,\"text\":\"\",\"method\":\"vision_llm\",\"chars\":0,\"note\":\"OCR local avançado indisponível neste instante; resultado fornecido pelo núcleo visual Syntexa.\"},\"cache\":\"miss\"}",
+      "binary_sig": null,
+      "json": {
+        "ok": true,
+        "detected_kind": "image",
+        "filename": "tiny.png",
+        "size": 68,
+        "content_type": "image/png",
+        "vision": {
+          "ok": false,
+          "detail": "imagem inválida ou corrompida"
+        },
+        "ocr": {
+          "ok": true,
+          "text": "",
+          "method": "vision_llm",
+          "chars": 0,
+          "note": "OCR local avançado indisponível neste instante; resultado fornecido pelo núcleo visual Syntexa."
+        },
+        "cache": "miss"
+      }
+    },
+    "multimodal_transcribe": {
+      "ok": true,
+      "status": 200,
+      "url": "https://api.syntexabr.com.br/v1/multimodal/transcribe",
+      "body_preview": "{\"ok\":false,\"text\":\"\",\"detail\":\"Módulo de transcrição de áudio da Syntexa indisponível no momento.\"}",
+      "binary_sig": null,
+      "json": {
+        "ok": false,
+        "text": "",
+        "detail": "Módulo de transcrição de áudio da Syntexa indisponível no momento."
+      }
+    },
+    "export_pdf": {
+      "ok": true,
+      "status": 200,
+      "url": "https://api.syntexabr.com.br/v1/multimodal/export/pdf",
+      "body_preview": "%PDF-1.4\n%���� ReportLab Generated PDF document (opensource)\n1 0 obj\n<<\n/F1 2 0 R /F2 3 0 R /F3 4 0 R\n>>\nendobj\n2 0 obj\n<<\n/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font\n>>\nendobj\n3 0 obj\n<<\n/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font\n>>\nendobj\n4 0 obj\n<<\n/BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding /Name /F3 /Subtype /Type1 /Type /Font\n>>\nendobj\n5 0 obj\n<<\n/Contents 9 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 8 0 R /Resources <<\n/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]\n>> ",
+      "binary_sig": "pdf",
+      "json": null
+    },
+    "export_docx": {
+      "ok": true,
+      "status": 200,
+      "url": "https://api.syntexabr.com.br/v1/multimodal/export/docx",
+      "body_preview": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000v��\\�R���\u0001\u0000\u0000�\u0006\u0000\u0000\u0013\u0000\u0000\u0000[Content_Types].xml��MO�@\u0010���\u0015�/> {C\u000f\u0015��p(p,�\u001aD���8Y�/�L\u0002���:�U�P�\u0006.����}\u001e۲=�|�&[CD�]]�W�\"\u0003�|�ݢ.�f7�E�!I�H�\u001d��\u0006���|\u0019�6\u00010��:_\u0012��B�Z��X�\u0000�'��V\u0012\u001fƅ\bR=�\u0005����7��#pTR��'�+h��Pv��w\"�C�E���.&V�k�\n��8��`�UF�`���s�v�+�rgUq����\u000ex�\u000bo\u0010��m�.w�W3�\u0006����SZ�\u0012j���ok�&���\u0003�W�n;���V+h�ZY�T}i�H\u001az�C\u000e����)'�!]�\u0006�2���|�����)��$>�؈^���Mm�U��\u000f�5U?�R�A���397�q�C\"}���[�9DN}�D_=(�@�{��\u000e��a\u0005�\u0018�\f���H����uۂ�cL,�)[��\u001d�\u0011��a�{�\u000b��\u0019D>��ק��?��\"��\u0014M^\u0000PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000v��\\y&K@�\u0000\u0000\u0000�\u0002\u0000\u0000\u000b\u0000\u0000\u0000_rels/.rels���J\u00031\u0010��>E�%�n�UD��^D�M�>����n~H�ھ�QD]X\u0016�\u001e���cf֛�\u001b�+�l�WbYՂ���X�)�_�\b�\t��!xT�Yl���#\u000e@e&�6fV >+�\u0013�[)���A�BD_*mH\u000e�",
+      "binary_sig": "zip_office",
+      "json": null
+    },
+    "export_xlsx": {
+      "ok": true,
+      "status": 200,
+      "url": "https://api.syntexabr.com.br/v1/multimodal/export/xlsx",
+      "body_preview": "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000v��\\F�MH�\u0000\u0000\u0000�\u0000\u0000\u0000\u0010\u0000\u0000\u0000docProps/app.xmlM�M\u000b�0\f\u0006�Rv���\u001e�\u000eD=����.u��)m����\u0004?nyy�\u001b�.�\"&��E�.�m32�\r@�#�>�ʡ���{�1݁��\u001a\u000f�\u001f\u001e\u0003âm׀�1\f8�ⷰ��.FguϖBw�:Q&��X4:�'\u001f��\u001c\n\u0010�z%>�\u0013K9�+\u0005��S�\u0015S���o�d\u0005�\u0007�\u0017PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000v��\\�\n%��\u0000\u0000\u0000+\u0002\u0000\u0000\u0011\u0000\u0000\u0000docProps/core.xml͒�N�0\f�_\u0005��:��\u0010Q�\u000b�\u0013HHL\u0002q�\u001co�h�(1j���e��\u00018������\u001a��>�s�=\u0005�\u0014�F�vQ�߈\u0003�W\u0000\u0011\u000f�t�S�K�]\u001f���\f{�\u001a?����r\r�X\u001b�\u001a&`�\u0017�hj�\n\u0003i��\top�����0�@-9�8B�\u0017 �i�?�m\r\u0017�\u0004c\n.~\u0017�,Ĺ�'v�8%�h��0\f���si�\u0002ޞ\u001e_�u3�E�\u001dR�\u0015�⣧�8O~]��o\u001fDS�r��*+嶸Q׷���'�\u001f~\u0017a�\u001b�����,����.�/PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000v��\\�\\�#\u0010\u0006\u0000\u0000�'\u0000\u0000\u0013\u0000\u0000\u0000xl/theme/theme1.xml�Z[s�8\u0014~��xg�m\u000b�6���\u0013siv۴���N\u001f�\u0011X�lyd���G6\u0010˖\r�M��<\u0004,���EG��8y��.b膈��x`�/�ֻ�/��W2$\u0011A0\u0019���",
+      "binary_sig": "zip_office",
+      "json": null
+    },
+    "export_json": {
+      "ok": true,
+      "status": 200,
+      "url": "https://api.syntexabr.com.br/v1/multimodal/json/export",
+      "body_preview": "{\n  \"title\": \"JSON Syntexa\",\n  \"data\": {\n    \"ok\": true\n  }\n}",
+      "binary_sig": null,
+      "json": {
+        "title": "JSON Syntexa",
+        "data": {
+          "ok": true
+        }
+      }
+    },
+    "capabilities": {
+      "ok": true,
+      "status": 200,
+      "url": "https://api.syntexabr.com.br/v1/multimodal/capabilities",
+      "body_preview": "{\"stt\":false,\"tts\":true,\"vision_llm\":false,\"image_gen_server\":true,\"redis_queue\":false,\"azure_blob_queue\":false}",
+      "binary_sig": null,
+      "json": {
+        "stt": false,
+        "tts": true,
+        "vision_llm": false,
+        "image_gen_server": true,
+        "redis_queue": false,
+        "azure_blob_queue": false
+      }
+    }
+  }
+}

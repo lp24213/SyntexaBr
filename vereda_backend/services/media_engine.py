@@ -1,21 +1,16 @@
 import asyncio
 import base64
-import hashlib
-import io
 import logging
-import math
-import random
 import urllib.parse
 from urllib.parse import urlparse
 import uuid
-import wave
 from typing import Any, Dict, Optional
 
 import requests
 from fastapi import UploadFile
-from PIL import Image, ImageDraw
 
 from vereda_backend.core.config import settings
+from vereda_backend.core.media_orchestrator import plan_image_request, plan_video_request
 
 
 logger = logging.getLogger(__name__)
@@ -80,9 +75,16 @@ def fetch_whitelisted_image_url_to_base64(url: str) -> Dict[str, Any]:
 def _pollinations_download_b64(prompt: str) -> Optional[Dict[str, Any]]:
     """Tenta Pollinations com mais de uma URL; sempre retorna base64 se der certo."""
     encoded = urllib.parse.quote_plus((prompt or "").strip() or "futuristic illustration")
+    raw_res = str(getattr(settings, "media_image_target_resolution", "1024x1024") or "1024x1024")
+    try:
+        w, h = [int(x) for x in raw_res.lower().replace(" ", "").replace("*", "x").split("x", 1)]
+    except Exception:
+        w, h = 1024, 1024
+    w = max(512, min(2048, w))
+    h = max(512, min(2048, h))
     variants = [
         f"https://image.pollinations.ai/prompt/{encoded}",
-        f"https://image.pollinations.ai/prompt/{encoded}?width=768&height=768&nologo=true",
+        f"https://image.pollinations.ai/prompt/{encoded}?width={w}&height={h}&nologo=true",
     ]
     last_exc: Optional[Exception] = None
     for url in variants:
@@ -119,88 +121,148 @@ def _pollinations_download_b64(prompt: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def _local_video_gif_data_uri(prompt: str) -> str:
-    seed = int(hashlib.sha256((prompt or "").encode("utf-8")).hexdigest()[:8], 16)
-    rnd = random.Random(seed)
-    w, h = 480, 270
-    frames = []
-    base_color = (rnd.randint(20, 120), rnd.randint(20, 120), rnd.randint(20, 120))
+def _extract_image_base64_and_mime(data: Dict[str, Any]) -> tuple[Optional[str], Optional[str]]:
+    def _clean_base64(value: Any) -> Optional[str]:
+        if not isinstance(value, str):
+            return None
+        raw = value.strip()
+        if not raw:
+            return None
+        if raw.startswith("data:") and ";base64," in raw:
+            raw = raw.split(";base64,", 1)[1]
+        return raw or None
 
-    for i in range(18):
-        img = Image.new("RGB", (w, h), base_color)
-        draw = ImageDraw.Draw(img)
-        for _ in range(24):
-            x = rnd.randint(0, w - 1)
-            y = rnd.randint(0, h - 1)
-            r = rnd.randint(8, 40)
-            c = (
-                (base_color[0] + i * 8 + rnd.randint(0, 140)) % 255,
-                (base_color[1] + i * 6 + rnd.randint(0, 140)) % 255,
-                (base_color[2] + i * 4 + rnd.randint(0, 140)) % 255,
+    direct_keys = ("image_base64", "b64_json", "b64", "base64")
+    for key in direct_keys:
+        got = _clean_base64(data.get(key))
+        if got:
+            return got, data.get("mime") or "image/png"
+
+    for list_key in ("data", "images", "output", "results"):
+        arr = data.get(list_key)
+        if isinstance(arr, list) and arr:
+            first = arr[0]
+            if isinstance(first, dict):
+                for key in direct_keys:
+                    got = _clean_base64(first.get(key))
+                    if got:
+                        return got, first.get("mime") or data.get("mime") or "image/png"
+    return None, None
+
+
+def _extract_image_url(data: Dict[str, Any]) -> Optional[str]:
+    direct_keys = ("url", "image_url", "output_url")
+    for key in direct_keys:
+        value = data.get(key)
+        if isinstance(value, str) and value.strip().startswith(("http://", "https://")):
+            return value.strip()
+    for list_key in ("data", "images", "output", "results"):
+        arr = data.get(list_key)
+        if isinstance(arr, list) and arr:
+            first = arr[0]
+            if isinstance(first, dict):
+                for key in direct_keys:
+                    value = first.get(key)
+                    if isinstance(value, str) and value.strip().startswith(("http://", "https://")):
+                        return value.strip()
+    return None
+
+
+def _bfl_generate_b64(prompt: str) -> Optional[Dict[str, Any]]:
+    api_key = (getattr(settings, "bfl_api_key", None) or "").strip()
+    if not api_key:
+        return None
+
+    endpoint_tpl = (getattr(settings, "bfl_api_url", None) or "").strip() or "https://api.us1.bfl.ai/v1/{model}"
+    model = (getattr(settings, "bfl_model", None) or "").strip() or "flux-pro-1.1"
+    timeout_sec = int(getattr(settings, "bfl_timeout_sec", 90) or 90)
+    endpoint = endpoint_tpl.replace("{model}", model)
+
+    payload: Dict[str, Any] = {"prompt": prompt}
+    if "{model}" not in endpoint_tpl:
+        payload["model"] = model
+
+    try:
+        resp = requests.post(
+            endpoint,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "User-Agent": "SyntexaMedia/1.0",
+            },
+            json=payload,
+            timeout=max(20, timeout_sec),
+        )
+        resp.raise_for_status()
+        data = resp.json() if "application/json" in (resp.headers.get("content-type", "")) else {}
+        if not isinstance(data, dict):
+            data = {}
+
+        b64, mime = _extract_image_base64_and_mime(data)
+        if b64:
+            return {
+                "ok": True,
+                "id": f"img-bfl-{uuid.uuid4()}",
+                "provider": "black-forest-labs",
+                "prompt": prompt,
+                "image_base64": b64,
+                "mime": mime or "image/png",
+                "source_url": endpoint,
+            }
+
+        image_url = _extract_image_url(data)
+        if image_url:
+            img_resp = requests.get(
+                image_url,
+                timeout=60,
+                headers={"User-Agent": "SyntexaMedia/1.0"},
             )
-            draw.ellipse((x, y, min(w - 1, x + r), min(h - 1, y + r)), outline=c, width=2)
-        draw.text((16, 16), f"Syntexa Video | frame {i+1}", fill=(240, 240, 255))
-        draw.text((16, 40), (prompt or "")[:90], fill=(245, 245, 245))
-        frames.append(img)
-
-    buf = io.BytesIO()
-    frames[0].save(
-        buf,
-        format="GIF",
-        save_all=True,
-        append_images=frames[1:],
-        duration=90,
-        loop=0,
-    )
-    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-    return f"data:image/gif;base64,{b64}"
-
-
-def _local_audio_data_uri(prompt: str, duration_s: float = 6.0, sample_rate: int = 22050) -> str:
-    seed = int(hashlib.sha256((prompt or "").encode("utf-8")).hexdigest()[:8], 16)
-    rnd = random.Random(seed)
-    base = 180 + rnd.randint(0, 220)
-    freqs = [base, base * 1.25, base * 1.5, base * 2.0]
-    total = int(duration_s * sample_rate)
-    amp = 14000
-
-    buf = io.BytesIO()
-    with wave.open(buf, "wb") as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(sample_rate)
-        pcm = bytearray()
-        for n in range(total):
-            t = n / sample_rate
-            env = 0.3 + 0.7 * min(1.0, t / 0.8) * min(1.0, (duration_s - t) / 0.8)
-            val = 0.0
-            for idx, f in enumerate(freqs):
-                val += math.sin(2.0 * math.pi * f * t + idx * 0.45) * (0.42 / (idx + 1))
-            sample = int(max(-1.0, min(1.0, val * env)) * amp)
-            pcm += int(sample).to_bytes(2, byteorder="little", signed=True)
-        wf.writeframes(pcm)
-    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-    return f"data:audio/wav;base64,{b64}"
+            img_resp.raise_for_status()
+            raw_bytes = img_resp.content
+            mime2 = _sniff_image_mime(raw_bytes)
+            if mime2:
+                return {
+                    "ok": True,
+                    "id": f"img-bfl-{uuid.uuid4()}",
+                    "provider": "black-forest-labs",
+                    "prompt": prompt,
+                    "image_base64": base64.b64encode(raw_bytes).decode("ascii"),
+                    "mime": mime2,
+                    "source_url": image_url,
+                }
+    except Exception as exc:
+        logger.warning("Black Forest Labs falhou, aplicando fallback: %s", exc)
+    return None
 
 
 def generate_image_from_prompt(prompt: str) -> Dict[str, Any]:
     """
-    Gera imagem a partir do prompt.
+    Gera imagem a partir do prompt (provedores reais apenas).
 
-    Ordem de tentativa:
-    1) Se LOCAL_IMAGE_GEN_ENDPOINT estiver configurado, delega para serviço open-source externo (ex.: Stable Diffusion API).
-       Espera um POST em `${LOCAL_IMAGE_GEN_ENDPOINT.rstrip('/')}/generate` com JSON `{\"prompt\": prompt}` e
-       resposta JSON contendo ao menos `image_base64` (PNG base64) ou `url` (link da imagem).
-    2) Pollinations (várias URLs) — sempre tenta devolver image_base64 (não url crua pro browser).
-    3) Se REPLICATE_API_TOKEN existir, tenta Replicate (também base64).
-    Se nenhum provedor responder, levanta erro (sem imagem placeholder).
+    Ordem: Black Forest Labs (BFL_API_KEY) → LOCAL_IMAGE_GEN_ENDPOINT (serviço GPU no VPS) → Pollinations
+    se MEDIA_USE_POLLINATIONS=true. Imagem no browser: use Puter.js no frontend (sem este endpoint).
     """
+    image_plan = plan_image_request(prompt)
+    effective_prompt = image_plan.prompt
+    bfl = _bfl_generate_b64(effective_prompt)
+    if bfl:
+        logger.info("Imagem via Black Forest Labs.")
+        return bfl
+
     endpoint = (settings.local_image_gen_endpoint or "").rstrip("/")
     if endpoint:
         try:
             resp = requests.post(
                 f"{endpoint}/generate",
-                json={"prompt": prompt},
+                json={
+                    "prompt": effective_prompt,
+                    "width": image_plan.width,
+                    "height": image_plan.height,
+                    "quality": image_plan.quality,
+                    "negative_prompt": image_plan.negative_prompt,
+                    "style": "photorealistic",
+                },
                 timeout=180,
             )
             resp.raise_for_status()
@@ -213,24 +275,22 @@ def generate_image_from_prompt(prompt: str) -> Dict[str, Any]:
                 data.setdefault("ok", True)
                 data.setdefault("id", f"img-{uuid.uuid4()}")
                 data.setdefault("provider", "local-image-gen")
-                data.setdefault("prompt", prompt)
+                data.setdefault("prompt", effective_prompt)
                 return data
         except Exception as exc:
             logger.warning("Falha na geração de imagem via serviço externo: %s", exc)
 
-    poll = _pollinations_download_b64(prompt)
-    if poll:
-        return poll
+    if bool(getattr(settings, "media_use_pollinations", False)):
+        poll = _pollinations_download_b64(effective_prompt)
+        if poll:
+            poll.setdefault("provider", "pollinations")
+            logger.info("Imagem via Pollinations (fallback quando LOCAL_IMAGE_GEN_ENDPOINT indisponível).")
+            return poll
 
-    if (settings.replicate_api_token or "").strip():
-        from vereda_backend.services.replicate_media import try_replicate_image
-
-        rr = try_replicate_image(prompt)
-        if rr:
-            return rr
-
-    # Se chegou aqui, nenhum provedor real conseguiu gerar.
-    raise RuntimeError("Falha ao gerar imagem em todos os provedores configurados.")
+    raise RuntimeError(
+        "Imagem indisponível: configure LOCAL_IMAGE_GEN_ENDPOINT (GPU/serviço local) ou "
+        "MEDIA_USE_POLLINATIONS=true. No site, a geração principal usa Puter.js no navegador."
+    )
 
 
 def analyze_video_basic(file: UploadFile) -> Dict[str, Any]:
@@ -284,18 +344,24 @@ def generate_video_from_prompt(prompt: str) -> Dict[str, Any]:
     """
     Gera vídeo a partir do prompt.
 
-    Ordem de tentativa:
-    1) Se LOCAL_VIDEO_GEN_ENDPOINT estiver configurado, delega para serviço open-source externo de vídeo
-       (ex.: SVD, Open-Sora, etc) em `${LOCAL_VIDEO_GEN_ENDPOINT.rstrip('/')}/generate`,
-       enviando JSON `{\"prompt\": prompt}` e esperando resposta com `url` ou `video_url`.
-    2) Fallback: gera animação GIF determinística local (data URI) via motor interno.
+    Requer LOCAL_VIDEO_GEN_ENDPOINT (serviço no VPS/GPU).
     """
+    video_plan = plan_video_request(prompt)
+    effective_prompt = video_plan.prompt
     endpoint = (settings.local_video_gen_endpoint or "").rstrip("/")
     if endpoint:
         try:
             resp = requests.post(
                 f"{endpoint}/generate",
-                json={"prompt": prompt},
+                json={
+                    "prompt": effective_prompt,
+                    "resolution": video_plan.resolution,
+                    "fps": video_plan.fps,
+                    "duration_sec": video_plan.duration_sec,
+                    "quality": video_plan.quality,
+                    "negative_prompt": video_plan.negative_prompt,
+                    "camera_motion": "stable-cinematic",
+                },
                 timeout=600,
             )
             resp.raise_for_status()
@@ -307,37 +373,21 @@ def generate_video_from_prompt(prompt: str) -> Dict[str, Any]:
                 data.setdefault("ok", True)
                 data.setdefault("id", f"vid-{uuid.uuid4()}")
                 data.setdefault("provider", "local-video-gen")
-                data.setdefault("prompt", prompt)
+                data.setdefault("prompt", effective_prompt)
                 return data
         except Exception as exc:
             logger.warning("Falha na geração de vídeo via serviço externo: %s", exc)
 
-    if (settings.replicate_api_token or "").strip():
-        from vereda_backend.services.replicate_media import try_replicate_video
-
-        rr = try_replicate_video(prompt)
-        if rr:
-            return rr
-
-    return {
-        "ok": True,
-        "id": f"vid-{uuid.uuid4()}",
-        "provider": "syntexa-media-engine",
-        "prompt": prompt,
-        "url": _local_video_gif_data_uri(prompt),
-        "mime": "image/gif",
-    }
+    raise RuntimeError(
+        "Vídeo indisponível: configure LOCAL_VIDEO_GEN_ENDPOINT (serviço de vídeo no servidor)."
+    )
 
 
 def generate_music_from_prompt(prompt: str) -> Dict[str, Any]:
     """
     Geração de áudio a partir do prompt.
 
-    Ordem de tentativa:
-    1) Se LOCAL_MUSIC_GEN_ENDPOINT estiver configurado, delega para serviço open-source externo de música
-       em `${LOCAL_MUSIC_GEN_ENDPOINT.rstrip('/')}/generate`, com JSON `{\"prompt\": prompt}` e
-       resposta contendo `audio_url` ou `url`.
-    2) Fallback: gera WAV sintetizado localmente em data URI para nunca quebrar.
+    Requer LOCAL_MUSIC_GEN_ENDPOINT (serviço no VPS).
     """
     endpoint = (settings.local_music_gen_endpoint or "").rstrip("/")
     if endpoint:
@@ -362,21 +412,50 @@ def generate_music_from_prompt(prompt: str) -> Dict[str, Any]:
         except Exception as exc:
             logger.exception("Falha na geração de áudio via serviço externo: %s", exc)
 
-    if (settings.replicate_api_token or "").strip():
-        from vereda_backend.services.replicate_media import try_replicate_music
+    raise RuntimeError(
+        "Áudio indisponível: configure LOCAL_MUSIC_GEN_ENDPOINT (serviço de música no servidor)."
+    )
 
-        rr = try_replicate_music(prompt)
-        if rr:
-            return rr
 
-    return {
-        "ok": True,
-        "id": f"music-{uuid.uuid4()}",
-        "provider": "syntexa-media-engine",
-        "prompt": prompt,
-        "audio_url": _local_audio_data_uri(prompt),
-        "mime": "audio/wav",
-    }
+def _azure_tts_mp3_bytes(text: str, voice: str) -> bytes | None:
+    """TTS via Azure AI Speech (mesma chave/região do STT). Devolve MP3 ou None."""
+    key = (getattr(settings, "azure_speech_key", None) or "").strip()
+    region = (getattr(settings, "azure_speech_region", None) or "").strip()
+    if not key or not region or not (text or "").strip():
+        return None
+    try:
+        import azure.cognitiveservices.speech as speechsdk  # type: ignore[import-untyped]
+
+        speech_config = speechsdk.SpeechConfig(subscription=key, region=region)
+        speech_config.speech_synthesis_voice_name = (voice or "").strip() or getattr(
+            settings, "azure_tts_voice", "pt-BR-FranciscaNeural"
+        )
+        try:
+            speech_config.set_speech_synthesis_output_format(
+                speechsdk.SpeechSynthesisOutputFormat.Audio16Khz128KBitRateMonoMp3
+            )
+        except Exception:
+            pass
+        synthesizer = speechsdk.SpeechSynthesizer(
+            speech_config=speech_config, audio_config=None
+        )
+        result = synthesizer.speak_text_async((text or "")[:5000]).get()
+        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+            audio = result.audio_data
+            if audio and len(audio) > 0:
+                return bytes(audio)
+        if result.reason == speechsdk.ResultReason.Canceled:
+            cr = result.cancellation_details
+            logger.warning(
+                "Azure TTS cancelado: %s %s",
+                cr.reason if cr else "?",
+                cr.error_details if cr else "",
+            )
+    except ImportError:
+        logger.warning("Pacote azure-cognitiveservices-speech não instalado (TTS Azure).")
+    except Exception as exc:
+        logger.warning("Azure TTS falhou: %s", exc)
+    return None
 
 
 def _edge_tts_mp3_bytes(text: str, voice: str) -> bytes:
@@ -423,6 +502,18 @@ def generate_tts_from_text(text: str, voice: str | None = None) -> Dict[str, Any
         except Exception as exc:
             logger.warning("TTS via LOCAL_TTS_ENDPOINT falhou: %s", exc)
 
+    v_azure = (voice or settings.azure_tts_voice or settings.edge_tts_voice or "pt-BR-FranciscaNeural").strip()
+    mp3_az = _azure_tts_mp3_bytes(raw[:5000], v_azure)
+    if mp3_az:
+        b64a = base64.b64encode(mp3_az).decode("ascii")
+        return {
+            "ok": True,
+            "provider": "azure-speech-tts",
+            "audio_url": f"data:audio/mpeg;base64,{b64a}",
+            "mime": "audio/mpeg",
+            "voice": v_azure,
+        }
+
     v = (voice or settings.edge_tts_voice or "pt-BR-FranciscaNeural").strip()
     try:
         mp3 = _edge_tts_mp3_bytes(raw[:5000], v)
@@ -439,72 +530,38 @@ def generate_tts_from_text(text: str, voice: str | None = None) -> Dict[str, Any
         return {"ok": False, "detail": str(exc)}
 
 
-def describe_image_with_ollama(file: UploadFile, prompt: str = "") -> str:
-    """
-    Reconhecimento de imagem via modelo multimodal local no Ollama.
-    """
-    endpoint = (settings.ollama_endpoint or "").rstrip("/")
-    if not endpoint:
-        return ""
+def describe_image_with_vision_llm(file: UploadFile, prompt: str = "") -> str:
+    """Visão via endpoint HTTP próprio (delega para `llm_client.describe_image`)."""
     try:
-        file.file.seek(0)
-        img = Image.open(file.file).convert("RGB")
-        buf = io.BytesIO()
-        img.save(buf, format="JPEG", quality=90)
-        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-        user_prompt = prompt.strip() or "Descreva esta imagem em detalhes objetivos."
-        payload = {
-            "model": settings.ollama_vision_model,
-            "prompt": user_prompt,
-            "images": [b64],
-            "stream": False,
-        }
-        resp = requests.post(
-            f"{endpoint}/api/generate",
-            json=payload,
-            timeout=120,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        return str(data.get("response") or "").strip()
+        from vereda_backend.services.llm_client import describe_image
+
+        return describe_image(file.file, prompt)
     except Exception as exc:
-        logger.warning("Falha na descrição de imagem via Ollama: %s", exc)
-        return ""
-    finally:
+        logger.warning("describe_image gerou erro: %s", exc)
         try:
             file.file.seek(0)
         except Exception:
             pass
+        return ""
 
 
 def transcribe_audio_local(file: UploadFile) -> str:
     """
-    Transcrição via endpoint STT local open-source (ex.: whisper.cpp/faster-whisper service).
-    Espera LOCAL_STT_ENDPOINT recebendo multipart "file" e retornando JSON com "text".
+    STT: Azure Speech (AZURE_SPEECH_*) e/ou LOCAL_STT_ENDPOINT — ver `vereda_backend.audio.stt`.
     """
-    endpoint = (settings.local_stt_endpoint or "").rstrip("/")
-    if not endpoint:
-        return ""
+    from vereda_backend.audio.stt import transcribe_bytes
+
     try:
         file.file.seek(0)
-        resp = requests.post(
-            endpoint,
-            files={
-                "file": (
-                    file.filename or "audio.bin",
-                    file.file.read(),
-                    file.content_type or "application/octet-stream",
-                )
-            },
-            timeout=120,
+        data = file.file.read()
+        out = transcribe_bytes(
+            data,
+            filename=file.filename or "audio.bin",
+            content_type=file.content_type or "application/octet-stream",
         )
-        resp.raise_for_status()
-        data = resp.json()
-        if isinstance(data, dict):
-            return str(data.get("text") or data.get("transcript") or "").strip()
-        return ""
+        return str(out.get("text") or "").strip()
     except Exception as exc:
-        logger.warning("Falha na transcrição local de áudio: %s", exc)
+        logger.warning("Falha na transcrição de áudio: %s", exc)
         return ""
     finally:
         try:

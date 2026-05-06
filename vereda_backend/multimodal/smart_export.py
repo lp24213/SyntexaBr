@@ -4,12 +4,82 @@ from __future__ import annotations
 import base64
 import csv
 import io
+import logging
 import re
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from vereda_backend.docs.docx_builder import build_docx_bytes
 from vereda_backend.queues.media_jobs import run_pdf_export_sync, run_xlsx_export_sync
+from vereda_backend.services.file_generators.ods_generator import rows_matrix_to_ods_bytes
+from vereda_backend.services.file_generators.storage import save_generated_bytes
 from vereda_backend.services.media_engine import generate_tts_from_text
+from vereda_backend.core.text_polish import polish_portuguese_light, strip_llm_markdown_artifacts
+
+_log = logging.getLogger(__name__)
+
+
+def _preferred_text_provider_for_export() -> Optional[str]:
+    """Alinha com o chat: Ollama / HTTP local têm prioridade sobre o núcleo híbrido."""
+    from vereda_backend.core.config import settings as _s
+
+    if (_s.ollama_endpoint or "").strip():
+        return "ollama"
+    if (_s.local_llm_endpoint or "").strip():
+        return "local_http"
+    if (_s.exllama_endpoint or "").strip():
+        return "exllama"
+    if (_s.azure_openai_endpoint or "").strip() and (_s.azure_openai_key or "").strip():
+        return "azure_openai"
+    if (_s.azure_tgi_endpoint or "").strip():
+        return "azure_tgi"
+    if (_s.remote_llm_endpoint or "").strip():
+        return "remote"
+    if (_s.openai_endpoint or "").strip() and (_s.openai_api_key or "").strip():
+        return "openai"
+    return None
+
+
+def _ensure_assistant_body(user_message: str, assistant_reply: Optional[str]) -> str:
+    """
+    Se não há texto do assistente (chat) suficiente, gera o corpo com o mesmo LLM do chat (Ollama por defeito).
+    Evita PDF/planilhas só com templates quando o utilizador pediu conteúdo concreto.
+    """
+    a = (assistant_reply or "").strip()
+    if len(a) >= 220:
+        return a
+    u = (user_message or "").strip()
+    if len(u) < 28:
+        return a
+    try:
+        from vereda_backend.ai_runtime import llm_engine
+
+        prompt = (
+            "Gera apenas o conteúdo pedido (tabelas em texto, listas, cláusulas, valores, cronograma). "
+            "Português europeu/brasileiro correcto, vírgulas e acentuação cuidados. "
+            "NÃO uses markdown: proibido ** # ` [links](url) ou símbolos estranhos. "
+            "Texto corrido e listas com marcadores simples (• ou 1.).\n\nPedido:\n"
+            + u[:9500]
+        )
+        prov = _preferred_text_provider_for_export()
+        if prov and llm_engine.has_provider(prov):
+            out = llm_engine.chat(
+                [{"role": "user", "content": prompt}],
+                provider=prov,
+                temperature=0.35,
+                max_tokens=8192,
+            )
+        else:
+            out = llm_engine.chat(
+                [{"role": "user", "content": prompt}],
+                temperature=0.35,
+                max_tokens=8192,
+            )
+        got = polish_portuguese_light((out or "").strip())
+        if len(got) > 100:
+            return got
+    except Exception as exc:
+        _log.warning("smart_export: geração LLM auxiliar falhou: %s", exc)
+    return a
 
 
 def _b64(data: bytes) -> str:
@@ -76,24 +146,90 @@ def _financial_model(user_message: str) -> Tuple[List[List[Any]], str, str]:
     return rows, title, summary
 
 
-def _generic_table(user_message: str) -> Tuple[List[List[Any]], str, str]:
-    """Planilha simples a partir do pedido (sem tema financeiro explícito)."""
-    title = "Planilha — Syntexa"
+def _user_message_defines_document_body(u: str) -> bool:
+    """
+    Pedido longo ou com tema (nutrição, treino, etc.): o corpo do ficheiro deve seguir
+    o pedido actual — não a última bolha do chat (ex.: biografia anterior).
+    """
+    t = (u or "").strip()
+    if len(t) >= 130:
+        return True
+    low = t.lower()
+    if re.search(
+        r"\b(alimenta(ç|c)|nutri(ç|c)|dieta|card(á|a)pio|ectomorfo|mesomorfo|endomorfo|hipertrofia|"
+        r"massa muscular|bulking|deficit|super(á|a)vit|macros?|calorias|prote(í|i)na|carboidrat)\b",
+        low,
+    ):
+        return True
+    if re.search(
+        r"\b(n(ã|a)o quero|nao quero|sem (hist(ó|o)ria|biografia)|n(ã|a)o (é|e) sobre|esquece)\b",
+        low,
+    ):
+        return True
+    return False
+
+
+def _export_primary(user_message: str, assistant_reply: Optional[str]) -> Tuple[str, str]:
+    """
+    Corpo a colocar em PDF/planilhas: prioriza a última resposta do assistente
+    quando o utilizador só manda um comando curto de exportação.
+    Retorna (primary_body, merged_user_plus_assistant para parsing de números).
+    """
     u = (user_message or "").strip()
+    a = (assistant_reply or "").strip()
+    merged = f"{u}\n\n{a}".strip() if a else u
+    if _user_message_defines_document_body(u):
+        return u, merged
+    if not a:
+        return u, merged
+    ul, lu, la = u.lower(), len(u), len(a)
+    short_export_cmd = lu <= 280 and bool(
+        re.search(
+            r"\b(gera|gere|cria|crie|exporta|exporte|manda|mande|faz|faça|faca|baixa|baixar|quero|preciso|dá|dê|me\s+dá)\b",
+            ul,
+        )
+        and re.search(
+            r"\b(pdf|planilha|excel|xlsx|csv|word|docx|ods|tabela|lista|documento|arquivo|ficheiro|anexo)\b",
+            ul,
+        )
+    )
+    if short_export_cmd or la >= 80 or (la >= 40 and la >= lu):
+        return a, merged
+    if la >= 40 and lu <= 160:
+        return a, merged
+    return u, merged
+
+
+def _generic_table(user_message: str, *, primary_body: str) -> Tuple[List[List[Any]], str, str]:
+    """Planilha: conteúdo principal = resposta da IA quando existir."""
+    title = "Planilha — Syntexa"
+    u = strip_llm_markdown_artifacts((user_message or "").strip()[:2000])
+    body = strip_llm_markdown_artifacts((primary_body or "").strip())
     rows: List[List[Any]] = [
         ["Campo", "Valor"],
-        ["Pedido", u[:2000]],
-        ["Gerado em", "Automático"],
+        ["Conteúdo (resposta)", body[:20000] if body else "(vazio)"],
     ]
-    summary = "Planilha criada conforme o seu pedido (ficheiros em Excel, PDF, CSV e TXT)."
+    if u and u not in body[:5000]:
+        rows.append(["Pedido / contexto", u])
+    rows.append(["Gerado em", "Automático"])
+    summary = polish_portuguese_light(
+        "Planilha gerada a partir da resposta do assistente no chat (Excel, PDF, CSV e TXT)."
+        if body
+        else "Planilha criada conforme o seu pedido (ficheiros em Excel, PDF, CSV e TXT)."
+    )
     return rows, title, summary
 
 
-def _simple_pdf_doc(user_message: str) -> Tuple[str, List[Dict[str, Any]], str]:
+def _simple_pdf_doc(primary_body: str, *, user_message: str) -> Tuple[str, List[Dict[str, Any]], str]:
     title = "Documento — Syntexa"
-    body = (user_message or "").strip()[:12000] or "(vazio)"
-    sections = [{"heading": "Conteúdo", "body": body}]
-    summary = "PDF e Word gerados com o texto do seu pedido."
+    body = strip_llm_markdown_artifacts((primary_body or "").strip()[:12000]) or "(vazio)"
+    sections: List[Dict[str, Any]] = [{"heading": "Conteúdo", "body": body}]
+    u = strip_llm_markdown_artifacts((user_message or "").strip())
+    if u and u not in body:
+        sections.insert(0, {"heading": "Pedido do utilizador", "body": u[:4000]})
+    summary = polish_portuguese_light(
+        "PDF e Word gerados com o texto da conversa (prioridade: última resposta do assistente)."
+    )
     return title, sections, summary
 
 
@@ -116,13 +252,20 @@ def _document_contract_pack(_user_message: str) -> Tuple[List[Dict[str, Any]], s
     return sections, title, summary
 
 
-def run_smart_export(user_message: str, *, generate_audio: bool = True) -> Dict[str, Any]:
+def run_smart_export(
+    user_message: str,
+    *,
+    generate_audio: bool = True,
+    assistant_reply: Optional[str] = None,
+) -> Dict[str, Any]:
     msg = (user_message or "").strip()
+    assistant_reply = _ensure_assistant_body(msg, assistant_reply)
+    primary, merged_text = _export_primary(msg, assistant_reply)
     low = msg.lower()
     files: List[Dict[str, Any]] = []
 
     verb = re.search(
-        r"\b(faz|faça|faca|gera|gere|cria|crie|monta|manda|mande|exporta|exporte|envia|preciso|quero|me\s+manda)\b",
+        r"\b(faz|faça|faca|gera|gere|cria|crie|monta|manda|mande|exporta|exporte|envia|envie|preciso|quero|me\s+manda|dá|dê|me\s+dá)\b",
         low,
     )
     financial_heavy = bool(
@@ -148,10 +291,31 @@ def run_smart_export(user_message: str, *, generate_audio: bool = True) -> Dict[
     generic_docx = bool(verb and docx_kw and not sheet_kw and not pdf_kw)
     manda_arquivo = bool(
         verb
-        and re.search(r"\b(manda|mande|envia)\b", low)
-        and re.search(r"\b(arquivo|ficheiro|anexo)\b", low)
+        and (
+            (
+                re.search(r"\b(manda|mande|envia|envie)\b", low)
+                and re.search(r"\b(arquivo|ficheiro|anexo)\b", low)
+            )
+            or re.search(r"\bme\s+manda\b", low)
+            or re.search(r"\b(manda|mande)\s+(um|uma|o|a)?\s*(arquivo|ficheiro)\b", low)
+        )
     )
     generic_manda = bool(manda_arquivo and not pdf_kw and not sheet_kw and not docx_kw)
+
+    ods_only = bool(
+        verb
+        and (
+            re.search(r"\bods\b", low)
+            or re.search(r"open\s*document\s*spreadsheet", low)
+            or re.search(r"planilha\s+(em\s+)?ods\b", low)
+            or re.search(
+                r"\b(exporta|exporte|gera|gere|cria|crie|faz|faça|faca)\s+.{0,80}\bods\b",
+                low,
+            )
+            or re.search(r"libreoffice\s+calc", low)
+            or re.search(r"onlyoffice.{0,40}\bods\b", low)
+        )
+    )
 
     doc_contract = bool(
         re.search(
@@ -167,9 +331,46 @@ def run_smart_export(user_message: str, *, generate_audio: bool = True) -> Dict[
         and not generic_manda
     )
 
+    if ods_only:
+        if financial_heavy:
+            if len((primary or "").strip()) >= 400:
+                rows, title, summary = _generic_table(msg, primary_body=primary)
+            else:
+                rows, title, summary = _financial_model(merged_text)
+        else:
+            rows, title, summary = _generic_table(msg, primary_body=primary)
+        ods_b = rows_matrix_to_ods_bytes(title, rows)
+        fn_base = re.sub(r"[^\w\-]+", "-", title, flags=re.UNICODE)[:60].strip("-") or "syntexa"
+        fid = save_generated_bytes(ods_b, ".ods")
+        files_ods: List[Dict[str, Any]] = [
+            {
+                "kind": "ods",
+                "filename": f"{fn_base}.ods",
+                "mime": "application/vnd.oasis.opendocument.spreadsheet",
+                "data_base64": _b64(ods_b),
+                "download_url": f"/api/files/downloads/{fid}",
+                "file_id": fid,
+            }
+        ]
+        tts_ods: Dict[str, Any] = {}
+        if generate_audio and summary:
+            tts_ods = generate_tts_from_text(summary[:3500])
+        return {
+            "ok": True,
+            "intent": "ods",
+            "summary": summary + " Ficheiro OpenDocument (.ods) gerado.",
+            "files": files_ods,
+            "tts": tts_ods,
+        }
+
     if financial:
-        rows, title, summary = _financial_model(msg)
-        xlsx_b = run_xlsx_export_sync("Financeiro", rows, header=True)
+        if len((primary or "").strip()) >= 400:
+            rows, title, summary = _generic_table(msg, primary_body=primary)
+        else:
+            rows, title, summary = _financial_model(merged_text)
+        xlsx_b = run_xlsx_export_sync(
+            "Financeiro", rows, header=True, document_title=title
+        )
         pdf_sections = [
             {"heading": "Resumo", "body": summary},
             {
@@ -202,8 +403,8 @@ def run_smart_export(user_message: str, *, generate_audio: bool = True) -> Dict[
             ]
         )
     elif generic_sheet or generic_manda:
-        rows, title, summary = _generic_table(msg)
-        xlsx_b = run_xlsx_export_sync("Dados", rows, header=True)
+        rows, title, summary = _generic_table(msg, primary_body=primary)
+        xlsx_b = run_xlsx_export_sync("Dados", rows, header=True, document_title=title)
         pdf_sections = [
             {"heading": "Resumo", "body": summary},
             {
@@ -234,7 +435,7 @@ def run_smart_export(user_message: str, *, generate_audio: bool = True) -> Dict[
             ]
         )
     elif generic_pdf:
-        title, sections, summary = _simple_pdf_doc(msg)
+        title, sections, summary = _simple_pdf_doc(primary, user_message=msg)
         pdf_b = run_pdf_export_sync(title, sections, subtitle="Gerado automaticamente — Syntexa")
         docx_b = build_docx_bytes(title, sections)
         files.extend(
@@ -244,7 +445,7 @@ def run_smart_export(user_message: str, *, generate_audio: bool = True) -> Dict[
             ]
         )
     elif generic_docx:
-        title, sections, summary = _simple_pdf_doc(msg)
+        title, sections, summary = _simple_pdf_doc(primary, user_message=msg)
         docx_b = build_docx_bytes(title, sections)
         pdf_b = run_pdf_export_sync(title, sections, subtitle="Gerado automaticamente — Syntexa")
         files.extend(
@@ -254,7 +455,10 @@ def run_smart_export(user_message: str, *, generate_audio: bool = True) -> Dict[
             ]
         )
     elif doc_contract:
-        sections, title, summary = _document_contract_pack(msg)
+        if len((primary or "").strip()) >= 160:
+            title, sections, summary = _simple_pdf_doc(primary, user_message=msg)
+        else:
+            sections, title, summary = _document_contract_pack(msg)
         pdf_b = run_pdf_export_sync(title, sections, "Documento gerado — Syntexa")
         docx_b = build_docx_bytes(title, sections)
         files.extend(
@@ -270,6 +474,8 @@ def run_smart_export(user_message: str, *, generate_audio: bool = True) -> Dict[
         }
 
     tts: Dict[str, Any] = {}
+    if not (summary or "").strip() and files:
+        summary = "Ficheiros gerados conforme o seu pedido (veja os anexos para transferência)."
     if generate_audio and summary:
         tts = generate_tts_from_text(summary[:3500])
 

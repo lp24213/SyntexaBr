@@ -21,7 +21,13 @@ def get_redis() -> Optional[redis.Redis]:
         return None
     if _client is None:
         try:
-            _client = redis.from_url(url, decode_responses=True, socket_connect_timeout=2.0)
+            _client = redis.from_url(
+                url,
+                decode_responses=True,
+                socket_connect_timeout=5.0,
+                socket_keepalive=True,
+                health_check_interval=30,
+            )
             _client.ping()
             logger.info("Redis conectado para cache/filas.")
         except Exception as exc:

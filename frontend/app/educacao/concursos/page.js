@@ -13,9 +13,9 @@ const EXAMS = [
     label: "ENEM",
     iconName: "medal",
     full: "Exame Nacional do Ensino Médio",
-    color: "from-sky-500/20 to-cyan-500/20",
-    border: "border-sky-500/30",
-    badge: "text-sky-300 border-sky-500/20 bg-sky-500/10",
+    color: "from-sky-50 to-cyan-50",
+    border: "border-sky-200",
+    badge: "text-sky-700 border-sky-200 bg-sky-50",
     subjects: ["Linguagens", "Matemática", "Ciências da Natureza", "Ciências Humanas"],
     tags: ["BNCC", "Vestibular", "Prouni", "Sisu", "Fies"],
     tip: "Redação e questões de múltipla escolha. Use o modo Simulado para praticar questões no formato real.",
@@ -25,9 +25,9 @@ const EXAMS = [
     label: "OAB",
     iconName: "scale",
     full: "Exame da Ordem dos Advogados do Brasil",
-    color: "from-amber-500/20 to-yellow-500/20",
-    border: "border-amber-500/30",
-    badge: "text-amber-300 border-amber-500/20 bg-amber-500/10",
+    color: "from-amber-50 to-yellow-50",
+    border: "border-amber-200",
+    badge: "text-amber-700 border-amber-200 bg-amber-50",
     subjects: ["Direito Constitucional", "Civil", "Penal", "Trabalhista", "Tributário", "Processual"],
     tags: ["FGV", "CESPE", "Primeira fase", "Segunda fase", "Peça prática"],
     tip: "Cite artigos de lei, jurisprudência (STF/STJ) e a doutrina majoritária nas respostas.",
@@ -37,9 +37,9 @@ const EXAMS = [
     label: "Residência Médica",
     iconName: "cross",
     full: "Concurso para Residência Médica",
-    color: "from-rose-500/20 to-pink-500/20",
-    border: "border-rose-500/30",
-    badge: "text-rose-300 border-rose-500/20 bg-rose-500/10",
+    color: "from-rose-50 to-pink-50",
+    border: "border-rose-200",
+    badge: "text-rose-700 border-rose-200 bg-rose-50",
     subjects: ["Clínica Médica", "Cirurgia", "Pediatria", "GO", "Psiquiatria", "MFC"],
     tags: ["USP", "UNIFESP", "UFRJ", "SUSep", "ACLS", "ATLS"],
     tip: "Foco em raciocínio clínico, diagnóstico diferencial e condutas baseadas em evidências.",
@@ -49,9 +49,9 @@ const EXAMS = [
     label: "FUVEST / Unicamp",
     iconName: "building",
     full: "Vestibulares de Universidades Públicas",
-    color: "from-violet-500/20 to-purple-500/20",
-    border: "border-violet-500/30",
-    badge: "text-violet-300 border-violet-500/20 bg-violet-500/10",
+    color: "from-violet-50 to-purple-50",
+    border: "border-violet-200",
+    badge: "text-violet-700 border-violet-200 bg-violet-50",
     subjects: ["Redação", "Português", "Matemática", "Ciências", "História", "Geografia"],
     tags: ["USP", "Unicamp", "UNESP", "Discursiva", "Interpretação"],
     tip: "Questões discursivas exigem respostas completas com fundamentação e repertório cultural.",
@@ -61,9 +61,9 @@ const EXAMS = [
     label: "ENADE",
     iconName: "book",
     full: "Exame Nacional de Desempenho dos Estudantes",
-    color: "from-green-500/20 to-emerald-500/20",
-    border: "border-green-500/30",
-    badge: "text-green-300 border-green-500/20 bg-green-500/10",
+    color: "from-green-50 to-emerald-50",
+    border: "border-green-200",
+    badge: "text-green-700 border-green-200 bg-green-50",
     subjects: ["Formação Geral", "Componente Específico", "Ciências", "Humanas"],
     tags: ["INEP", "Formação superior", "Competências profissionais"],
     tip: "Avalia competências profissionais integradas com temas sociais e científicos contemporâneos.",
@@ -73,9 +73,9 @@ const EXAMS = [
     label: "Concurso Público",
     iconName: "medal",
     full: "Concursos Federais e Estaduais",
-    color: "from-indigo-500/20 to-blue-500/20",
-    border: "border-indigo-500/30",
-    badge: "text-indigo-300 border-indigo-500/20 bg-indigo-500/10",
+    color: "from-indigo-50 to-blue-50",
+    border: "border-indigo-200",
+    badge: "text-indigo-700 border-indigo-200 bg-indigo-50",
     subjects: ["Português", "Raciocínio Lógico", "Direito Adm.", "Informática", "Atualidades"],
     tags: ["CESPE", "FCC", "VUNESP", "FGV", "Agentes", "Analistas"],
     tip: "Foco em bancas: CESPE (certo/errado), FCC (letra de lei), FGV (interpretação).",
@@ -127,19 +127,19 @@ function renderText(text) {
     if (raw.startsWith("```")) {
       if (code === null) code = [];
       else {
-        els.push(React.createElement("pre", { key: k++, className: "my-2 overflow-x-auto rounded-xl border border-white/8 bg-black/40 p-3 text-xs text-green-300 font-mono" }, code.join("\n")));
+        els.push(React.createElement("pre", { key: k++, className: "my-2 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700 font-mono" }, code.join("\n")));
         code = null;
       }
       continue;
     }
     if (code !== null) { code.push(raw); continue; }
     if (!raw.trim()) { els.push(React.createElement("br", { key: k++ })); continue; }
-    if (raw.startsWith("## ")) els.push(React.createElement("p", { key: k++, className: "mt-3 mb-1 font-bold text-white text-base" }, raw.slice(3)));
-    else if (raw.startsWith("# ")) els.push(React.createElement("p", { key: k++, className: "mt-4 mb-2 font-bold text-white text-lg" }, raw.slice(2)));
-    else if (raw.startsWith("**") && raw.endsWith("**")) els.push(React.createElement("p", { key: k++, className: "font-semibold text-white/90 text-sm" }, raw.slice(2, -2)));
-    else if (raw.startsWith("- ") || raw.startsWith("* ")) els.push(React.createElement("p", { key: k++, className: "pl-3 text-white/80 text-sm" }, React.createElement("span", { className: "mr-2 text-white/30" }, "·"), raw.slice(2)));
-    else if (/^\d+\. /.test(raw)) els.push(React.createElement("p", { key: k++, className: "pl-3 text-white/80 text-sm" }, raw));
-    else els.push(React.createElement("p", { key: k++, className: "text-white/80 text-sm leading-relaxed" }, raw));
+    if (raw.startsWith("## ")) els.push(React.createElement("p", { key: k++, className: "mt-3 mb-1 font-bold text-zinc-900 text-base" }, raw.slice(3)));
+    else if (raw.startsWith("# ")) els.push(React.createElement("p", { key: k++, className: "mt-4 mb-2 font-bold text-zinc-900 text-lg" }, raw.slice(2)));
+    else if (raw.startsWith("**") && raw.endsWith("**")) els.push(React.createElement("p", { key: k++, className: "font-semibold text-zinc-800 text-sm" }, raw.slice(2, -2)));
+    else if (raw.startsWith("- ") || raw.startsWith("* ")) els.push(React.createElement("p", { key: k++, className: "pl-3 text-zinc-700 text-sm" }, React.createElement("span", { className: "mr-2 text-zinc-400" }, "·"), raw.slice(2)));
+    else if (/^\d+\. /.test(raw)) els.push(React.createElement("p", { key: k++, className: "pl-3 text-zinc-700 text-sm" }, raw));
+    else els.push(React.createElement("p", { key: k++, className: "text-zinc-700 text-sm leading-relaxed" }, raw));
   }
   return React.createElement("div", { className: "space-y-0.5" }, ...els);
 }
@@ -151,9 +151,13 @@ function ConcursoChat({ exam, mode, subject, language, onBack }) {
   const [essayText, setEssayText] = useState("");
   const [essayTheme, setEssayTheme] = useState("");
   const [streaming, setStreaming] = useState(false);
-  const [sessionId] = useState(getOrCreateSession);
+  const [sessionId, setSessionId] = useState("anon-ssr");
   const abortRef = useRef(null);
   const bottomRef = useRef(null);
+
+  useEffect(() => {
+    setSessionId(getOrCreateSession());
+  }, []);
 
   useEffect(() => {
     const saved = loadHistory(sessionId, exam.id + "_" + mode);
@@ -243,16 +247,16 @@ function ConcursoChat({ exam, mode, subject, language, onBack }) {
     // Header
     React.createElement("div", { className: `mb-4 flex items-center justify-between gap-3 rounded-2xl border ${exam.border} bg-gradient-to-r ${exam.color} p-4 flex-wrap` },
       React.createElement("div", { className: "flex items-center gap-3" },
-        React.createElement("button", { onClick: onBack, className: "rounded-xl border border-white/10 bg-white/5 p-2 text-white/60 hover:bg-white/10 hover:text-white transition-colors" }, "←"),
-        React.createElement(FuturisticIcon, { name: exam.iconName, className: "h-7 w-7 text-sky-400/85" }),
+        React.createElement("button", { onClick: onBack, className: "rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors" }, "←"),
+        React.createElement(FuturisticIcon, { name: exam.iconName, className: "h-7 w-7 text-sky-600/85" }),
         React.createElement("div", null,
-          React.createElement("h2", { className: "font-semibold text-white text-sm" }, exam.label),
-          React.createElement("p", { className: "text-xs text-white/40" }, `${MODES.find(m => m.id === mode)?.label}${subject ? " · " + subject : ""}`)
+          React.createElement("h2", { className: "font-semibold text-zinc-900 text-sm" }, exam.label),
+          React.createElement("p", { className: "text-xs text-zinc-500" }, `${MODES.find(m => m.id === mode)?.label}${subject ? " · " + subject : ""}`)
         )
       ),
       React.createElement("div", { className: "flex gap-2" },
-        React.createElement("button", { onClick: exportChat, title: "Exportar como .md", className: "rounded-xl border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white/50 hover:bg-white/8" }, "⬇ Exportar"),
-        React.createElement("button", { onClick: () => { setMessages([]); saveHistory(sessionId, exam.id + "_" + mode, []); }, className: "rounded-xl border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white/50 hover:bg-white/8" }, "Limpar")
+        React.createElement("button", { onClick: exportChat, title: "Exportar como .md", className: "rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-1.5 text-xs text-zinc-500 hover:bg-white" }, "Exportar"),
+        React.createElement("button", { onClick: () => { setMessages([]); saveHistory(sessionId, exam.id + "_" + mode, []); }, className: "rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-1.5 text-xs text-zinc-500 hover:bg-white" }, "Limpar")
       )
     ),
 
@@ -262,14 +266,14 @@ function ConcursoChat({ exam, mode, subject, language, onBack }) {
         React.createElement(motion.div, { key: i, initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 }, className: `flex ${msg.role === "user" ? "justify-end" : "justify-start"}` },
           React.createElement("div", {
             className: msg.role === "user"
-              ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-white/8 border border-white/10 px-4 py-3 text-sm text-white"
-              : "max-w-[90%] rounded-2xl rounded-tl-sm border border-white/8 bg-[rgba(12,20,40,0.7)] px-4 py-3",
+              ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-white border border-zinc-200 px-4 py-3 text-sm text-zinc-900"
+              : "max-w-[90%] rounded-2xl rounded-tl-sm border border-zinc-200 bg-[rgba(12,20,40,0.7)] px-4 py-3",
           },
             msg.role === "user"
               ? React.createElement("p", { className: "text-sm" }, msg.content)
               : React.createElement("div", null,
                   renderText(msg.content || ""),
-                  msg.content === "" && React.createElement("span", { className: "inline-block w-1.5 h-3 bg-white/40 rounded-sm animate-pulse" })
+                  msg.content === "" && React.createElement("span", { className: "inline-block w-1.5 h-3 bg-zinc-1000 rounded-sm animate-pulse" })
                 )
           )
         )
@@ -280,13 +284,13 @@ function ConcursoChat({ exam, mode, subject, language, onBack }) {
     // Input
     mode === "redacao"
       ? React.createElement("div", { className: "mt-4 space-y-2" },
-          React.createElement("input", { value: essayTheme, onChange: e => setEssayTheme(e.target.value), placeholder: "Tema da redação...", className: "w-full rounded-xl border border-white/8 bg-white/4 px-4 py-2 text-xs text-white placeholder-white/25 outline-none focus:border-white/20" }),
-          React.createElement("textarea", { value: essayText, onChange: e => setEssayText(e.target.value), rows: 7, disabled: streaming, placeholder: "Cole sua redação aqui para correção nas 5 competências do ENEM (0-1000)...", className: "w-full resize-none rounded-2xl border border-white/8 bg-white/4 px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 disabled:opacity-50" }),
+          React.createElement("input", { value: essayTheme, onChange: e => setEssayTheme(e.target.value), placeholder: "Tema da redação...", className: "w-full rounded-xl border border-zinc-200 bg-zinc-100 px-4 py-2 text-xs text-zinc-900 placeholder-zinc-400 outline-none focus:border-zinc-200" }),
+          React.createElement("textarea", { value: essayText, onChange: e => setEssayText(e.target.value), rows: 7, disabled: streaming, placeholder: "Cole sua redação aqui para correção nas 5 competências do ENEM (0-1000)...", className: "w-full resize-none rounded-2xl border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none focus:border-zinc-200 disabled:opacity-50" }),
           React.createElement("button", { onClick: streaming ? () => abortRef.current?.abort() : send, disabled: !streaming && essayText.trim().length < 50, className: `w-full rounded-xl border py-2.5 text-sm font-medium transition-all inline-flex items-center justify-center gap-2 ${streaming ? "border-red-500/30 bg-red-500/10 text-red-300" : "border-sky-500/30 bg-sky-500/10 text-sky-300 disabled:opacity-30"}` }, streaming ? "Parar" : React.createElement(React.Fragment, null, React.createElement(FuturisticIcon, { name: "doc", className: "h-4 w-4" }), "Corrigir Redação"))
         )
       : React.createElement("div", { className: "mt-4 flex gap-2" },
-          React.createElement("textarea", { value: input, onChange: e => setInput(e.target.value), onKeyDown: e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }, rows: 2, disabled: streaming, placeholder: mode === "simulado" ? `Diga o tópico e gerei uma questão real de ${exam.label}...` : mode === "resumo" ? "Digite o assunto para resumir..." : `Dúvida sobre ${exam.label}...`, className: "flex-1 resize-none rounded-2xl border border-white/8 bg-white/4 px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-white/20 disabled:opacity-50" }),
-          React.createElement("button", { onClick: streaming ? () => abortRef.current?.abort() : send, disabled: !streaming && !input.trim(), className: `rounded-2xl px-4 py-2 text-sm font-medium transition-all ${streaming ? "border border-red-500/30 bg-red-500/10 text-red-300" : "border border-white/10 bg-white/6 text-white hover:bg-white/10 disabled:opacity-30"}` }, streaming ? "Parar" : "Enviar")
+          React.createElement("textarea", { value: input, onChange: e => setInput(e.target.value), onKeyDown: e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }, rows: 2, disabled: streaming, placeholder: mode === "simulado" ? `Diga o tópico e gerei uma questão real de ${exam.label}...` : mode === "resumo" ? "Digite o assunto para resumir..." : `Dúvida sobre ${exam.label}...`, className: "flex-1 resize-none rounded-2xl border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 outline-none focus:border-zinc-200 disabled:opacity-50" }),
+          React.createElement("button", { onClick: streaming ? () => abortRef.current?.abort() : send, disabled: !streaming && !input.trim(), className: `rounded-2xl px-4 py-2 text-sm font-medium transition-all ${streaming ? "border border-red-500/30 bg-red-500/10 text-red-300" : "border border-zinc-200 bg-zinc-50 text-zinc-900 hover:bg-zinc-100 disabled:opacity-30"}` }, streaming ? "Parar" : "Enviar")
         )
   );
 }
@@ -299,16 +303,16 @@ function ExamSelector({ onSelect }) {
         key: exam.id,
         initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.06 * idx },
         onClick: () => onSelect(exam),
-        className: `rounded-2xl border ${exam.border} bg-gradient-to-br ${exam.color} p-5 text-left transition-all hover:scale-[1.01] hover:border-white/25`,
+        className: `rounded-2xl border ${exam.border} bg-gradient-to-br ${exam.color} p-5 text-left transition-all hover:scale-[1.01] hover:border-zinc-300`,
       },
         React.createElement("div", { className: "flex items-start gap-3 mb-3" },
           React.createElement(FuturisticIcon, { name: exam.iconName, className: "h-8 w-8 mt-0.5 text-sky-400/85" }),
           React.createElement("div", { className: "flex-1" },
-            React.createElement("h3", { className: "font-semibold text-white text-sm mb-0.5" }, exam.label),
-            React.createElement("p", { className: "text-xs text-white/40 leading-relaxed" }, exam.full)
+            React.createElement("h3", { className: "font-semibold text-zinc-900 text-sm mb-0.5" }, exam.label),
+            React.createElement("p", { className: "text-xs text-zinc-500 leading-relaxed" }, exam.full)
           )
         ),
-        React.createElement("p", { className: "text-xs text-white/30 mb-3 leading-relaxed" }, exam.tip),
+        React.createElement("p", { className: "text-xs text-zinc-400 mb-3 leading-relaxed" }, exam.tip),
         React.createElement("div", { className: "flex flex-wrap gap-1.5" },
           exam.tags.slice(0, 4).map(t =>
             React.createElement("span", { key: t, className: `rounded-full border px-2 py-0.5 text-[10px] ${exam.badge}` }, t)
@@ -328,36 +332,36 @@ function ModeSelector({ exam, language, setLanguage, onConfirm }) {
     React.createElement("div", { className: `rounded-2xl border ${exam.border} bg-gradient-to-r ${exam.color} p-4 flex items-center gap-3` },
       React.createElement(FuturisticIcon, { name: exam.iconName, className: "h-8 w-8 text-sky-400/85" }),
       React.createElement("div", null,
-        React.createElement("h2", { className: "font-bold text-white" }, exam.label),
-        React.createElement("p", { className: "text-xs text-white/40" }, exam.full)
+        React.createElement("h2", { className: "font-bold text-zinc-900" }, exam.label),
+        React.createElement("p", { className: "text-xs text-zinc-500" }, exam.full)
       )
     ),
-    React.createElement("div", { className: "rounded-2xl border border-white/8 bg-white/3 p-4 space-y-3" },
-      React.createElement("p", { className: "text-xs font-medium text-white/50 uppercase tracking-wider" }, "Modo"),
+    React.createElement("div", { className: "rounded-2xl border border-zinc-200 bg-zinc-50 p-4 space-y-3" },
+      React.createElement("p", { className: "text-xs font-medium text-zinc-500 uppercase tracking-wider" }, "Modo"),
       React.createElement("div", { className: "grid grid-cols-2 gap-2" },
         MODES.map(m => React.createElement("button", {
           key: m.id, onClick: () => setMode(m.id),
-          className: `rounded-xl border px-3 py-2.5 text-left text-xs transition-all ${mode === m.id ? `${exam.border} bg-white/8 text-white font-medium` : "border-white/8 text-white/40 hover:text-white/70"}`,
+          className: `rounded-xl border px-3 py-2.5 text-left text-xs transition-all ${mode === m.id ? `${exam.border} bg-white text-zinc-900 font-medium` : "border-zinc-200 text-zinc-500 hover:text-zinc-700"}`,
         }, React.createElement(FuturisticIcon, { name: m.iconName, className: "h-4 w-4 mr-1.5 inline-block" }), m.label))
       )
     ),
-    React.createElement("div", { className: "rounded-2xl border border-white/8 bg-white/3 p-4 space-y-3" },
-      React.createElement("p", { className: "text-xs font-medium text-white/50 uppercase tracking-wider" }, "Disciplina / Área (opcional)"),
+    React.createElement("div", { className: "rounded-2xl border border-zinc-200 bg-zinc-50 p-4 space-y-3" },
+      React.createElement("p", { className: "text-xs font-medium text-zinc-500 uppercase tracking-wider" }, "Disciplina / Área (opcional)"),
       React.createElement("div", { className: "flex flex-wrap gap-1.5" },
         exam.subjects.map(s => React.createElement("button", {
           key: s, onClick: () => setSubject(subject === s ? "" : s),
-          className: `rounded-full border px-2.5 py-1 text-xs transition-colors ${subject === s ? `${exam.badge}` : "border-white/8 text-white/35 hover:text-white/60"}`,
+          className: `rounded-full border px-2.5 py-1 text-xs transition-colors ${subject === s ? `${exam.badge}` : "border-zinc-200 text-zinc-500 hover:text-zinc-600"}`,
         }, s))
       )
     ),
     React.createElement("div", { className: "flex items-center gap-2" },
-      React.createElement("span", { className: "text-xs text-white/30" }, "Idioma:"),
+      React.createElement("span", { className: "text-xs text-zinc-400" }, "Idioma:"),
       LANGUAGES.map(lg => React.createElement("button", {
         key: lg.id, onClick: () => setLanguage(lg.id),
-        className: `rounded-xl border px-3 py-1 text-xs transition-colors ${language === lg.id ? "border-white/25 bg-white/10 text-white" : "border-white/8 text-white/35 hover:text-white/60"}`,
+        className: `rounded-xl border px-3 py-1 text-xs transition-colors ${language === lg.id ? "border-zinc-300 bg-zinc-100 text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-600"}`,
       }, lg.label))
     ),
-    React.createElement("button", { onClick: () => onConfirm(mode, subject), className: "w-full rounded-2xl border border-white/15 bg-white/6 py-3 text-sm font-medium text-white hover:bg-white/10 transition-all" }, "Iniciar sessão →")
+    React.createElement("button", { onClick: () => onConfirm(mode, subject), className: "w-full rounded-2xl border border-zinc-200 bg-zinc-50 py-3 text-sm font-medium text-zinc-900 hover:bg-zinc-100 transition-all" }, "Iniciar sessão →")
   );
 }
 
@@ -374,12 +378,12 @@ export default function ConcursosPage() {
 
       // Hero (only on select)
       stage === "select" && React.createElement(motion.div, { initial: { opacity: 0, y: -10 }, animate: { opacity: 1, y: 0 }, className: "mb-8 text-center" },
-        React.createElement("div", { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/4 px-3 py-1 text-xs text-white/50" },
+        React.createElement("div", { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs text-zinc-500" },
           React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" }),
           "Acesso público · Sessão 100% anônima"
         ),
-        React.createElement("h1", { className: "text-3xl font-bold text-white mb-2" }, "Concursos & Vestibulares"),
-        React.createElement("p", { className: "text-white/50 text-sm max-w-lg mx-auto" },
+        React.createElement("h1", { className: "text-3xl font-bold text-zinc-900 mb-2" }, "Concursos & Vestibulares"),
+        React.createElement("p", { className: "text-zinc-500 text-sm max-w-lg mx-auto" },
           "Tutor especializado para ENEM, OAB, Residência Médica, FUVEST, ENADE e concursos públicos. " +
           "Questões no formato real, correção de redação e resumos."
         )
@@ -387,10 +391,10 @@ export default function ConcursosPage() {
 
       // Back navigation
       stage !== "select" && React.createElement("div", { className: "mb-6 flex items-center gap-2" },
-        React.createElement("button", { onClick: () => setStage(stage === "chat" ? "configure" : "select"), className: "inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors" },
+        React.createElement("button", { onClick: () => setStage(stage === "chat" ? "configure" : "select"), className: "inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-700 transition-colors" },
           "← " + (stage === "chat" ? "Configurar" : "Escolher exame")
         ),
-        stage === "chat" && React.createElement("span", { className: "text-white/20 text-xs" }, "/ " + (exam?.label || "") + " · " + (MODES.find(m => m.id === mode)?.label || ""))
+        stage === "chat" && React.createElement("span", { className: "text-zinc-400 text-xs" }, "/ " + (exam?.label || "") + " · " + (MODES.find(m => m.id === mode)?.label || ""))
       ),
 
       // Stages
@@ -404,8 +408,8 @@ export default function ConcursosPage() {
       ),
 
       // Privacy (only on select)
-      stage === "select" && React.createElement(motion.div, { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.5 }, className: "mt-8 rounded-2xl border border-white/5 bg-white/2 p-3 text-center" },
-        React.createElement("p", { className: "text-xs text-white/20" }, "100% anônimo — nenhum dado, pergunta ou redação é armazenado. LGPD (Lei 13.709/2018).")
+      stage === "select" && React.createElement(motion.div, { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.5 }, className: "mt-8 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-center" },
+        React.createElement("p", { className: "text-xs text-zinc-400" }, "100% anônimo — nenhum dado, pergunta ou redação é armazenado. LGPD (Lei 13.709/2018).")
       )
     )
   );

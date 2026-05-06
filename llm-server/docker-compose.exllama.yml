@@ -1,0 +1,56 @@
+version: '3.8'
+services:
+  exllama:
+    # Exemplo prático: imagem pública `oobabooga/text-generation-webui` (suporta ExLlama e várias backends).
+    # Esta imagem provê webui + servidor que pode carregar modelos quantizados ExLlama quando configurada.
+    # Se preferir um servidor leve e API-first, use o serviço `tgi` abaixo (Hugging Face TGI).
+    image: "oobabooga/text-generation-webui:latest"
+    container_name: syntexa-exllama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - MODEL_DIR=/models
+      - PORT=8080
+      # Exemplo: variáveis para oobabooga webui (ajuste conforme necessidade):
+      - COMMANDLINE_ARGS=--api --no-stream
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./models:/models:rw
+      - exllama_cache:/root/.cache/exllama
+    restart: unless-stopped
+
+  # Serviço TGI (recomendado como API-first, produção estável)
+  tgi:
+    image: ghcr.io/huggingface/text-generation-inference:0.9.4
+    container_name: syntexa-tgi
+    environment:
+      - TRANSFORMERS_CACHE=/root/.cache/huggingface
+      # MODELO: substitua por um modelo compatível e leve o suficiente para seu GPU
+      - MODEL_ID=TheBloke/RedPajama-INCITE-Chat-3B-v1
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./models-tgi:/models:rw
+    restart: unless-stopped
+
+  # Observação: escolha UM dos serviços para servir requests de LLM. No backend,
+  # configure `EXLLAMA_ENDPOINT` ou `TGI_ENDPOINT` apontando para o serviço ativo.
+
+volumes:
+  exllama_cache: {}
+  models-tgi: {}
+
+# Notas:
+# Notas de execução:
+# - Para GPUs NVIDIA, instale o NVIDIA driver e o nvidia-container-toolkit no host.
+# - Para rodar (no host/VM com GPU):
+#   1) copie seus modelos para `./models` (para ExLlama) ou `./models-tgi` (para TGI).
+#   2) execute: `docker compose -f docker-compose.exllama.yml up -d --build`
+# - A API do TGI estará em http://HOST:8081 (rota compatível v0/v1). O `oobabooga` webui
+#   expõe API em http://HOST:8080 quando `--api` é passado.
+# - Ajuste `MODEL_ID` em `tgi` para um modelo otimizado para inferência na sua GPU.

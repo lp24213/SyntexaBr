@@ -25,7 +25,8 @@ logger = logging.getLogger(__name__)
 _global_sem: Optional[threading.BoundedSemaphore] = None
 _user_semaphores: "OrderedDict[str, threading.BoundedSemaphore]" = OrderedDict()
 _user_lock = threading.Lock()
-_MAX_USER_KEYS = 4000
+# Máximo de chaves distintas (user / IP) com semáforo; picos 10k+ conexões precisam de margem
+_MAX_USER_KEYS = 20000
 
 
 class SlotTimeoutError(RuntimeError):

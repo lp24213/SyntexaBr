@@ -1,0 +1,23 @@
+[Unit]
+Description=Syntexa Own Model Runtime (FastAPI)
+Documentation=file:///opt/syntexa/docs/OWN_MODEL_OPERATIONS.md
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/syntexa
+EnvironmentFile=-/opt/syntexa/.env
+Environment=PYTHONPATH=/opt/syntexa
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/syntexa/.venv/bin/python /opt/syntexa/training/serve_model.py --checkpoint /opt/syntexa/checkpoints/syntexa_small/manifest.json --host 0.0.0.0 --port 9000 --device cuda
+Restart=always
+RestartSec=4
+StandardOutput=append:/opt/syntexa/own-model.log
+StandardError=append:/opt/syntexa/own-model.log
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

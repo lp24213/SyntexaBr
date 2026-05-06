@@ -78,7 +78,7 @@ export default function ActivateResetPage() {
     null,
     React.createElement(
       "div",
-      { className: "flex min-h-[calc(100vh-5rem)] items-center justify-center" },
+      { className: "flex min-h-[calc(100vh-5rem)] items-start justify-center py-8" },
       React.createElement(
         motion.div,
         {

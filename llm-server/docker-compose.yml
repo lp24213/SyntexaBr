@@ -1,14 +1,25 @@
-# Ollama + Mistral 7B (substitui vLLM; roda bem em VPS com 8GB+ RAM)
+# Ollama na VM de produção (Azure): CPU/GPU do próprio servidor; porta 11434 no host para o FastAPI.
+# - Para throughput, aumente OLLAMA_NUM_PARALLEL conforme RAM/CPU/GPU.
+# - Para estabilidade sob pico, mantenha MAX_LOADED_MODELS baixo.
 services:
   ollama:
     image: ollama/ollama:latest
     container_name: syntexa-ollama
     ports:
       - "11434:11434"
+    environment:
+      # Ajuste fino:
+      # - 1: máximo de estabilidade, menor throughput
+      # - 2-4: melhor throughput se o VPS aguentar (RAM/CPU/GPU)
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
     volumes:
       - ollama_data:/root/.ollama
     restart: unless-stopped
-    # Primeira vez no servidor: docker exec -it syntexa-ollama ollama pull mistral
+    # Primeira vez no servidor (exemplos):
+    #   docker exec -it syntexa-ollama ollama pull llama3.1:8b
+    #   docker exec -it syntexa-ollama ollama pull llama3.1:70b
+    #   docker exec -it syntexa-ollama ollama pull llava:7b
 
 networks:
   default:
@@ -16,3 +27,22 @@ networks:
 
 volumes:
   ollama_data: {}
+
+# --- Exemplo opcional: Text Generation Inference (TGI) para modelos 13B+ em GPU ---
+# Descomente e ajuste conforme necessário. TGI requer imagens específicas e drivers NVIDIA no host.
+# Serviço exemplo (comentado):
+# tgi:
+#   image: ghcr.io/huggingface/text-generation-inference:latest
+#   container_name: syntexa-tgi
+#   runtime: nvidia
+#   environment:
+#     - CUDA_VISIBLE_DEVICES=0
+#     - TGI_AUTOTUNE=true
+#   ports:
+#     - "8080:8080"
+#   volumes:
+#     - ./models:/models
+#   command: ["--model", "/models/llama-13b", "--max-input-length", "8192"]
+#   restart: unless-stopped
+# Nota: para GPU na Azure, use VM com NVIDIA + nvidia-container-toolkit no host.
+# Em seguida, coloque os arquivos do modelo em `./models/llama-13b` ou use um caminho persistente.

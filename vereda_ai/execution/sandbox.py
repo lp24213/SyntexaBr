@@ -22,10 +22,17 @@ class Sandbox:
             file = Path(tmpdir) / "main.py"
             file.write_text(code, encoding="utf-8")
             proc = subprocess.run(
-                ["python", str(file), *args],
+                ["python", "-I", "-S", "-B", str(file), *args],
                 capture_output=True,
                 text=True,
                 timeout=timeout_s,
+                cwd=str(tmpdir),
+                stdin=subprocess.DEVNULL,
+                env={
+                    "PYTHONIOENCODING": "utf-8",
+                    "PYTHONUTF8": "1",
+                    "PATH": "",
+                },
             )
             return proc.stdout + proc.stderr
 

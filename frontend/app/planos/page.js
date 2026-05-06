@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { motion } from "framer-motion";
 import { AppShell } from "../../components/shell";
-import { Card } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
 import { createStripeCheckout, getProfile } from "../../lib/api";
+import { BusinessPlanPage } from "../../components/business-plan-page";
 
 var plans = [
   {
@@ -89,100 +87,7 @@ export default function PlanosPage() {
   return React.createElement(
     AppShell,
     null,
-    React.createElement(
-      "div",
-      { className: "mx-auto flex max-w-5xl flex-col items-center py-10" },
-      React.createElement(
-        motion.div,
-        {
-          initial: { opacity: 0, y: 12 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.35 },
-          className: "mb-10 text-center",
-        },
-        React.createElement(
-          "p",
-          { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-300" },
-          "Planos Syntexa com desconto estudantil"
-        ),
-        React.createElement(
-          "h1",
-          { className: "mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl" },
-          "Da ideia ao produto rodando em produção"
-        ),
-        React.createElement(
-          "p",
-          { className: "mt-3 max-w-xl text-sm text-white/65" },
-          "Planos pensados para estudantes, criadores e instituições que precisam de uma camada de inteligência escalável, com até 50% de desconto para estudantes verificados."
-        )
-      ),
-      React.createElement(
-        "div",
-        { className: "grid w-full gap-5 md:grid-cols-3" },
-        plans.map(function (plan, idx) {
-          var cardClass =
-            "h-full border relative " +
-            (plan.highlighted ? "border-emerald-300/60 bg-gradient-to-b from-emerald-400/10 via-white/5 to-black" : "border-white/10 bg-[#111]");
-          return React.createElement(
-            motion.div,
-            {
-              key: plan.name,
-              initial: { opacity: 0, y: 12 },
-              animate: { opacity: 1, y: 0 },
-              transition: { duration: 0.22, delay: idx * 0.05 },
-            },
-            React.createElement(
-              Card,
-              {
-                className: cardClass,
-                title: plan.name === "Médio" ? "Médio — recomendado" : plan.name,
-                description: plan.description,
-              },
-              plan.tag && React.createElement(
-                "span",
-                { className: "mb-3 inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/40 px-2.5 py-1 text-[11px] font-medium text-white/70" },
-                React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-emerald-400" }),
-                plan.tag
-              ),
-              React.createElement(
-                "div",
-                { className: "mb-1 text-2xl font-semibold text-white" },
-                plan.price,
-                React.createElement("span", { className: "text-base font-normal text-white/70" }, " ", plan.priceLabel)
-              ),
-              React.createElement(
-                "div",
-                { className: "mb-3 text-xs text-emerald-300" },
-                "Estudantes com 50% OFF: ",
-                React.createElement("span", { className: "font-semibold" }, plan.priceStudent),
-                " ",
-                plan.studentLabel
-              ),
-              React.createElement(
-                "ul",
-                { className: "mb-5 space-y-2 text-xs text-white/80" },
-                plan.features.map(function (f) {
-                  return React.createElement(
-                    "li",
-                    { key: f, className: "flex items-start gap-2" },
-                    React.createElement("span", { className: "mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-gradient-to-r from-emerald-300 to-cyan-300" }),
-                    React.createElement("span", null, f)
-                  );
-                })
-              ),
-              React.createElement(
-                Button,
-                {
-                  variant: plan.highlighted ? "primary" : "outline",
-                  className: "w-full justify-center",
-                  onClick: function () { handleSubscribe(plan.key || "basic"); },
-                },
-                "Assinar plano"
-              )
-            )
-          );
-        })
-      )
-    )
+    React.createElement(BusinessPlanPage, { plans: plans, onSubscribe: handleSubscribe })
   );
 }
+

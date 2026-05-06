@@ -50,6 +50,14 @@ if ! command -v certbot >/dev/null 2>&1; then
   apt-get install -y certbot python3-certbot-nginx
 fi
 
+# O include padrão do certbot fica no pacote Python; copiar para /etc/letsencrypt/ se ainda não existir.
+OPTS_SRC="/usr/lib/python3/dist-packages/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf"
+if [[ ! -f /etc/letsencrypt/options-ssl-nginx.conf ]] && [[ -f "$OPTS_SRC" ]]; then
+  mkdir -p /etc/letsencrypt
+  install -m 644 "$OPTS_SRC" /etc/letsencrypt/options-ssl-nginx.conf
+  echo "[OK] options-ssl-nginx.conf instalado (pacote certbot)"
+fi
+
 # certbot --nginx reescreve configs e costuma quebrar listen 443 em IPv4; usamos webroot + nosso bloco TLS.
 if [[ -f "/etc/letsencrypt/live/${API_HOST}/fullchain.pem" ]]; then
   echo "Certificado ja existe; renovando se necessario..."

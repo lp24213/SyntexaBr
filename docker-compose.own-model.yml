@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  syntexa-own-model:
+    build:
+      context: .
+      dockerfile: docker/own-model/Dockerfile
+    container_name: syntexa-own-model
+    env_file:
+      - .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+      OWN_MODEL_MAX_NEW_TOKENS: ${OWN_MODEL_MAX_NEW_TOKENS:-1024}
+      OWN_MODEL_TEMPERATURE: ${OWN_MODEL_TEMPERATURE:-0.8}
+      OWN_MODEL_TOP_K: ${OWN_MODEL_TOP_K:-80}
+    command:
+      - python
+      - training/serve_model.py
+      - --checkpoint
+      - /app/checkpoints/syntexa_small/manifest.json
+      - --host
+      - 0.0.0.0
+      - --port
+      - "9000"
+      - --device
+      - cpu
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./checkpoints:/app/checkpoints
+      - ./config:/app/config
+    restart: unless-stopped

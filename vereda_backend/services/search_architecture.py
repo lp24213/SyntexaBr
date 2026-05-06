@@ -7,22 +7,14 @@ Arquitetura de busca Syntexa (código próprio).
 Nada do que já existe é removido; este módulo unifica interfaces e extensões.
 """
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
+from vereda_backend.search.schemas import SearchResult
+from vereda_backend.search.hybrid import hybrid_public_search
 
 # --- RAG: já implementado em ai_runtime (rag_engine, memory_system, vector_store). ---
 # Indexação de PDFs/artigos/leis: usar vector_store.add ou rag_engine.db.add quando
 # houver pipeline de ingestão. Interface unificada abaixo para futura expansão.
-
-
-@dataclass
-class SearchResult:
-    """Resultado de busca (RAG ou web) com metadados de confiabilidade."""
-    text: str
-    source: str = ""
-    confidence: float = 1.0
-    metadata: dict = field(default_factory=dict)
 
 
 def rag_search(
@@ -46,34 +38,15 @@ def rag_search(
     ]
 
 
-# --- Web Search Agent: busca real na internet (DuckDuckGo, sem API key). ---
+# --- Web Search Agent: busca híbrida (DDG + Wikipedia + notícias + Scholar condicional + Google CSE opcional).
 
 
 def web_search(query: str, max_results: int = 8) -> List[SearchResult]:
-    """Busca em tempo real na web. Usa DuckDuckGo (sem API key). Retorna trechos para contexto."""
-    out: List[SearchResult] = []
+    """Busca pública agregada e ranqueada (`vereda_backend.search.hybrid`)."""
     try:
-        from duckduckgo_search import DDGS
-        with DDGS() as ddgs:
-            for r in ddgs.text(query, max_results=max_results):
-                title = r.get("title") or ""
-                body = r.get("body") or r.get("snippet") or ""
-                href = r.get("href") or ""
-                text = f"{title}: {body}".strip()
-                if text:
-                    out.append(
-                        SearchResult(
-                            text=text[:800],
-                            source=href or "web",
-                            confidence=0.9,
-                            metadata={"title": title},
-                        )
-                    )
-                if len(out) >= max_results:
-                    break
+        return hybrid_public_search(query, max_total=max_results)
     except Exception:
-        pass
-    return out
+        return []
 
 
 def web_search_available() -> bool:

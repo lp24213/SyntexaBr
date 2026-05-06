@@ -1,5 +1,17 @@
-/** API pública Hetzner — única origem permitida no browser/build. */
+import { getClientLocale } from "./i18n";
+
+/**
+ * API pública (produção): build estático usa sempre este host (sem override acidental no Pages).
+ * Dev local: opcional NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000
+ */
 const PRODUCTION_API_BASE = "https://api.syntexabr.com.br";
+
+/** Mensagem única e segura para o utilizador (sem detalhes técnicos). */
+export const USER_FACING_TRY_AGAIN =
+  "Não foi possível concluir agora. Tente novamente em alguns instantes.";
+
+export const USER_FACING_CONNECTION =
+  "Conexão instável. Verifique a internet e tente de novo.";
 
 function isForbiddenApiHost(url) {
   try {
@@ -18,110 +30,95 @@ function isForbiddenApiHost(url) {
 }
 
 export function getApiBase() {
-  let base = PRODUCTION_API_BASE;
-  if (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_BASE) {
+  const isDev =
+    typeof process !== "undefined" &&
+    process.env &&
+    process.env.NODE_ENV === "development";
+  if (isDev && process.env.NEXT_PUBLIC_API_BASE) {
     const raw = String(process.env.NEXT_PUBLIC_API_BASE).trim();
     if (raw) {
       const normalized = raw.replace(/\/$/, "");
-      if (isForbiddenApiHost(normalized.startsWith("http") ? normalized : `https://${normalized}`)) {
-        throw new Error(
-          "NEXT_PUBLIC_API_BASE não pode apontar para loopback. Use https://api.syntexabr.com.br (produção)."
-        );
+      const withScheme = normalized.startsWith("http")
+        ? normalized
+        : `https://${normalized}`;
+      if (!isForbiddenApiHost(withScheme)) {
+        return withScheme.replace(/\/$/, "");
       }
-      base = normalized.startsWith("http") ? normalized : `https://${normalized}`;
     }
   }
-  if (isForbiddenApiHost(base)) {
-    throw new Error("API base inválida: apenas produção (https://api.syntexabr.com.br).");
-  }
-  return base.replace(/\/$/, "");
+  return PRODUCTION_API_BASE.replace(/\/$/, "");
 }
 
 const API_BASE = getApiBase();
 
-function getBackupApiBase() {
-  if (typeof process === "undefined" || !process.env || !process.env.NEXT_PUBLIC_API_BACKUP_BASE) {
-    return null;
-  }
-  const raw = String(process.env.NEXT_PUBLIC_API_BACKUP_BASE).trim();
-  if (!raw) return null;
-  const normalized = raw.replace(/\/$/, "");
-  const withScheme = normalized.startsWith("http") ? normalized : `https://${normalized}`;
-  if (isForbiddenApiHost(withScheme)) return null;
-  return withScheme.replace(/\/$/, "");
-}
+/** Limite de saída pedido ao backend (alinhado a respostas longas / tabelas). */
+export const CHAT_MAX_TOKENS = 8192;
+const STREAM_IDLE_TIMEOUT_MS = 45000;
+const STREAM_TOTAL_TIMEOUT_MS = 180000;
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
 /**
- * Fetch com retry (5xx / rede) e fallback opcional para NEXT_PUBLIC_API_BACKUP_BASE.
- * Preserva o contrato das rotas; não altera URL primária.
+ * Fetch com retry (5xx / rede) na única base de produção (API_BASE).
  */
 export async function fetchWithResilience(path, options = {}) {
-  const bases = [API_BASE];
-  const backup = getBackupApiBase();
-  if (backup && backup !== API_BASE) bases.push(backup);
-
   const retries = typeof options.__retries === "number" ? options.__retries : 2;
   const { __retries, ...fetchOpts } = options;
   const pathStr = typeof path === "string" ? path : String(path);
   const urlPath = pathStr.startsWith("/") ? pathStr : "/" + pathStr;
+  const url = API_BASE.replace(/\/$/, "") + urlPath;
 
   let lastErr = null;
-  for (const base of bases) {
-    const url = base.replace(/\/$/, "") + urlPath;
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        const resp = await fetch(url, fetchOpts);
-        if (resp.ok) return resp;
-        if (resp.status >= 500 && resp.status < 600 && attempt < retries) {
-          await sleep(350 * (attempt + 1));
-          continue;
-        }
-        if (resp.status >= 400 && resp.status < 500) return resp;
-        if (attempt < retries) {
-          await sleep(350 * (attempt + 1));
-          continue;
-        }
-        return resp;
-      } catch (e) {
-        lastErr = e;
-        if (attempt < retries) {
-          await sleep(350 * (attempt + 1));
-          continue;
-        }
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const resp = await fetch(url, fetchOpts);
+      if (resp.ok) return resp;
+      if (resp.status >= 500 && resp.status < 600 && attempt < retries) {
+        await sleep(350 * (attempt + 1));
+        continue;
+      }
+      if (resp.status >= 400 && resp.status < 500) return resp;
+      if (attempt < retries) {
+        await sleep(350 * (attempt + 1));
+        continue;
+      }
+      return resp;
+    } catch (e) {
+      lastErr = e;
+      if (attempt < retries) {
+        await sleep(350 * (attempt + 1));
+        continue;
       }
     }
   }
-  const msg =
-    lastErr && lastErr.message
-      ? "Serviço temporariamente indisponível. " + lastErr.message
-      : "Serviço temporariamente indisponível. Tente novamente em instantes.";
-  throw new Error(msg);
+  throw new Error(lastErr && /fetch|network|failed/i.test(String(lastErr.message || "")) ? USER_FACING_CONNECTION : USER_FACING_TRY_AGAIN);
 }
 
-async function readErrorMessage(resp, fallbackMessage) {
-  try {
-    const data = await resp.json();
-    if (data && typeof data.detail === "string" && data.detail.trim()) {
-      return data.detail;
-    }
-    if (data && Array.isArray(data.detail) && data.detail.length) {
-      const first = data.detail[0];
-      if (typeof first === "string") return first;
-      if (first && typeof first.msg === "string") return first.msg;
-    }
-    return fallbackMessage;
-  } catch (_) {
+/**
+ * Lê erro HTTP sem expor texto bruto do servidor (exceto 403 de limite de plano).
+ */
+async function readErrorMessage(resp, _fallbackUnused) {
+  const raw = await resp.text();
+  if (resp.status === 403) {
     try {
-      const txt = await resp.text();
-      return txt || fallbackMessage;
-    } catch (_) {
-      return fallbackMessage;
-    }
+      const data = JSON.parse(raw);
+      const d = data && typeof data.detail === "string" ? data.detail.trim() : "";
+      if (d && /limite|plano|upgrade|mensagens/i.test(d)) {
+        return d;
+      }
+    } catch (_) {}
+    return USER_FACING_TRY_AGAIN;
   }
+  if (resp.status === 401) {
+    return "Sessão expirada ou acesso não autorizado. Entre novamente.";
+  }
+  return USER_FACING_TRY_AGAIN;
+}
+
+async function throwIfNotOk(resp) {
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
 }
 
 function parseSSEChunkedTextIntoJsonLines(rawText, state) {
@@ -130,6 +127,53 @@ function parseSSEChunkedTextIntoJsonLines(rawText, state) {
   const lines = state.buffer.split("\n");
   state.buffer = lines.pop() || "";
   return lines;
+}
+
+function flushSseTail(state, onChunk) {
+  const leftover = String(state.buffer || "").trim();
+  state.buffer = "";
+  if (!leftover.startsWith("data: ")) return;
+  try {
+    const data = JSON.parse(leftover.slice(6));
+    if (data.content && onChunk) onChunk(data.content);
+  } catch (_) {}
+}
+
+function createStreamGuard(externalSignal, idleMs = STREAM_IDLE_TIMEOUT_MS, totalMs = STREAM_TOTAL_TIMEOUT_MS) {
+  const controller = new AbortController();
+  let idleTimer = null;
+  let totalTimer = null;
+
+  const clearTimers = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    if (totalTimer) clearTimeout(totalTimer);
+    idleTimer = null;
+    totalTimer = null;
+  };
+
+  const abortNow = () => {
+    clearTimers();
+    if (!controller.signal.aborted) controller.abort();
+  };
+
+  const armIdle = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(abortNow, Math.max(3000, Number(idleMs) || STREAM_IDLE_TIMEOUT_MS));
+  };
+
+  totalTimer = setTimeout(abortNow, Math.max(5000, Number(totalMs) || STREAM_TOTAL_TIMEOUT_MS));
+  armIdle();
+
+  if (externalSignal) {
+    if (externalSignal.aborted) abortNow();
+    else externalSignal.addEventListener("abort", abortNow, { once: true });
+  }
+
+  return {
+    signal: controller.signal,
+    touch: armIdle,
+    cleanup: clearTimers,
+  };
 }
 
 export async function login(email, password) {
@@ -142,9 +186,112 @@ export async function login(email, password) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
-  if (!resp.ok) throw new Error("Credenciais inválidas");
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
   const data = await resp.json();
-  return data.access_token;
+  return data;
+}
+
+export async function verifyTwoFactor(twoFactorToken, code) {
+  const resp = await fetchWithResilience("/v1/auth/2fa/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      two_factor_token: twoFactorToken,
+      code,
+    }),
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export async function setupTwoFactor(token) {
+  const resp = await fetchWithResilience("/v1/auth/2fa/setup", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export async function enableTwoFactor(token, code) {
+  const resp = await fetchWithResilience("/v1/auth/2fa/enable", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify({ code }),
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export function githubLoginUrl() {
+  var origin =
+    typeof window !== "undefined" && window.location && window.location.origin
+      ? window.location.origin.replace(/\/$/, "")
+      : "https://syntexabr.com.br";
+  return origin + "/v1/auth/github/login";
+}
+
+export async function listIntegrationTokens(token) {
+  const resp = await fetchWithResilience("/v1/integrations/tokens", {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export async function createIntegrationToken(token, payload) {
+  const resp = await fetchWithResilience("/v1/integrations/tokens", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export async function revokeIntegrationToken(token, tokenId) {
+  const resp = await fetchWithResilience("/v1/integrations/tokens/" + tokenId, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return true;
+}
+
+export async function rotateIntegrationToken(token, tokenId) {
+  const resp = await fetchWithResilience("/v1/integrations/tokens/" + tokenId + "/rotate", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export async function getIntegrationConfig(token) {
+  const resp = await fetchWithResilience("/v1/integrations/config", {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export async function setIntegrationConfig(token, payload) {
+  const resp = await fetchWithResilience("/v1/integrations/config", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
 }
 
 export async function getMe(token) {
@@ -155,67 +302,132 @@ export async function getMe(token) {
   return resp.json();
 }
 
-export async function chatCompletion(token, history) {
-  const headers = { "Content-Type": "application/json" };
+export async function updateMe(token, payload) {
+  const resp = await fetchWithResilience("/v1/auth/me", {
+    method: "PUT",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export async function chatCompletion(token, history, sessionId) {
+  const locale = getClientLocale();
+  const headers = { "Content-Type": "application/json", "Accept-Language": locale };
   if (token) headers.Authorization = "Bearer " + token;
   const resp = await fetchWithResilience( "/v1/chat/completions", {
     method: "POST",
     headers,
-    body: JSON.stringify({ model: "syntexa-large", messages: history, max_tokens: 1024 }),
+    body: JSON.stringify({
+      model: "syntexa-large",
+      messages: history,
+      max_tokens: CHAT_MAX_TOKENS,
+      session_id: sessionId || undefined,
+      locale,
+    }),
   });
   if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error("Erro ao chamar IA: " + txt);
+    throw new Error(await readErrorMessage(resp));
   }
   const data = await resp.json();
   return data?.choices?.[0]?.message?.content ?? "Nenhuma resposta retornada pelo backend.";
 }
 
-export async function chatCompletionStream(token, history, onChunk, signal) {
-  const headers = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetchWithResilience( "/v1/chat/completions/stream", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ model: "syntexa-large", messages: history, max_tokens: 1024 }),
-    signal,
-  });
-  if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error("Erro ao chamar IA: " + txt);
-  }
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let full = "";
-  const state = { buffer: "" };
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    const lines = parseSSEChunkedTextIntoJsonLines(chunk, state);
-    for (const line of lines) {
-      if (line.startsWith("data: ")) {
-        try {
-          const data = JSON.parse(line.slice(6));
-          if (data.content) {
-            full += data.content;
-            if (onChunk) onChunk(data.content);
-          }
-        } catch (_) {}
+export async function chatCompletionStream(token, history, onChunk, signal, sessionId) {
+  const guard = createStreamGuard(signal);
+  try {
+    const locale = getClientLocale();
+    const headers = { "Content-Type": "application/json", "Accept-Language": locale };
+    if (token) headers.Authorization = "Bearer " + token;
+    const resp = await fetchWithResilience( "/v1/chat/completions/stream", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: "syntexa-large",
+        messages: history,
+        max_tokens: CHAT_MAX_TOKENS,
+        session_id: sessionId || undefined,
+        locale,
+      }),
+      signal: guard.signal,
+    });
+    if (!resp.ok) {
+      throw new Error(await readErrorMessage(resp));
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder("utf-8", { fatal: false, ignoreBOM: true });
+    let full = "";
+    const state = { buffer: "" };
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      guard.touch();
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = parseSSEChunkedTextIntoJsonLines(chunk, state);
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.content) {
+              full += data.content;
+              if (onChunk) onChunk(data.content);
+            }
+          } catch (_) {}
+        }
       }
     }
+    flushSseTail(state, (c) => {
+      full += c;
+      if (onChunk) onChunk(c);
+    });
+    return full || "Nenhuma resposta retornada.";
+  } finally {
+    guard.cleanup();
   }
-  return full || "Nenhuma resposta retornada.";
 }
 
-export async function chatCompletionWithMedia(token, history, files) {
+/**
+ * Se o stream falhar antes de qualquer token, obtém resposta completa sem stream.
+ * Se já houver texto parcial, propaga o erro (evita duplicar conteúdo na UI).
+ */
+export async function chatCompletionStreamWithFallback(token, history, onChunk, signal, sessionId) {
+  var received = "";
+  try {
+    return await chatCompletionStream(
+      token,
+      history,
+      function (c) {
+        received += c;
+        if (onChunk) onChunk(c);
+      },
+      signal,
+      sessionId
+    );
+  } catch (e) {
+    if (!String(received || "").trim()) {
+      const text = await chatCompletion(token, history, sessionId);
+      if (onChunk) onChunk(text);
+      return text;
+    }
+    throw e;
+  }
+}
+
+export async function chatCompletionWithMedia(token, history, files, sessionId) {
+  const locale = getClientLocale();
   const form = new FormData();
   form.append(
     "payload",
     JSON.stringify({
       model: "syntexa-large",
       messages: history,
-      max_tokens: 1024,
+      max_tokens: CHAT_MAX_TOKENS,
+      session_id: sessionId || undefined,
+      locale,
     })
   );
   for (const file of files) {
@@ -223,32 +435,33 @@ export async function chatCompletionWithMedia(token, history, files) {
   }
   const headers = {};
   if (token) headers.Authorization = "Bearer " + token;
+  headers["Accept-Language"] = locale;
   const resp = await fetchWithResilience( "/v1/chat/completions", {
     method: "POST",
     headers,
     body: form,
   });
   if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error("Erro ao chamar IA com mídia: " + txt);
+    throw new Error(await readErrorMessage(resp));
   }
   const data = await resp.json();
   return data?.choices?.[0]?.message?.content ?? "Nenhuma resposta retornada pelo backend.";
 }
 
 export async function publicChat(history) {
+  const locale = getClientLocale();
   const resp = await fetchWithResilience( "/public-chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "Accept-Language": locale },
     body: JSON.stringify({
       model: "syntexa-large",
       messages: history,
-      max_tokens: 1024,
+      max_tokens: CHAT_MAX_TOKENS,
+      locale,
     }),
   });
   if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error("Erro no modo gratuito: " + txt);
+    throw new Error(await readErrorMessage(resp));
   }
   const data = await resp.json();
   return data?.choices?.[0]?.message?.content ?? "Nenhuma resposta retornada pelo backend.";
@@ -259,52 +472,86 @@ export async function publicChat(history) {
  * onChunk(content) é chamado a cada pedaço; retorna o texto completo ao terminar.
  */
 export async function publicChatStream(history, onChunk, signal) {
-  const resp = await fetchWithResilience( "/public-chat/stream", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "syntexa-large",
-      messages: history,
-      max_tokens: 1024,
-    }),
-    signal,
-  });
-  if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error("Erro no modo gratuito: " + txt);
-  }
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let full = "";
-  const state = { buffer: "" };
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    const lines = parseSSEChunkedTextIntoJsonLines(chunk, state);
-    for (const line of lines) {
-      if (line.startsWith("data: ")) {
-        try {
-          const data = JSON.parse(line.slice(6));
-          if (data.content) {
-            full += data.content;
-            if (onChunk) onChunk(data.content);
-          }
-        } catch (_) {}
+  const guard = createStreamGuard(signal);
+  try {
+    const locale = getClientLocale();
+    const resp = await fetchWithResilience( "/public-chat/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept-Language": locale },
+      body: JSON.stringify({
+        model: "syntexa-large",
+        messages: history,
+        max_tokens: CHAT_MAX_TOKENS,
+        locale,
+      }),
+      signal: guard.signal,
+    });
+    if (!resp.ok) {
+      throw new Error(await readErrorMessage(resp));
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder("utf-8", { fatal: false, ignoreBOM: true });
+    let full = "";
+    const state = { buffer: "" };
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      guard.touch();
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = parseSSEChunkedTextIntoJsonLines(chunk, state);
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.content) {
+              full += data.content;
+              if (onChunk) onChunk(data.content);
+            }
+          } catch (_) {}
+        }
       }
     }
+    flushSseTail(state, (c) => {
+      full += c;
+      if (onChunk) onChunk(c);
+    });
+    return full || "Nenhuma resposta retornada.";
+  } finally {
+    guard.cleanup();
   }
-  return full || "Nenhuma resposta retornada.";
+}
+
+export async function publicChatStreamWithFallback(history, onChunk, signal) {
+  var received = "";
+  try {
+    return await publicChatStream(
+      history,
+      function (c) {
+        received += c;
+        if (onChunk) onChunk(c);
+      },
+      signal
+    );
+  } catch (e) {
+    if (!String(received || "").trim()) {
+      const text = await publicChat(history);
+      if (onChunk) onChunk(text);
+      return text;
+    }
+    throw e;
+  }
 }
 
 export async function publicChatWithMedia(history, files) {
+  const locale = getClientLocale();
   const form = new FormData();
   form.append(
     "payload",
     JSON.stringify({
       model: "vereda-small-echo",
       messages: history,
-      max_tokens: 1024,
+      max_tokens: CHAT_MAX_TOKENS,
+      locale,
     })
   );
   for (const file of files) {
@@ -312,11 +559,11 @@ export async function publicChatWithMedia(history, files) {
   }
   const resp = await fetchWithResilience( "/public-chat", {
     method: "POST",
+    headers: { "Accept-Language": locale },
     body: form,
   });
   if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error("Erro no modo gratuito com mídia: " + txt);
+    throw new Error(await readErrorMessage(resp));
   }
   const data = await resp.json();
   return data?.choices?.[0]?.message?.content ?? "Nenhuma resposta retornada pelo backend.";
@@ -353,6 +600,72 @@ export async function putAdminAllowedIps(token, ips) {
   return resp.json();
 }
 
+export async function getAdminMe(token) {
+  const resp = await fetchWithResilience("/v1/admin/me", {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!resp.ok) return null;
+  return resp.json();
+}
+
+export async function getAdminSystemStatus(token) {
+  const resp = await fetchWithResilience("/v1/admin/system/status", {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!resp.ok) throw new Error(USER_FACING_TRY_AGAIN);
+  return resp.json();
+}
+
+export async function pentestAdminPreflight(token, payload) {
+  const resp = await fetchWithResilience("/v1/chat/pentest-admin/preflight", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export async function pentestAdminRun(token, payload) {
+  const resp = await fetchWithResilience("/v1/chat/pentest-admin", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export async function pentestAdminSuite(token, payload) {
+  const resp = await fetchWithResilience("/v1/chat/pentest-admin/suite", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
+export async function getPentestAdminHistory(token, limit = 50) {
+  const cap = Math.min(Math.max(Number(limit) || 50, 1), 200);
+  const resp = await fetchWithResilience("/v1/chat/pentest-admin/history?limit=" + cap, {
+    headers: {
+      Authorization: "Bearer " + token,
+    },
+  });
+  if (!resp.ok) throw new Error(await readErrorMessage(resp));
+  return resp.json();
+}
+
 export async function listChatSessions(token) {
   if (!token) return [];
   const resp = await fetchWithResilience( "/v1/chat/sessions", {
@@ -380,8 +693,7 @@ export async function createStripeCheckout(plan, token) {
     body: JSON.stringify({ plan }),
   });
   if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error("Erro ao iniciar checkout: " + txt);
+    throw new Error(await readErrorMessage(resp));
   }
   const data = await resp.json();
   return data?.url;
@@ -412,18 +724,51 @@ async function mergeImageBase64FromWhitelistedUrl(data, token) {
 }
 
 export async function generateImage(prompt, token) {
+  /** Por defeito: API no backend (Pollinations/Azure/local) — sem login Puter. Puter só com NEXT_PUBLIC_USE_PUTER_IMAGES=1 */
+  const puterExplicit =
+    typeof window !== "undefined" &&
+    typeof process !== "undefined" &&
+    process.env &&
+    process.env.NEXT_PUBLIC_USE_PUTER_IMAGES === "1";
+
   const form = new FormData();
   form.append("prompt", prompt);
   const headers = {};
   if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetchWithResilience( "/v1/media/images/generate", {
+
+  if (!puterExplicit) {
+    try {
+      const resp = await fetchWithResilience("/v1/media/images/generate", {
+        method: "POST",
+        headers,
+        body: form,
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        return mergeImageBase64FromWhitelistedUrl(data, token);
+      }
+    } catch (_e) {
+      /* tenta Puter só se explícito abaixo */
+    }
+  }
+
+  if (puterExplicit) {
+    try {
+      const { generateImageWithPuter } = await import("./puter-image.js");
+      const data = await generateImageWithPuter(prompt);
+      return mergeImageBase64FromWhitelistedUrl(data, token);
+    } catch (_e) {
+      /* fallback servidor */
+    }
+  }
+
+  const resp = await fetchWithResilience("/v1/media/images/generate", {
     method: "POST",
     headers,
     body: form,
   });
   if (!resp.ok) {
-    const msg = await readErrorMessage(resp, "Falha ao gerar imagem no provedor real.");
-    throw new Error(msg);
+    throw new Error(await readErrorMessage(resp));
   }
   const data = await resp.json();
   return mergeImageBase64FromWhitelistedUrl(data, token);
@@ -440,8 +785,7 @@ export async function generateVideo(prompt, token) {
     body: form,
   });
   if (!resp.ok) {
-    const msg = await readErrorMessage(resp, "Falha ao gerar video no provedor real.");
-    throw new Error(msg);
+    throw new Error(await readErrorMessage(resp));
   }
   return resp.json();
 }
@@ -457,8 +801,7 @@ export async function generateMusic(prompt, token) {
     body: form,
   });
   if (!resp.ok) {
-    const msg = await readErrorMessage(resp, "Falha ao gerar audio no provedor real.");
-    throw new Error(msg);
+    throw new Error(await readErrorMessage(resp));
   }
   return resp.json();
 }
@@ -481,7 +824,7 @@ export async function educationTutor(discipline, question, mode, history, level,
       feedback: feedback || null,
     }),
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro no tutor: " + txt); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -500,12 +843,9 @@ export async function educationTutorStream(discipline, question, mode, history, 
     }),
     signal,
   });
-  if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error("Erro no tutor: " + txt);
-  }
+  await throwIfNotOk(resp);
   const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
+  const decoder = new TextDecoder("utf-8", { fatal: false, ignoreBOM: true });
   let full = "";
   const state = { buffer: "" };
   while (true) {
@@ -534,7 +874,7 @@ export async function teacherChat(token, task, content, context, level, language
     headers,
     body: JSON.stringify({ task, content, context: context || null, level: level || "avancado", language: language || "pt" }),
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro na ferramenta: " + txt); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -548,12 +888,9 @@ export async function teacherChatStream(token, task, content, context, level, la
     body: JSON.stringify({ task, content, context: context || null, level: level || "avancado", language: language || "pt" }),
     signal,
   });
-  if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error("Erro na ferramenta: " + txt);
-  }
+  await throwIfNotOk(resp);
   const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
+  const decoder = new TextDecoder("utf-8", { fatal: false, ignoreBOM: true });
   let full = "";
   const state = { buffer: "" };
   while (true) {
@@ -580,7 +917,7 @@ export async function educationCompute(expression, computeType, variable) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ expression, compute_type: computeType || "auto", variable: variable || "x" }),
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro no cálculo: " + txt); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -591,7 +928,7 @@ export async function educationCodeSandbox(code, language, timeout) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code, language: language || "python", timeout: timeout || 10 }),
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro no sandbox: " + txt); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -604,7 +941,7 @@ export async function teacherResearch(token, task, content, extra, language) {
     headers,
     body: JSON.stringify({ task: task || "analisar", content, extra: extra || null, language: language || "pt" }),
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro na pesquisa: " + txt); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -618,9 +955,9 @@ export async function teacherResearchStream(token, task, content, extra, languag
     body: JSON.stringify({ task: task || "analisar", content, extra: extra || null, language: language || "pt" }),
     signal,
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro na pesquisa: " + txt); }
+  await throwIfNotOk(resp);
   const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
+  const decoder = new TextDecoder("utf-8", { fatal: false, ignoreBOM: true });
   let full = "";
   const state = { buffer: "" };
   while (true) {
@@ -645,7 +982,7 @@ export async function govStats(token) {
   const resp = await fetchWithResilience( "/v1/education/gov/stats", {
     headers: { Authorization: "Bearer " + token },
   });
-  if (!resp.ok) throw new Error("Acesso negado ou erro ao buscar estatísticas");
+  if (!resp.ok) throw new Error(USER_FACING_TRY_AGAIN);
   return resp.json();
 }
 
@@ -656,7 +993,7 @@ export async function govGenerateReport(token, type, period, region) {
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
     body: JSON.stringify({ type: type || "geral", period: period || "mensal", region: region || "nacional" }),
   });
-  if (!resp.ok) throw new Error("Erro ao gerar relatório");
+  if (!resp.ok) throw new Error(USER_FACING_TRY_AGAIN);
   return resp.json();
 }
 
@@ -667,7 +1004,7 @@ export async function govPredict(token, scenario, context) {
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
     body: JSON.stringify({ scenario, context: context || null }),
   });
-  if (!resp.ok) throw new Error("Erro na previsão");
+  if (!resp.ok) throw new Error(USER_FACING_TRY_AGAIN);
   return resp.json();
 }
 
@@ -678,7 +1015,7 @@ export async function govPolicy(token, challenge, region, budget) {
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
     body: JSON.stringify({ challenge, region: region || null, budget: budget || null }),
   });
-  if (!resp.ok) throw new Error("Erro ao gerar política");
+  if (!resp.ok) throw new Error(USER_FACING_TRY_AGAIN);
   return resp.json();
 }
 
@@ -689,7 +1026,7 @@ export async function gradeEnemEssay(essay, theme, language) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ essay, theme: theme || null, language: language || "pt" }),
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro na correção: " + txt); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -701,9 +1038,9 @@ export async function gradeEnemEssayStream(essay, theme, language, onChunk, sign
     body: JSON.stringify({ essay, theme: theme || null, language: language || "pt" }),
     signal,
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro na correção: " + txt); }
+  await throwIfNotOk(resp);
   const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
+  const decoder = new TextDecoder("utf-8", { fatal: false, ignoreBOM: true });
   let full = "";
   const state = { buffer: "" };
   while (true) {
@@ -730,7 +1067,7 @@ export async function concursosTutor(exam, subject, question, level, language, h
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ exam: exam || "enem", subject: subject || "geral", question, level: level || "avancado", language: language || "pt", history: history || [] }),
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro no tutor: " + txt); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -742,9 +1079,9 @@ export async function concursosTutorStream(exam, subject, question, level, langu
     body: JSON.stringify({ exam: exam || "enem", subject: subject || "geral", question, level: level || "avancado", language: language || "pt", history: history || [] }),
     signal,
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro no tutor: " + txt); }
+  await throwIfNotOk(resp);
   const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
+  const decoder = new TextDecoder("utf-8", { fatal: false, ignoreBOM: true });
   let full = "";
   const state = { buffer: "" };
   while (true) {
@@ -784,7 +1121,7 @@ export async function educationScience(area, question, level, language, history)
       history: history || [],
     }),
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro na consulta científica: " + txt); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -802,9 +1139,9 @@ export async function educationScienceStream(area, question, level, language, hi
     }),
     signal,
   });
-  if (!resp.ok) { const txt = await resp.text(); throw new Error("Erro na consulta: " + txt); }
+  await throwIfNotOk(resp);
   const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
+  const decoder = new TextDecoder("utf-8", { fatal: false, ignoreBOM: true });
   let full = "";
   const state = { buffer: "" };
   while (true) {
@@ -824,6 +1161,156 @@ export async function educationScienceStream(area, question, level, language, hi
   return full || "Sem resposta.";
 }
 
+// ─── Multimodal (análise, exportação, STT/TTS unificados) ─────────────────
+
+export async function multimodalCapabilities() {
+  const resp = await fetchWithResilience("/v1/multimodal/capabilities");
+  await throwIfNotOk(resp);
+  return resp.json();
+}
+
+/** INTENÇÃO -> xlsx/pdf/docx/csv/txt + resumo + TTS (Azure quando configurado). */
+export async function multimodalSmartExport(
+  userMessage,
+  token,
+  generateAudio,
+  assistantReply
+) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = "Bearer " + token;
+  const ar =
+    assistantReply != null && String(assistantReply).trim()
+      ? String(assistantReply).slice(0, 500000)
+      : undefined;
+  const resp = await fetchWithResilience("/v1/multimodal/smart-export", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      user_message: userMessage,
+      generate_audio: generateAudio !== false,
+      ...(ar ? { assistant_reply: ar } : {}),
+    }),
+  });
+  await throwIfNotOk(resp);
+  return resp.json();
+}
+
+export async function multimodalAnalyze(file, { deep = false, token = null } = {}) {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("deep", deep ? "true" : "false");
+  const headers = {};
+  if (token) headers.Authorization = "Bearer " + token;
+  const resp = await fetchWithResilience("/v1/multimodal/analyze", {
+    method: "POST",
+    headers,
+    body: form,
+  });
+  await throwIfNotOk(resp);
+  return resp.json();
+}
+
+/** Evita guardar JSON como “.pdf” quando o origin devolve erro em 200 (raro). */
+async function _blobFromExportResponse(resp, label) {
+  if (!resp.ok) {
+    await throwIfNotOk(resp);
+  }
+  const buf = await resp.arrayBuffer();
+  if (buf.byteLength >= 1) {
+    const first = new Uint8Array(buf.slice(0, 1))[0];
+    if (first === 0x7b) {
+      try {
+        const j = JSON.parse(new TextDecoder().decode(buf));
+        throw new Error(
+          (j && j.detail) || label + ": o servidor devolveu JSON em vez do ficheiro."
+        );
+      } catch (e) {
+        if (e instanceof Error && /JSON|servidor/i.test(e.message)) throw e;
+      }
+    }
+  }
+  return new Blob([buf]);
+}
+
+export async function multimodalExportPdf(body, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = "Bearer " + token;
+  const resp = await fetchWithResilience("/v1/multimodal/export/pdf", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  return _blobFromExportResponse(resp, "PDF");
+}
+
+export async function multimodalExportXlsx(body, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = "Bearer " + token;
+  const resp = await fetchWithResilience("/v1/multimodal/export/xlsx", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  return _blobFromExportResponse(resp, "Excel");
+}
+
+export async function multimodalExportDocx(body, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = "Bearer " + token;
+  const resp = await fetchWithResilience("/v1/multimodal/export/docx", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  return _blobFromExportResponse(resp, "Word");
+}
+
+export async function multimodalExportTxt(body, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = "Bearer " + token;
+  const resp = await fetchWithResilience("/v1/multimodal/export/txt", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  return _blobFromExportResponse(resp, "TXT");
+}
+
+/** Áudio → STT → chat → TTS (resposta com audio_url base64). */
+export async function multimodalVoiceConversation(file, token, maxTokens) {
+  const form = new FormData();
+  form.append("file", file);
+  if (maxTokens) form.append("max_tokens", String(maxTokens));
+  const headers = {};
+  if (token) headers.Authorization = "Bearer " + token;
+  const resp = await fetchWithResilience("/v1/multimodal/voice/conversation", {
+    method: "POST",
+    headers,
+    body: form,
+  });
+  await throwIfNotOk(resp);
+  return resp.json();
+}
+
+export async function multimodalTranscribe(file, token) {
+  const form = new FormData();
+  form.append("file", file);
+  const headers = {};
+  if (token) headers.Authorization = "Bearer " + token;
+  const resp = await fetchWithResilience("/v1/multimodal/transcribe", {
+    method: "POST",
+    headers,
+    body: form,
+  });
+  await throwIfNotOk(resp);
+  const raw = await resp.text();
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new Error(USER_FACING_TRY_AGAIN);
+  }
+}
+
 /** Voz (TTS) em PT-BR via backend (edge-tts). Requer login. */
 export async function generateSpeech(text, token, voice) {
   const form = new FormData();
@@ -836,10 +1323,7 @@ export async function generateSpeech(text, token, voice) {
     headers,
     body: form,
   });
-  if (!resp.ok) {
-    const msg = await readErrorMessage(resp, "Falha ao sintetizar voz.");
-    throw new Error(msg);
-  }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -855,7 +1339,7 @@ function _adminHeaders() {
 export async function institutionalListClients({ activeOnly = false } = {}) {
   const qs = activeOnly ? "?active_only=true" : "";
   const resp = await fetchWithResilience( "/v1/institutional/clients" + qs, { headers: _adminHeaders() });
-  if (!resp.ok) { const msg = await readErrorMessage(resp, "Erro ao listar clientes."); throw new Error(msg); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -865,7 +1349,7 @@ export async function institutionalCreateClient(data) {
     headers: _adminHeaders(),
     body: JSON.stringify(data),
   });
-  if (!resp.ok) { const msg = await readErrorMessage(resp, "Erro ao criar cliente."); throw new Error(msg); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -875,7 +1359,7 @@ export async function institutionalUpdateClient(id, data) {
     headers: _adminHeaders(),
     body: JSON.stringify(data),
   });
-  if (!resp.ok) { const msg = await readErrorMessage(resp, "Erro ao atualizar cliente."); throw new Error(msg); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -884,7 +1368,7 @@ export async function institutionalDeactivateClient(id) {
     method: "DELETE",
     headers: _adminHeaders(),
   });
-  if (!resp.ok) { const msg = await readErrorMessage(resp, "Erro ao desativar cliente."); throw new Error(msg); }
+  await throwIfNotOk(resp);
   return { ok: true };
 }
 
@@ -893,7 +1377,7 @@ export async function institutionalRenewClient(id, expiresDays = 365) {
     "/v1/institutional/clients/" + id + "/renew?expires_days=" + expiresDays,
     { method: "POST", headers: _adminHeaders() }
   );
-  if (!resp.ok) { const msg = await readErrorMessage(resp, "Erro ao renovar licença."); throw new Error(msg); }
+  await throwIfNotOk(resp);
   return resp.json();
 }
 
@@ -902,6 +1386,6 @@ export async function institutionalRegenerateKey(id) {
     "/v1/institutional/clients/" + id + "/regenerate-key",
     { method: "POST", headers: _adminHeaders() }
   );
-  if (!resp.ok) { const msg = await readErrorMessage(resp, "Erro ao regenerar chave."); throw new Error(msg); }
+  await throwIfNotOk(resp);
   return resp.json();
 }

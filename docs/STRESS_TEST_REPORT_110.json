@@ -1,0 +1,1006 @@
+{
+  "timestamp_utc": "2026-04-20T12:08:23.288470Z",
+  "url": "https://syntexabr.com.br/v1/public-chat",
+  "rounds": 110,
+  "summary": {
+    "total": 110,
+    "success": 105,
+    "failed": 5,
+    "success_rate": 95.45454545454545,
+    "latency_avg_sec": 3.375579130000816,
+    "latency_p50_sec": 3.7715868500017677,
+    "latency_p95_sec": 5.248748900005012
+  },
+  "results": [
+    {
+      "index": 1,
+      "status_code": 200,
+      "latency_sec": 5.248748900005012,
+      "ok": true,
+      "answer_len": 1792,
+      "answer_preview": "**SAT is NP‑complete**   - **NP membership**: given a truth assignment, we can evaluate a Boolean formula in polynomial time.   - **NP‑hardness**: we reduce a known NP‑hard problem to SAT. A classic reduction is from **3",
+      "error": ""
+    },
+    {
+      "index": 2,
+      "status_code": 200,
+      "latency_sec": 4.145985200011637,
+      "ok": true,
+      "answer_len": 661,
+      "answer_preview": "**Integral**  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice.  1. First integration by parts      \\[    u=x^{2},\\qquad dv=e^{-x}dx \\;\\Longrightarrow\\; du=2x\\,dx,\\; v=-e^{-x}    \\]    \\[    \\int x^{2}e^{-x}dx ",
+      "error": ""
+    },
+    {
+      "index": 3,
+      "status_code": 200,
+      "latency_sec": 4.282224000009592,
+      "ok": true,
+      "answer_len": 310,
+      "answer_preview": "## 1.  High‑level Architecture  ``` ┌───────────────────────┐ │  Client (Web/Native)  │ │  • UI, local cache   │ │  • WebSocket/WS      │ └───────┬───────────────┘         │         ▼ ┌───────────────────────┐ │  API Gat",
+      "error": ""
+    },
+    {
+      "index": 4,
+      "status_code": 200,
+      "latency_sec": 4.221731300000101,
+      "ok": true,
+      "answer_len": 2646,
+      "answer_preview": "**Comparação de modelos para previsão de séries temporais com contexto longo**  | Aspecto | RNN (incl. LSTM/GRU) | Transformer (Self‑Attention) | State‑Space Models (SSM, e.g., Neural‑SSM, DeepAR‑SSM) | |----------|-----",
+      "error": ""
+    },
+    {
+      "index": 5,
+      "status_code": 503,
+      "latency_sec": 5.234213100004126,
+      "ok": false,
+      "answer_len": 0,
+      "answer_preview": "",
+      "error": "{\"detail\":\"Não foi possível concluir agora. Tente novamente em alguns instantes.\"}"
+    },
+    {
+      "index": 6,
+      "status_code": 200,
+      "latency_sec": 4.0924986000027275,
+      "ok": true,
+      "answer_len": 1903,
+      "answer_preview": "**Incident Response Plan – API Outage**  | Section | Purpose | Key Actions | |--------|---------|-------------| | **1. Scope** | All public and internal APIs that expose business services. | • REST/GraphQL endpoints, gRP",
+      "error": ""
+    },
+    {
+      "index": 7,
+      "status_code": 200,
+      "latency_sec": 3.314393499997095,
+      "ok": true,
+      "answer_len": 1887,
+      "answer_preview": "**Byzantine Fault Tolerance (BFT) vs. Raft – Core Differences**  | Feature | BFT (e.g., PBFT, Tendermint, HotStuff) | Raft | |---------|----------------------------------------|------| | **Fault model** | Arbitrary (Byza",
+      "error": ""
+    },
+    {
+      "index": 8,
+      "status_code": 200,
+      "latency_sec": 3.957026899995981,
+      "ok": true,
+      "answer_len": 1771,
+      "answer_preview": "**Performance Plan – Reduce API p95 latency from 2.4 s → < 900 ms**  | # | Objective | Action | Tool / Technique | Expected Impact | KPI / Target | |---|-----------|--------|-----------------|-----------------|----------",
+      "error": ""
+    },
+    {
+      "index": 9,
+      "status_code": 200,
+      "latency_sec": 4.028311300004134,
+      "ok": true,
+      "answer_len": 1238,
+      "answer_preview": "**Derivation of the closed‑form solution**  Consider the first‑order linear ordinary differential equation    \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I \\]  where \\(I\\subset\\mathbb R\\) is an interval.  1. **Integrating fact",
+      "error": ""
+    },
+    {
+      "index": 10,
+      "status_code": 200,
+      "latency_sec": 3.809834299987415,
+      "ok": true,
+      "answer_len": 1932,
+      "answer_preview": "**Secure File‑Export Pipeline – PDF / XLSX / DOCX**  | Layer | Responsibility | Key Technologies | Security / Reliability | |-------|----------------|------------------|------------------------| | **API / Ingress** | Acc",
+      "error": ""
+    },
+    {
+      "index": 11,
+      "status_code": 200,
+      "latency_sec": 0.19578560000809375,
+      "ok": true,
+      "answer_len": 1792,
+      "answer_preview": "**SAT is NP‑complete**   - **NP membership**: given a truth assignment, we can evaluate a Boolean formula in polynomial time.   - **NP‑hardness**: we reduce a known NP‑hard problem to SAT. A classic reduction is from **3",
+      "error": ""
+    },
+    {
+      "index": 12,
+      "status_code": 200,
+      "latency_sec": 6.295498799998313,
+      "ok": true,
+      "answer_len": 924,
+      "answer_preview": "**Indefinite integral**  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice (or the known formula for \\(\\int x^{n}e^{ax}\\,dx\\)):  1. First integration by parts      Let \\(u=x^{2}\\), \\(dv=e^{-x}dx\\).      Then \\(d",
+      "error": ""
+    },
+    {
+      "index": 13,
+      "status_code": 200,
+      "latency_sec": 0.1843998999975156,
+      "ok": true,
+      "answer_len": 310,
+      "answer_preview": "## 1.  High‑level Architecture  ``` ┌───────────────────────┐ │  Client (Web/Native)  │ │  • UI, local cache   │ │  • WebSocket/WS      │ └───────┬───────────────┘         │         ▼ ┌───────────────────────┐ │  API Gat",
+      "error": ""
+    },
+    {
+      "index": 14,
+      "status_code": 200,
+      "latency_sec": 1.2090733000077307,
+      "ok": true,
+      "answer_len": 2646,
+      "answer_preview": "**Comparação de modelos para previsão de séries temporais com contexto longo**  | Aspecto | RNN (incl. LSTM/GRU) | Transformer (Self‑Attention) | State‑Space Models (SSM, e.g., Neural‑SSM, DeepAR‑SSM) | |----------|-----",
+      "error": ""
+    },
+    {
+      "index": 15,
+      "status_code": 200,
+      "latency_sec": 4.254461700009415,
+      "ok": true,
+      "answer_len": 2221,
+      "answer_preview": "**PostgreSQL Multi‑Tenant Architecture with Audit Logging and LGPD‑Compliant Data Erasure**  Below is a practical, production‑ready design that satisfies:  | Requirement | How it is achieved | |--------------|-----------",
+      "error": ""
+    },
+    {
+      "index": 16,
+      "status_code": 200,
+      "latency_sec": 3.7752570000011474,
+      "ok": true,
+      "answer_len": 2385,
+      "answer_preview": "**Incident Response Plan – API Outage**  | Section | Purpose | Key Actions | |--------|----------|-------------| | 1. Scope | Define what counts as an “API outage” | • Any public‑facing endpoint returning < 200 ms latenc",
+      "error": ""
+    },
+    {
+      "index": 17,
+      "status_code": 200,
+      "latency_sec": 0.2521988000080455,
+      "ok": true,
+      "answer_len": 1887,
+      "answer_preview": "**Byzantine Fault Tolerance (BFT) vs. Raft – Core Differences**  | Feature | BFT (e.g., PBFT, Tendermint, HotStuff) | Raft | |---------|----------------------------------------|------| | **Fault model** | Arbitrary (Byza",
+      "error": ""
+    },
+    {
+      "index": 18,
+      "status_code": 200,
+      "latency_sec": 3.5135162999940803,
+      "ok": true,
+      "answer_len": 1973,
+      "answer_preview": "**Performance Plan – Reduce API p95 latency from 2.4 s → < 900 ms**  | Phase | Goal | Key Actions | Tools / References | |-------|------|-------------|--------------------| | **1. Baseline & Profiling** | Understand wher",
+      "error": ""
+    },
+    {
+      "index": 19,
+      "status_code": 200,
+      "latency_sec": 3.750550099997781,
+      "ok": true,
+      "answer_len": 1268,
+      "answer_preview": "**Closed‑form solution of a first‑order linear ODE**  ---  ### 1. Standard form  A first‑order linear ordinary differential equation can be written as    \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I \\]  where \\(p\\) and \\(q\\) ",
+      "error": ""
+    },
+    {
+      "index": 20,
+      "status_code": 200,
+      "latency_sec": 3.6390842999971937,
+      "ok": true,
+      "answer_len": 1818,
+      "answer_preview": "**Secure File‑Export Pipeline (PDF / XLSX / DOCX)**   *Designed for a cloud‑native, micro‑service environment (e.g., AWS, Azure, GCP, or on‑prem Kubernetes).*  ---  ## 1. High‑level Flow  ``` ┌──────────────────────┐ │  ",
+      "error": ""
+    },
+    {
+      "index": 21,
+      "status_code": 200,
+      "latency_sec": 3.982202799990773,
+      "ok": true,
+      "answer_len": 1040,
+      "answer_preview": "**SAT é NP‑completo**  1. **SAT ∈ NP** – dada uma atribuição de valores a todas as variáveis, podemos verificar em tempo polinomial se a fórmula booleana é satisfeita.   2. **SAT é NP‑hard** – a partir de qualquer proble",
+      "error": ""
+    },
+    {
+      "index": 22,
+      "status_code": 200,
+      "latency_sec": 3.9435181000008015,
+      "ok": true,
+      "answer_len": 1002,
+      "answer_preview": "**Integral**  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice.   Let    \\[ u=x^{2},\\qquad dv=e^{-x}\\,dx \\;\\Rightarrow\\; du=2x\\,dx,\\; v=-e^{-x} \\]  \\[ \\int x^{2}e^{-x}\\,dx = -x^{2}e^{-x} + \\int 2x e^{-x}\\,dx \\]",
+      "error": ""
+    },
+    {
+      "index": 23,
+      "status_code": 200,
+      "latency_sec": 4.016365000003134,
+      "ok": true,
+      "answer_len": 1940,
+      "answer_preview": "## 1.  Visão geral  | Camada | Responsabilidade | Tecnologias recomendadas | |--------|------------------|--------------------------| | **UI (frontend)** | Editor de células, visualização de histórico, UI de permissões |",
+      "error": ""
+    },
+    {
+      "index": 24,
+      "status_code": 200,
+      "latency_sec": 3.576936299999943,
+      "ok": true,
+      "answer_len": 2763,
+      "answer_preview": "**Short answer**  | Model type | How it handles long context | Typical strengths | Typical weaknesses | When to use it | |-----------|------------------------------|--------------------|--------------------|-------------",
+      "error": ""
+    },
+    {
+      "index": 25,
+      "status_code": 200,
+      "latency_sec": 4.208404999997583,
+      "ok": true,
+      "answer_len": 1671,
+      "answer_preview": "**Proposta de arquitetura PostgreSQL multi‑tenant com auditoria e LGPD‑compliant data erasure**  | Camada | Objetivo | Como implementar | |--------|----------|------------------| | **1. Isolamento de dados** | Garantir q",
+      "error": ""
+    },
+    {
+      "index": 26,
+      "status_code": 200,
+      "latency_sec": 0.18828149999899324,
+      "ok": true,
+      "answer_len": 2385,
+      "answer_preview": "**Incident Response Plan – API Outage**  | Section | Purpose | Key Actions | |--------|----------|-------------| | 1. Scope | Define what counts as an “API outage” | • Any public‑facing endpoint returning < 200 ms latenc",
+      "error": ""
+    },
+    {
+      "index": 27,
+      "status_code": 200,
+      "latency_sec": 8.061879299988504,
+      "ok": true,
+      "answer_len": 2221,
+      "answer_preview": "**Short answer**  - **Byzantine Fault Tolerance (BFT)** tolerates arbitrary (including malicious) failures. It needs *3f + 1* replicas to tolerate *f* Byzantine faults, incurs high communication and computation overhead,",
+      "error": ""
+    },
+    {
+      "index": 28,
+      "status_code": 200,
+      "latency_sec": 3.002245600000606,
+      "ok": true,
+      "answer_len": 1978,
+      "answer_preview": "**Performance Plan – Reduce API p95 latency from 2.4 s → < 900 ms**  | Phase | Goal | Key Actions | Tools / Metrics | Expected Impact | |-------|------|-------------|-----------------|-----------------| | **1. Baseline &",
+      "error": ""
+    },
+    {
+      "index": 29,
+      "status_code": 503,
+      "latency_sec": 4.915393299990683,
+      "ok": false,
+      "answer_len": 0,
+      "answer_preview": "",
+      "error": "{\"detail\":\"Não foi possível concluir agora. Tente novamente em alguns instantes.\"}"
+    },
+    {
+      "index": 30,
+      "status_code": 200,
+      "latency_sec": 4.275977900004364,
+      "ok": true,
+      "answer_len": 1818,
+      "answer_preview": "**Secure File‑Export Pipeline (PDF / XLSX / DOCX)**   *Designed for a cloud‑native, micro‑service environment (e.g., AWS, Azure, GCP, or on‑prem Kubernetes).*  ---  ## 1. High‑level Flow  ``` ┌──────────────────────┐ │  ",
+      "error": ""
+    },
+    {
+      "index": 31,
+      "status_code": 200,
+      "latency_sec": 0.5110118000011425,
+      "ok": true,
+      "answer_len": 1040,
+      "answer_preview": "**SAT é NP‑completo**  1. **SAT ∈ NP** – dada uma atribuição de valores a todas as variáveis, podemos verificar em tempo polinomial se a fórmula booleana é satisfeita.   2. **SAT é NP‑hard** – a partir de qualquer proble",
+      "error": ""
+    },
+    {
+      "index": 32,
+      "status_code": 200,
+      "latency_sec": 4.316137600006186,
+      "ok": true,
+      "answer_len": 1002,
+      "answer_preview": "**Integral**  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice.   Let    \\[ u=x^{2},\\qquad dv=e^{-x}\\,dx \\;\\Rightarrow\\; du=2x\\,dx,\\; v=-e^{-x} \\]  \\[ \\int x^{2}e^{-x}\\,dx = -x^{2}e^{-x} + \\int 2x e^{-x}\\,dx \\]",
+      "error": ""
+    },
+    {
+      "index": 33,
+      "status_code": 200,
+      "latency_sec": 4.564080700001796,
+      "ok": true,
+      "answer_len": 1940,
+      "answer_preview": "## 1.  Visão geral  | Camada | Responsabilidade | Tecnologias recomendadas | |--------|------------------|--------------------------| | **UI (frontend)** | Editor de células, visualização de histórico, UI de permissões |",
+      "error": ""
+    },
+    {
+      "index": 34,
+      "status_code": 200,
+      "latency_sec": 3.892049300004146,
+      "ok": true,
+      "answer_len": 1962,
+      "answer_preview": "**Short answer**  | Model type | Long‑context strength | Typical limitations | Common use‑cases | |------------|----------------------|---------------------|------------------| | **RNN (LSTM/GRU)** | Can, in theory, reme",
+      "error": ""
+    },
+    {
+      "index": 35,
+      "status_code": 200,
+      "latency_sec": 0.3280802999943262,
+      "ok": true,
+      "answer_len": 1671,
+      "answer_preview": "**Proposta de arquitetura PostgreSQL multi‑tenant com auditoria e LGPD‑compliant data erasure**  | Camada | Objetivo | Como implementar | |--------|----------|------------------| | **1. Isolamento de dados** | Garantir q",
+      "error": ""
+    },
+    {
+      "index": 36,
+      "status_code": 200,
+      "latency_sec": 4.336882400006289,
+      "ok": true,
+      "answer_len": 2222,
+      "answer_preview": "**Incident Response Plan – API Outage**  ---  ### 1. Purpose & Scope   - **Purpose:** Provide a repeatable, auditable process for detecting, containing, and recovering from an API outage while meeting Service‑Level Objec",
+      "error": ""
+    },
+    {
+      "index": 37,
+      "status_code": 200,
+      "latency_sec": 0.22812790000170935,
+      "ok": true,
+      "answer_len": 2221,
+      "answer_preview": "**Short answer**  - **Byzantine Fault Tolerance (BFT)** tolerates arbitrary (including malicious) failures. It needs *3f + 1* replicas to tolerate *f* Byzantine faults, incurs high communication and computation overhead,",
+      "error": ""
+    },
+    {
+      "index": 38,
+      "status_code": 200,
+      "latency_sec": 3.3962313999945763,
+      "ok": true,
+      "answer_len": 1284,
+      "answer_preview": "**Performance Plan – Reduce API p95 latency from 2.4 s → < 900 ms**  | Phase | Goal | Key Actions | Tools / Metrics | Owner | Time | |-------|------|-------------|-----------------|--------|------| | **1. Baseline & Prof",
+      "error": ""
+    },
+    {
+      "index": 39,
+      "status_code": 503,
+      "latency_sec": 4.88770609999483,
+      "ok": false,
+      "answer_len": 0,
+      "answer_preview": "",
+      "error": "{\"detail\":\"Não foi possível concluir agora. Tente novamente em alguns instantes.\"}"
+    },
+    {
+      "index": 40,
+      "status_code": 200,
+      "latency_sec": 4.190036799991503,
+      "ok": true,
+      "answer_len": 1452,
+      "answer_preview": "**Secure File‑Export Pipeline (PDF / XLSX / DOCX)**   *Goal:* Export user‑requested documents, store them securely, and deliver them to the requester with full auditability, retry logic, and end‑to‑end tracing.   *Platfo",
+      "error": ""
+    },
+    {
+      "index": 41,
+      "status_code": 200,
+      "latency_sec": 4.114322400011588,
+      "ok": true,
+      "answer_len": 1093,
+      "answer_preview": "**SAT is NP‑complete**  * **SAT** (Boolean satisfiability) is the problem:     *Input*: a Boolean formula φ in conjunctive normal form (CNF).     *Question*: does there exist an assignment of truth values to the variable",
+      "error": ""
+    },
+    {
+      "index": 42,
+      "status_code": 200,
+      "latency_sec": 3.904958800005261,
+      "ok": true,
+      "answer_len": 158,
+      "answer_preview": "**Integral**  \\[ \\int x^{2}e^{-x}\\,dx \\]  Usamos integração por partes duas vezes.  1. **Primeira aplicação**  \\[ u=x^{2},\\qquad dv=e^{-x}\\,dx \\] \\[ du=2x\\,dx",
+      "error": ""
+    },
+    {
+      "index": 43,
+      "status_code": 200,
+      "latency_sec": 11.979506199990283,
+      "ok": true,
+      "answer_len": 1652,
+      "answer_preview": "**Collaborative Spreadsheet – High‑Level Architecture**  | Layer | Responsibility | Key Components | Notes | |-------|-----------------|---------------|-------| | **Client** | UI + local state | • Spreadsheet UI (grid, f",
+      "error": ""
+    },
+    {
+      "index": 44,
+      "status_code": 200,
+      "latency_sec": 4.128089399993769,
+      "ok": true,
+      "answer_len": 2506,
+      "answer_preview": "**Short answer**  | Model type | How it handles long context | Typical strengths | Typical weaknesses | Common use‑cases | |------------|-----------------------------|-------------------|--------------------|------------",
+      "error": ""
+    },
+    {
+      "index": 45,
+      "status_code": 200,
+      "latency_sec": 3.9613534999953117,
+      "ok": true,
+      "answer_len": 2148,
+      "answer_preview": "**Proposta de arquitetura PostgreSQL multi‑tenant com auditoria e eliminação LGPD‑conforme**  | Camada | Objetivo | Como implementar | |--------|----------|------------------| | **1. Isolamento de dados** | Garantir que ",
+      "error": ""
+    },
+    {
+      "index": 46,
+      "status_code": 200,
+      "latency_sec": 3.696460899998783,
+      "ok": true,
+      "answer_len": 1917,
+      "answer_preview": "**Incident Response Plan – API Outage**  | Section | Purpose | Key Actions | |---------|---------|-------------| | **1. Scope & Definition** | Define what constitutes an outage and the SLOs that trigger an incident. | • ",
+      "error": ""
+    },
+    {
+      "index": 47,
+      "status_code": 200,
+      "latency_sec": 7.403516000005766,
+      "ok": true,
+      "answer_len": 2278,
+      "answer_preview": "**Short answer**  - **Byzantine Fault Tolerance (BFT)** tolerates arbitrary (malicious or buggy) failures. It requires *2f + 1* replicas to tolerate *f* Byzantine faults and incurs heavy communication (O(n²) messages) an",
+      "error": ""
+    },
+    {
+      "index": 48,
+      "status_code": 200,
+      "latency_sec": 3.062897100011469,
+      "ok": true,
+      "answer_len": 2062,
+      "answer_preview": "**Performance Plan – Reduce API p95 latency from 2.4 s to < 900 ms**  | Phase | Goal | Key Actions | Expected Impact | Reference | |-------|------|-------------|-----------------|------------| | **1. Baseline & Measureme",
+      "error": ""
+    },
+    {
+      "index": 49,
+      "status_code": 200,
+      "latency_sec": 3.348206599999685,
+      "ok": true,
+      "answer_len": 1033,
+      "answer_preview": "**Derivation of the closed‑form solution for a first‑order linear ODE**  Consider the standard first‑order linear ordinary differential equation  \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I, \\]  where \\(I\\) is an interval on",
+      "error": ""
+    },
+    {
+      "index": 50,
+      "status_code": 200,
+      "latency_sec": 3.620224700003746,
+      "ok": true,
+      "answer_len": 1302,
+      "answer_preview": "**Secure File‑Export Pipeline (PDF / XLSX / DOCX)   with Queueing, Retries, and Tracing**  Below is a production‑ready, cloud‑agnostic design that can be deployed on AWS, Azure, or a hybrid environment.   The architectur",
+      "error": ""
+    },
+    {
+      "index": 51,
+      "status_code": 200,
+      "latency_sec": 3.986984200004372,
+      "ok": true,
+      "answer_len": 1420,
+      "answer_preview": "**SAT is NP‑complete**   - **SAT** (Boolean satisfiability) asks whether a Boolean formula has a satisfying assignment.   - It is in NP because a satisfying assignment can be verified in polynomial time.   - Cook’s theor",
+      "error": ""
+    },
+    {
+      "index": 52,
+      "status_code": 200,
+      "latency_sec": 3.4085892000002787,
+      "ok": true,
+      "answer_len": 383,
+      "answer_preview": "**Indefinite integral**  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice.  1. First integration by parts      \\[    u=x^{2},\\qquad dv=e^{-x}\\,dx    \\]    \\[    du=2x\\,dx,\\qquad v=-e^{-x}    \\]    \\[    \\int x^",
+      "error": ""
+    },
+    {
+      "index": 53,
+      "status_code": 200,
+      "latency_sec": 0.1953295999992406,
+      "ok": true,
+      "answer_len": 1652,
+      "answer_preview": "**Collaborative Spreadsheet – High‑Level Architecture**  | Layer | Responsibility | Key Components | Notes | |-------|-----------------|---------------|-------| | **Client** | UI + local state | • Spreadsheet UI (grid, f",
+      "error": ""
+    },
+    {
+      "index": 54,
+      "status_code": 200,
+      "latency_sec": 6.831560700011323,
+      "ok": true,
+      "answer_len": 2592,
+      "answer_preview": "**Comparação de modelos para previsão de séries temporais com contexto longo**  | Aspecto | RNN (incl. LSTM/GRU) | Transformer (Self‑Attention) | State‑Space Models (SSM) | |---------|---------------------|--------------",
+      "error": ""
+    },
+    {
+      "index": 55,
+      "status_code": 200,
+      "latency_sec": 0.20161499999812804,
+      "ok": true,
+      "answer_len": 2148,
+      "answer_preview": "**Proposta de arquitetura PostgreSQL multi‑tenant com auditoria e eliminação LGPD‑conforme**  | Camada | Objetivo | Como implementar | |--------|----------|------------------| | **1. Isolamento de dados** | Garantir que ",
+      "error": ""
+    },
+    {
+      "index": 56,
+      "status_code": 200,
+      "latency_sec": 4.957713399999193,
+      "ok": true,
+      "answer_len": 2196,
+      "answer_preview": "**Incident Response Plan – API Outage**  | Phase | Objective | Key Actions | Owner | SLA / SLO Impact | |-------|------------|------------|-------|------------------| | **1. Detection & Alerting** | Identify outage early",
+      "error": ""
+    },
+    {
+      "index": 57,
+      "status_code": 200,
+      "latency_sec": 0.5871723999880487,
+      "ok": true,
+      "answer_len": 2278,
+      "answer_preview": "**Short answer**  - **Byzantine Fault Tolerance (BFT)** tolerates arbitrary (malicious or buggy) failures. It requires *2f + 1* replicas to tolerate *f* Byzantine faults and incurs heavy communication (O(n²) messages) an",
+      "error": ""
+    },
+    {
+      "index": 58,
+      "status_code": 200,
+      "latency_sec": 4.251894899993204,
+      "ok": true,
+      "answer_len": 2019,
+      "answer_preview": "**Performance Plan – Reduce API p95 Latency from 2.4 s → < 900 ms**  | Phase | Goal | Key Actions | Expected Impact | Reference | |-------|------|-------------|-----------------|-----------| | **1. Measurement & Baseline",
+      "error": ""
+    },
+    {
+      "index": 59,
+      "status_code": 200,
+      "latency_sec": 0.20077750000928063,
+      "ok": true,
+      "answer_len": 1033,
+      "answer_preview": "**Derivation of the closed‑form solution for a first‑order linear ODE**  Consider the standard first‑order linear ordinary differential equation  \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I, \\]  where \\(I\\) is an interval on",
+      "error": ""
+    },
+    {
+      "index": 60,
+      "status_code": 200,
+      "latency_sec": 3.942868300000555,
+      "ok": true,
+      "answer_len": 1576,
+      "answer_preview": "**Secure File‑Export Pipeline (PDF / XLSX / DOCX)**   *Designed for a cloud‑native, event‑driven architecture (AWS or Azure).  The design is intentionally generic so it can be mapped to either platform with minimal chang",
+      "error": ""
+    },
+    {
+      "index": 61,
+      "status_code": 200,
+      "latency_sec": 0.18799449999642093,
+      "ok": true,
+      "answer_len": 1420,
+      "answer_preview": "**SAT is NP‑complete**   - **SAT** (Boolean satisfiability) asks whether a Boolean formula has a satisfying assignment.   - It is in NP because a satisfying assignment can be verified in polynomial time.   - Cook’s theor",
+      "error": ""
+    },
+    {
+      "index": 62,
+      "status_code": 200,
+      "latency_sec": 3.8031409999966854,
+      "ok": true,
+      "answer_len": 456,
+      "answer_preview": "**Indefinite integral**  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice.  1. First integration by parts      \\[    u=x^{2},\\qquad dv=e^{-x}\\,dx    \\]    \\[    du=2x\\,dx,\\qquad v=-e^{-x}    \\]    \\[    \\int x^",
+      "error": ""
+    },
+    {
+      "index": 63,
+      "status_code": 200,
+      "latency_sec": 3.7798150000016904,
+      "ok": true,
+      "answer_len": 2093,
+      "answer_preview": "## 1.  Visão geral  | Camada | Responsabilidade | Tecnologias recomendadas | |--------|------------------|--------------------------| | **Client (UI)** | Edição de células, visualização, UI de permissões | React/Angular ",
+      "error": ""
+    },
+    {
+      "index": 64,
+      "status_code": 200,
+      "latency_sec": 3.927227499996661,
+      "ok": true,
+      "answer_len": 2555,
+      "answer_preview": "**Comparação de Modelos para Forecasting de Séries Temporais com Longo Contexto**  | Característica | RNN (incl. LSTM/GRU) | Transformer (Self‑Attention) | State‑Space Models (SSM, e.g., DeepAR, N-BEATS, Neural State‑Spa",
+      "error": ""
+    },
+    {
+      "index": 65,
+      "status_code": 200,
+      "latency_sec": 3.3888251000025775,
+      "ok": true,
+      "answer_len": 2025,
+      "answer_preview": "**Proposta de arquitetura PostgreSQL multi‑tenant com auditoria e conformidade LGPD**  | Camada | Objetivo | Como implementar | |--------|----------|-------------------| | **1. Isolamento de dados** | Garantir que cada c",
+      "error": ""
+    },
+    {
+      "index": 66,
+      "status_code": 200,
+      "latency_sec": 4.612638400009018,
+      "ok": true,
+      "answer_len": 1473,
+      "answer_preview": "**Incident Response Plan – API Outage**   *(Designed for a production API with defined SLOs, rollback capability, and a clear communications timeline.)*  ---  ## 1. Overview  | Item | Description | |------|--------------",
+      "error": ""
+    },
+    {
+      "index": 67,
+      "status_code": 503,
+      "latency_sec": 4.433322900003986,
+      "ok": false,
+      "answer_len": 0,
+      "answer_preview": "",
+      "error": "{\"detail\":\"Não foi possível concluir agora. Tente novamente em alguns instantes.\"}"
+    },
+    {
+      "index": 68,
+      "status_code": 200,
+      "latency_sec": 4.132713300001342,
+      "ok": true,
+      "answer_len": 1809,
+      "answer_preview": "**Performance Plan – Reduce API p95 latency from 2.4 s → < 900 ms**  | Phase | Goal | Key Actions | Owner | Deadline | KPI | |-------|------|-------------|-------|----------|-----| | **1. Measurement & Baseline** | Quant",
+      "error": ""
+    },
+    {
+      "index": 69,
+      "status_code": 200,
+      "latency_sec": 3.805436100010411,
+      "ok": true,
+      "answer_len": 1305,
+      "answer_preview": "**Closed‑form solution of a first‑order linear ODE**  Consider the general first‑order linear ordinary differential equation    \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I \\]  where \\(I\\subset\\mathbb R\\) is an interval.   Th",
+      "error": ""
+    },
+    {
+      "index": 70,
+      "status_code": 200,
+      "latency_sec": 3.1514505999948597,
+      "ok": true,
+      "answer_len": 1679,
+      "answer_preview": "**Secure File‑Export Pipeline (PDF / XLSX / DOCX)**   *Designed for a cloud‑native, event‑driven architecture (AWS or Azure) with queueing, retry logic, and end‑to‑end tracing.*  ---  ## 1. High‑level Flow  ``` ┌────────",
+      "error": ""
+    },
+    {
+      "index": 71,
+      "status_code": 200,
+      "latency_sec": 3.753333800006658,
+      "ok": true,
+      "answer_len": 1554,
+      "answer_preview": "**SAT is NP‑complete**  * **SAT** (Boolean satisfiability) asks whether a Boolean formula has a satisfying assignment.   * **Cook–Levin theorem (1971)** shows that SAT is in NP and that every problem in NP can be reduced",
+      "error": ""
+    },
+    {
+      "index": 72,
+      "status_code": 200,
+      "latency_sec": 6.358716199989431,
+      "ok": true,
+      "answer_len": 812,
+      "answer_preview": "**Indefinite integral**  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice.  1. First integration by parts      Let \\(u=x^{2}\\), \\(dv=e^{-x}\\,dx\\).      Then \\(du=2x\\,dx\\), \\(v=-e^{-x}\\).  \\[ \\int x^{2}e^{-x}\\,d",
+      "error": ""
+    },
+    {
+      "index": 73,
+      "status_code": 200,
+      "latency_sec": 3.706221500004176,
+      "ok": true,
+      "answer_len": 1256,
+      "answer_preview": "## 1.  Visão geral  | Camada | Responsabilidade | Tecnologias típicas | |--------|------------------|---------------------| | **Client** | UI, local state, optimistic UI, offline edits | React/Angular + WebSocket / WebRT",
+      "error": ""
+    },
+    {
+      "index": 74,
+      "status_code": 200,
+      "latency_sec": 0.19929810000758152,
+      "ok": true,
+      "answer_len": 2555,
+      "answer_preview": "**Comparação de Modelos para Forecasting de Séries Temporais com Longo Contexto**  | Característica | RNN (incl. LSTM/GRU) | Transformer (Self‑Attention) | State‑Space Models (SSM, e.g., DeepAR, N-BEATS, Neural State‑Spa",
+      "error": ""
+    },
+    {
+      "index": 75,
+      "status_code": 200,
+      "latency_sec": 3.7373904999985825,
+      "ok": true,
+      "answer_len": 2020,
+      "answer_preview": "**Short answer**  Use a *schema‑per‑tenant* model with **Row‑Level Security (RLS)**, a central **audit table** that records every change with a tenant‑specific trace ID, and a **data‑erasure function** that either delete",
+      "error": ""
+    },
+    {
+      "index": 76,
+      "status_code": 200,
+      "latency_sec": 0.19946509999863338,
+      "ok": true,
+      "answer_len": 1473,
+      "answer_preview": "**Incident Response Plan – API Outage**   *(Designed for a production API with defined SLOs, rollback capability, and a clear communications timeline.)*  ---  ## 1. Overview  | Item | Description | |------|--------------",
+      "error": ""
+    },
+    {
+      "index": 77,
+      "status_code": 503,
+      "latency_sec": 4.270503899999312,
+      "ok": false,
+      "answer_len": 0,
+      "answer_preview": "",
+      "error": "{\"detail\":\"Não foi possível concluir agora. Tente novamente em alguns instantes.\"}"
+    },
+    {
+      "index": 78,
+      "status_code": 200,
+      "latency_sec": 3.799491700003273,
+      "ok": true,
+      "answer_len": 1992,
+      "answer_preview": "**Performance Plan – Reduce API p95 latency from 2.4 s to < 900 ms**  | Phase | Goal | Key Actions | Expected Impact | KPI / Target | |-------|------|-------------|------------------|--------------| | **1. Baseline & Mea",
+      "error": ""
+    },
+    {
+      "index": 79,
+      "status_code": 200,
+      "latency_sec": 0.19063159999495838,
+      "ok": true,
+      "answer_len": 1305,
+      "answer_preview": "**Closed‑form solution of a first‑order linear ODE**  Consider the general first‑order linear ordinary differential equation    \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I \\]  where \\(I\\subset\\mathbb R\\) is an interval.   Th",
+      "error": ""
+    },
+    {
+      "index": 80,
+      "status_code": 200,
+      "latency_sec": 3.4670396000001347,
+      "ok": true,
+      "answer_len": 997,
+      "answer_preview": "**Secure File‑Export Pipeline (PDF / XLSX / DOCX)**   *Designed for a cloud‑native, event‑driven architecture that guarantees confidentiality, integrity, and auditability while providing queueing, retry, and end‑to‑end t",
+      "error": ""
+    },
+    {
+      "index": 81,
+      "status_code": 200,
+      "latency_sec": 0.19619909999892116,
+      "ok": true,
+      "answer_len": 1554,
+      "answer_preview": "**SAT is NP‑complete**  * **SAT** (Boolean satisfiability) asks whether a Boolean formula has a satisfying assignment.   * **Cook–Levin theorem (1971)** shows that SAT is in NP and that every problem in NP can be reduced",
+      "error": ""
+    },
+    {
+      "index": 82,
+      "status_code": 200,
+      "latency_sec": 4.124330800012103,
+      "ok": true,
+      "answer_len": 485,
+      "answer_preview": "**Indefinite integral**  \\[ \\int x^{2}\\,e^{-x}\\,dx \\]  Use integration by parts twice.  1. First part      \\[    u=x^{2},\\qquad dv=e^{-x}\\,dx    \\]    \\[    du=2x\\,dx,\\qquad v=-e^{-x}    \\]    \\[    \\int x^{2}e^{-x}\\,dx ",
+      "error": ""
+    },
+    {
+      "index": 83,
+      "status_code": 200,
+      "latency_sec": 0.2036962999991374,
+      "ok": true,
+      "answer_len": 1256,
+      "answer_preview": "## 1.  Visão geral  | Camada | Responsabilidade | Tecnologias típicas | |--------|------------------|---------------------| | **Client** | UI, local state, optimistic UI, offline edits | React/Angular + WebSocket / WebRT",
+      "error": ""
+    },
+    {
+      "index": 84,
+      "status_code": 200,
+      "latency_sec": 4.312192600002163,
+      "ok": true,
+      "answer_len": 2362,
+      "answer_preview": "**Comparação de Transformers, RNNs e State‑Space Models (SSMs) para previsão de séries temporais com contexto longo**  | Característica | RNN (LSTM/GRU) | Transformer (Self‑Attention) | State‑Space Model (SSM) | |-------",
+      "error": ""
+    },
+    {
+      "index": 85,
+      "status_code": 200,
+      "latency_sec": 3.3054332000028808,
+      "ok": true,
+      "answer_len": 1874,
+      "answer_preview": "**Proposta de arquitetura PostgreSQL multi‑tenant com auditoria e eliminação de dados LGPD‑conforme**  ---  ## 1. Visão geral  | Camada | Objetivo | Principais componentes | |--------|----------|------------------------|",
+      "error": ""
+    },
+    {
+      "index": 86,
+      "status_code": 200,
+      "latency_sec": 3.7421919000044,
+      "ok": true,
+      "answer_len": 2263,
+      "answer_preview": "**Incident Response Plan – API Outage**  | Section | Purpose | Key Elements | |--------|---------|---------------| | 1. Overview | Define scope and goals | • API outage definition (any unavailability > 1 min) <br>• Prima",
+      "error": ""
+    },
+    {
+      "index": 87,
+      "status_code": 200,
+      "latency_sec": 3.648323400004301,
+      "ok": true,
+      "answer_len": 1801,
+      "answer_preview": "**Short answer**  - **Byzantine Fault Tolerance (BFT)** tolerates arbitrary (even malicious) faults; it needs **3 f + 1** replicas and incurs high communication, latency, and resource costs.   - **Raft** tolerates only c",
+      "error": ""
+    },
+    {
+      "index": 88,
+      "status_code": 200,
+      "latency_sec": 3.767916700002388,
+      "ok": true,
+      "answer_len": 2053,
+      "answer_preview": "**Performance Plan – Reduce API p95 Latency from 2.4 s → < 900 ms**  | Phase | Goal | Key Actions | Expected Impact | KPI / Tool | |-------|------|-------------|-----------------|------------| | **1. Baseline & Measureme",
+      "error": ""
+    },
+    {
+      "index": 89,
+      "status_code": 200,
+      "latency_sec": 3.6829964999924414,
+      "ok": true,
+      "answer_len": 1405,
+      "answer_preview": "**General form**  A first‑order linear ordinary differential equation (ODE) is written  \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I \\]  where \\(I\\subset\\mathbb R\\) is an interval.  ---  ### 1.  Derivation of the closed‑form ",
+      "error": ""
+    },
+    {
+      "index": 90,
+      "status_code": 200,
+      "latency_sec": 4.217925600009039,
+      "ok": true,
+      "answer_len": 1456,
+      "answer_preview": "## Secure File‑Export Pipeline   *(PDF, XLSX, DOCX – any format that can be generated by your application)*    The design below is **cloud‑agnostic** but uses AWS terminology (SQS, Lambda, S3, CloudWatch, X‑Ray) and Azur",
+      "error": ""
+    },
+    {
+      "index": 91,
+      "status_code": 200,
+      "latency_sec": 4.100778199994238,
+      "ok": true,
+      "answer_len": 1596,
+      "answer_preview": "**SAT is NP‑complete**   *Why?*   1. **SAT ∈ NP** – a truth assignment is a certificate that can be verified in polynomial time.   2. **SAT is NP‑hard** – every problem in NP can be reduced to SAT in polynomial time (Coo",
+      "error": ""
+    },
+    {
+      "index": 92,
+      "status_code": 200,
+      "latency_sec": 3.1104258999985177,
+      "ok": true,
+      "answer_len": 371,
+      "answer_preview": "**Indefinite integral**  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice.  1. First part      \\[    u=x^{2},\\qquad dv=e^{-x}dx    \\]    \\[    du=2x\\,dx,\\qquad v=-e^{-x}    \\]    \\[    \\int x^{2}e^{-x}dx = -x^{",
+      "error": ""
+    },
+    {
+      "index": 93,
+      "status_code": 200,
+      "latency_sec": 3.440328700002283,
+      "ok": true,
+      "answer_len": 1612,
+      "answer_preview": "**Arquitetura de uma planilha colaborativa com resolução de conflitos e ACLs por célula**  ---  ### 1. Visão geral  ``` ┌───────────────────────┐ │  Cliente (Web/React)   │ │  • UI de planilha      │ │  • WebSocket/Socke",
+      "error": ""
+    },
+    {
+      "index": 94,
+      "status_code": 200,
+      "latency_sec": 4.874142500004382,
+      "ok": true,
+      "answer_len": 2373,
+      "answer_preview": "**Comparação de modelos para previsão de séries temporais com contexto longo**  | Critério | RNN (Recurrent Neural Network) | Transformer | State‑Space Models (SSM) | |----------|--------------------------------|--------",
+      "error": ""
+    },
+    {
+      "index": 95,
+      "status_code": 200,
+      "latency_sec": 0.19997820000571664,
+      "ok": true,
+      "answer_len": 1874,
+      "answer_preview": "**Proposta de arquitetura PostgreSQL multi‑tenant com auditoria e eliminação de dados LGPD‑conforme**  ---  ## 1. Visão geral  | Camada | Objetivo | Principais componentes | |--------|----------|------------------------|",
+      "error": ""
+    },
+    {
+      "index": 96,
+      "status_code": 200,
+      "latency_sec": 4.264283600001363,
+      "ok": true,
+      "answer_len": 1955,
+      "answer_preview": "**Incident Response Plan – API Outage**   *(Designed for a production API that exposes a set of REST/GraphQL endpoints. Adapt the details to your stack, team structure, and regulatory environment.)*  ---  ## 1. Purpose &",
+      "error": ""
+    },
+    {
+      "index": 97,
+      "status_code": 200,
+      "latency_sec": 0.2131148999906145,
+      "ok": true,
+      "answer_len": 1801,
+      "answer_preview": "**Short answer**  - **Byzantine Fault Tolerance (BFT)** tolerates arbitrary (even malicious) faults; it needs **3 f + 1** replicas and incurs high communication, latency, and resource costs.   - **Raft** tolerates only c",
+      "error": ""
+    },
+    {
+      "index": 98,
+      "status_code": 200,
+      "latency_sec": 4.167814600004931,
+      "ok": true,
+      "answer_len": 2053,
+      "answer_preview": "**Performance Plan – Reduce API p95 Latency from 2.4 s → < 900 ms**  | Phase | Goal | Key Actions | Expected Impact | KPI / Tool | |-------|------|-------------|-----------------|------------| | **1. Baseline & Measureme",
+      "error": ""
+    },
+    {
+      "index": 99,
+      "status_code": 200,
+      "latency_sec": 3.278079300012905,
+      "ok": true,
+      "answer_len": 1217,
+      "answer_preview": "**Closed‑form solution of a first‑order linear ODE**  Consider the standard first‑order linear differential equation    \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I \\]  where \\(p\\) and \\(q\\) are real‑valued functions.  ---  #",
+      "error": ""
+    },
+    {
+      "index": 100,
+      "status_code": 200,
+      "latency_sec": 0.18924130000232253,
+      "ok": true,
+      "answer_len": 1456,
+      "answer_preview": "## Secure File‑Export Pipeline   *(PDF, XLSX, DOCX – any format that can be generated by your application)*    The design below is **cloud‑agnostic** but uses AWS terminology (SQS, Lambda, S3, CloudWatch, X‑Ray) and Azur",
+      "error": ""
+    },
+    {
+      "index": 101,
+      "status_code": 200,
+      "latency_sec": 3.388731300001382,
+      "ok": true,
+      "answer_len": 1482,
+      "answer_preview": "**SAT is NP‑complete**   - **SAT** (Boolean satisfiability) asks whether a Boolean formula has an assignment that makes it true.   - Cook–Levin (1971) proved that SAT is NP‑complete:     1. SAT ∈ NP (a satisfying assignm",
+      "error": ""
+    },
+    {
+      "index": 102,
+      "status_code": 200,
+      "latency_sec": 0.19312869998975657,
+      "ok": true,
+      "answer_len": 371,
+      "answer_preview": "**Indefinite integral**  \\[ \\int x^{2}e^{-x}\\,dx \\]  Use integration by parts twice.  1. First part      \\[    u=x^{2},\\qquad dv=e^{-x}dx    \\]    \\[    du=2x\\,dx,\\qquad v=-e^{-x}    \\]    \\[    \\int x^{2}e^{-x}dx = -x^{",
+      "error": ""
+    },
+    {
+      "index": 103,
+      "status_code": 200,
+      "latency_sec": 3.4182589999982156,
+      "ok": true,
+      "answer_len": 1418,
+      "answer_preview": "**Arquitetura de um Spreadsheet Colaborativo com Resolução de Conflitos e ACLs por Célula**  ---  ### 1. Visão geral  ``` ┌───────────────────────┐ │  Cliente (Web/Android)│ └─────────────┬─────────┘               │ WebS",
+      "error": ""
+    },
+    {
+      "index": 104,
+      "status_code": 200,
+      "latency_sec": 0.20199070000671782,
+      "ok": true,
+      "answer_len": 2373,
+      "answer_preview": "**Comparação de modelos para previsão de séries temporais com contexto longo**  | Critério | RNN (Recurrent Neural Network) | Transformer | State‑Space Models (SSM) | |----------|--------------------------------|--------",
+      "error": ""
+    },
+    {
+      "index": 105,
+      "status_code": 200,
+      "latency_sec": 4.286286600006861,
+      "ok": true,
+      "answer_len": 1116,
+      "answer_preview": "**Proposta de arquitetura PostgreSQL multi‑tenant com auditoria e conformidade LGPD**  | Camada | Objetivo | Como fazer | Referências | |--------|----------|------------|-------------| | **1. Isolamento de dados** | Gara",
+      "error": ""
+    },
+    {
+      "index": 106,
+      "status_code": 200,
+      "latency_sec": 3.6859127000061562,
+      "ok": true,
+      "answer_len": 1977,
+      "answer_preview": "**Incident Response Plan – API Outage**   *(Designed for a small‑to‑medium API team; adaptable to larger environments.)*    | Phase | Goal | Key Actions | Owner | Time Target | |-------|------|--------------|-------|----",
+      "error": ""
+    },
+    {
+      "index": 107,
+      "status_code": 200,
+      "latency_sec": 3.4343594000092708,
+      "ok": true,
+      "answer_len": 431,
+      "answer_preview": "**Short answer**  - **Byzantine Fault Tolerance (BFT)** tolerates arbitrary (malicious or buggy) failures. It needs at least 3f + 1 replicas to tolerate f faults, incurs O(n²) message complexity, and is harder to impleme",
+      "error": ""
+    },
+    {
+      "index": 108,
+      "status_code": 200,
+      "latency_sec": 3.5364284999959636,
+      "ok": true,
+      "answer_len": 1379,
+      "answer_preview": "**Goal:** Reduce API p95 latency from **2.4 s → < 900 ms**.  ---  ## 1. Quick‑Start Summary   | Step | Action | Tool / Technique | Expected Impact | |------|--------|-------------------|-----------------| | 1 | **Baselin",
+      "error": ""
+    },
+    {
+      "index": 109,
+      "status_code": 200,
+      "latency_sec": 3.263013099989621,
+      "ok": true,
+      "answer_len": 1253,
+      "answer_preview": "**General form**  A first‑order linear ordinary differential equation (ODE) has the form    \\[ y'(x)+p(x)\\,y(x)=q(x), \\qquad x\\in I \\]  where \\(p(x)\\) and \\(q(x)\\) are given functions and \\(I\\) is an interval on the real",
+      "error": ""
+    },
+    {
+      "index": 110,
+      "status_code": 200,
+      "latency_sec": 3.9511617999960436,
+      "ok": true,
+      "answer_len": 1031,
+      "answer_preview": "**Secure File‑Export Pipeline (PDF / XLSX / DOCX) – High‑Level Design**  | Layer | Purpose | Key Components | Security Controls | |-------|---------|----------------|-------------------| | **API / Ingress** | Accept expo",
+      "error": ""
+    }
+  ]
+}

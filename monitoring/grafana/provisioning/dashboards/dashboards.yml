@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: syntexa-own-model
+    orgId: 1
+    folder: Syntexa
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

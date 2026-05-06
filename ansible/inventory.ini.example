@@ -1,0 +1,9 @@
+[exllama]
+# Substitua IPs abaixo pelo IP público da VM Azure criada
+# ex: 20.50.10.123 ansible_user=azureuser ansible_ssh_private_key_file=~/.ssh/id_rsa
+# Use um bloco por host
+#20.50.10.123 ansible_user=azureuser ansible_ssh_private_key_file=/path/to/key
+
+[hetzner]
+# IP do servidor Hetzner onde o backend roda (root/ssh key)
+#91.98.123.197 ansible_user=root ansible_ssh_private_key_file=/path/to/key

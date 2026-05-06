@@ -1,0 +1,240 @@
+{
+  "generated_at": 1777723668,
+  "suite": "config\\domain_benchmark_suite.jsonl",
+  "providers": [
+    "syntexa_native",
+    "future_syntexa"
+  ],
+  "summary": {
+    "syntexa_native": {
+      "matematica": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 3.47,
+        "avg_quality": 0.2381
+      },
+      "fisica": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 3.57,
+        "avg_quality": 0.0994
+      },
+      "quimica": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 2.43,
+        "avg_quality": 0.0994
+      },
+      "biologia": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 1.01,
+        "avg_quality": 0.0994
+      },
+      "politica": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 0.98,
+        "avg_quality": 0.0994
+      },
+      "literatura": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 1.08,
+        "avg_quality": 0.0994
+      },
+      "programacao": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 1.02,
+        "avg_quality": 0.0762
+      }
+    },
+    "future_syntexa": {
+      "matematica": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 1.46,
+        "avg_quality": 0.2381
+      },
+      "fisica": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 1.27,
+        "avg_quality": 0.0994
+      },
+      "quimica": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 5.74,
+        "avg_quality": 0.0994
+      },
+      "biologia": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 1.05,
+        "avg_quality": 0.0994
+      },
+      "politica": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 1.05,
+        "avg_quality": 0.0994
+      },
+      "literatura": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 1.0,
+        "avg_quality": 0.0994
+      },
+      "programacao": {
+        "count": 1,
+        "success_rate": 1.0,
+        "avg_latency_ms": 1.1,
+        "avg_quality": 0.0762
+      }
+    }
+  },
+  "results": [
+    {
+      "provider": "syntexa_native",
+      "domain": "matematica",
+      "prompt": "Resolva a equação 2x + 5 = 17 e explique em passos curtos.",
+      "ok": true,
+      "latency_ms": 3.47,
+      "quality": 0.2381,
+      "error": "",
+      "reply_preview": "Para números exatos, usa também `!calc` seguido da expressão (ex.: `!calc 2**10`) se o chat suportar."
+    },
+    {
+      "provider": "future_syntexa",
+      "domain": "matematica",
+      "prompt": "Resolva a equação 2x + 5 = 17 e explique em passos curtos.",
+      "ok": true,
+      "latency_ms": 1.46,
+      "quality": 0.2381,
+      "error": "",
+      "reply_preview": "Para números exatos, usa também `!calc` seguido da expressão (ex.: `!calc 2**10`) se o chat suportar."
+    },
+    {
+      "provider": "syntexa_native",
+      "domain": "fisica",
+      "prompt": "Explique a diferença entre velocidade e aceleração com exemplo simples.",
+      "ok": true,
+      "latency_ms": 3.57,
+      "quality": 0.0994,
+      "error": "",
+      "reply_preview": "Posso responder conceitualmente mesmo sem contexto web neste turno. Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
+    },
+    {
+      "provider": "future_syntexa",
+      "domain": "fisica",
+      "prompt": "Explique a diferença entre velocidade e aceleração com exemplo simples.",
+      "ok": true,
+      "latency_ms": 1.27,
+      "quality": 0.0994,
+      "error": "",
+      "reply_preview": "Posso responder conceitualmente mesmo sem contexto web neste turno. Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
+    },
+    {
+      "provider": "syntexa_native",
+      "domain": "quimica",
+      "prompt": "O que é mol em química e por que ele é usado?",
+      "ok": true,
+      "latency_ms": 2.43,
+      "quality": 0.0994,
+      "error": "",
+      "reply_preview": "Posso responder conceitualmente mesmo sem contexto web neste turno. Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
+    },
+    {
+      "provider": "future_syntexa",
+      "domain": "quimica",
+      "prompt": "O que é mol em química e por que ele é usado?",
+      "ok": true,
+      "latency_ms": 5.74,
+      "quality": 0.0994,
+      "error": "",
+      "reply_preview": "Posso responder conceitualmente mesmo sem contexto web neste turno. Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
+    },
+    {
+      "provider": "syntexa_native",
+      "domain": "biologia",
+      "prompt": "Defina fotossíntese e cite seus reagentes e produtos principais.",
+      "ok": true,
+      "latency_ms": 1.01,
+      "quality": 0.0994,
+      "error": "",
+      "reply_preview": "Posso responder conceitualmente mesmo sem contexto web neste turno. Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
+    },
+    {
+      "provider": "future_syntexa",
+      "domain": "biologia",
+      "prompt": "Defina fotossíntese e cite seus reagentes e produtos principais.",
+      "ok": true,
+      "latency_ms": 1.05,
+      "quality": 0.0994,
+      "error": "",
+      "reply_preview": "Posso responder conceitualmente mesmo sem contexto web neste turno. Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
+    },
+    {
+      "provider": "syntexa_native",
+      "domain": "politica",
+      "prompt": "Explique separação de poderes de forma neutra e objetiva.",
+      "ok": true,
+      "latency_ms": 0.98,
+      "quality": 0.0994,
+      "error": "",
+      "reply_preview": "Posso responder conceitualmente mesmo sem contexto web neste turno. Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
+    },
+    {
+      "provider": "future_syntexa",
+      "domain": "politica",
+      "prompt": "Explique separação de poderes de forma neutra e objetiva.",
+      "ok": true,
+      "latency_ms": 1.05,
+      "quality": 0.0994,
+      "error": "",
+      "reply_preview": "Posso responder conceitualmente mesmo sem contexto web neste turno. Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
+    },
+    {
+      "provider": "syntexa_native",
+      "domain": "literatura",
+      "prompt": "Compare realismo e romantismo em 4 pontos objetivos.",
+      "ok": true,
+      "latency_ms": 1.08,
+      "quality": 0.0994,
+      "error": "",
+      "reply_preview": "Posso responder conceitualmente mesmo sem contexto web neste turno. Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
+    },
+    {
+      "provider": "future_syntexa",
+      "domain": "literatura",
+      "prompt": "Compare realismo e romantismo em 4 pontos objetivos.",
+      "ok": true,
+      "latency_ms": 1.0,
+      "quality": 0.0994,
+      "error": "",
+      "reply_preview": "Posso responder conceitualmente mesmo sem contexto web neste turno. Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
+    },
+    {
+      "provider": "syntexa_native",
+      "domain": "programacao",
+      "prompt": "Escreva uma função Python para inverter string e inclua um teste rápido.",
+      "ok": true,
+      "latency_ms": 1.02,
+      "quality": 0.0762,
+      "error": "",
+      "reply_preview": "Para código: cola o trecho ou descreve o erro (mensagem, linha, o que esperavas). Quanto mais contexto, melhor a resposta."
+    },
+    {
+      "provider": "future_syntexa",
+      "domain": "programacao",
+      "prompt": "Escreva uma função Python para inverter string e inclua um teste rápido.",
+      "ok": true,
+      "latency_ms": 1.1,
+      "quality": 0.0762,
+      "error": "",
+      "reply_preview": "Para código: cola o trecho ou descreve o erro (mensagem, linha, o que esperavas). Quanto mais contexto, melhor a resposta."
+    }
+  ]
+}

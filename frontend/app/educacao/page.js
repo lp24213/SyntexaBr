@@ -42,7 +42,7 @@ function IconGov() {
 function IconCheck() {
   return React.createElement(
     "svg",
-    { className: "h-4 w-4 text-white/60 shrink-0", viewBox: "0 0 24 24", fill: "none" },
+    { className: "h-4 w-4 text-zinc-500 shrink-0", viewBox: "0 0 24 24", fill: "none" },
     React.createElement("path", { d: "M5 13l4 4L19 7", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })
   );
 }
@@ -52,14 +52,14 @@ const AREAS = [
     key: "aluno",
     href: "/educacao/aluno",
     badge: "Acesso Público",
-    badgeColor: "bg-sky-500/15 text-sky-300 border border-sky-500/25",
-    iconColor: "text-sky-400",
-    accent: "from-sky-500/8 to-transparent",
-    borderColor: "border-sky-500/20 hover:border-sky-400/50",
+    badgeColor: "bg-sky-50 text-sky-800 border border-sky-200",
+    iconColor: "text-cyan-600",
+    accent: "from-white to-sky-50/80",
+    borderColor: "border-zinc-200 hover:border-cyan-300/80",
     title: "Área Aluno",
     description: "Tutor de IA do ensino fundamental ao pós-doutorado. Gratuito, sem login, sem limite.",
     cta: "Acessar agora",
-    ctaClass: "bg-sky-600/80 hover:bg-sky-500/90 text-white border border-sky-500/40",
+    ctaClass: "bg-sky-600 hover:bg-sky-500 text-white border border-sky-500 shadow-sm",
     features: [
       "15 disciplinas (Mat, Fís, Quím, IA, Segurança, Saúde...)",
       "4 níveis: Básico → Especialista",
@@ -73,14 +73,14 @@ const AREAS = [
     key: "professor",
     href: "/educacao/professor",
     badge: "Login Obrigatório",
-    badgeColor: "bg-violet-500/15 text-violet-300 border border-violet-500/25",
-    iconColor: "text-violet-400",
-    accent: "from-violet-500/8 to-transparent",
-    borderColor: "border-violet-500/20 hover:border-violet-400/50",
+    badgeColor: "bg-violet-50 text-violet-900 border border-violet-200",
+    iconColor: "text-cyan-600",
+    accent: "from-white to-violet-50/70",
+    borderColor: "border-zinc-200 hover:border-violet-300",
     title: "Área Professor / Pesquisador",
     description: "Ferramentas avançadas para docentes, pesquisadores e cientistas.",
     cta: "Entrar na área",
-    ctaClass: "bg-violet-600/80 hover:bg-violet-500/90 text-white border border-violet-500/40",
+    ctaClass: "bg-violet-600 hover:bg-violet-500 text-white border border-violet-500 shadow-sm",
     features: [
       "Correção automática com rubrica e nota",
       "Geração de provas com taxonomia de Bloom",
@@ -94,14 +94,14 @@ const AREAS = [
     key: "offline",
     href: "/download",
     badge: "Instalação Local",
-    badgeColor: "bg-amber-500/15 text-amber-300 border border-amber-500/25",
-    iconColor: "text-amber-400",
-    accent: "from-amber-500/8 to-transparent",
-    borderColor: "border-amber-500/20 hover:border-amber-400/50",
-    title: "Sistema Institucional (Offline)",
-    description: "Módulo governamental distribuído localmente em escolas, universidades e instituições. Implantado pelo administrador — não disponível no site público.",
+    badgeColor: "bg-amber-50 text-amber-900 border border-amber-200",
+    iconColor: "text-cyan-600",
+    accent: "from-white to-amber-50/70",
+    borderColor: "border-zinc-200 hover:border-amber-300",
+    title: "Sistema Offline (Download Local)",
+    description: "Download aberto para qualquer usuário que queira operar localmente sem internet. Também pode ser implantado por administradores em escolas, universidades e instituições.",
     cta: "Baixar sistema offline",
-    ctaClass: "bg-amber-600/80 hover:bg-amber-500/90 text-white border border-amber-500/40",
+    ctaClass: "bg-amber-600 hover:bg-amber-500 text-white border border-amber-500 shadow-sm",
     features: [
       "Dashboard nacional por região e escola",
       "Previsões de evasão e desempenho com IA",
@@ -109,7 +109,7 @@ const AREAS = [
       "Relatórios automáticos para órgãos públicos",
       "Funciona sem internet — dados locais seguros",
     ],
-    plan: "Plano Governamental · Instalação offline",
+    plan: "Plano Offline · Download local",
   },
 ];
 
@@ -128,14 +128,14 @@ export default function EducacaoPage() {
     },
     React.createElement(
       "div",
-      { className: "mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-white/60" },
-      React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" }),
+      { className: "mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-1.5 text-xs text-zinc-500" },
+      React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-cyan-500 animate-pulse" }),
       "SyntexaBR Educação & Pesquisa"
     ),
-    React.createElement("h1", { className: "mb-4 text-4xl font-bold tracking-tight text-white sm:text-5xl" }, "Educação & Pesquisa"),
+    React.createElement("h1", { className: "mb-4 text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl" }, "Educação & Pesquisa"),
     React.createElement(
       "p",
-      { className: "mx-auto max-w-2xl text-lg text-white/50" },
+      { className: "mx-auto max-w-2xl text-lg text-zinc-500" },
       "Plataforma completa de IA educacional — do aluno ao governo. Escolha sua área de acesso."
     )
   );
@@ -149,7 +149,7 @@ export default function EducacaoPage() {
         motion.div,
         {
           key: area.key,
-          className: `relative flex flex-col overflow-hidden rounded-2xl border bg-gradient-to-b ${area.accent} bg-[rgba(15,23,42,0.96)] p-7 transition-all duration-200 ${area.borderColor}`,
+          className: `relative flex flex-col overflow-hidden rounded-2xl border bg-gradient-to-b ${area.accent} bg-white p-7 shadow-sm transition-all duration-200 ${area.borderColor}`,
           initial: { opacity: 0, y: 24 },
           animate: { opacity: 1, y: 0 },
           transition: { duration: 0.4, delay: 0.1 + idx * 0.08 },
@@ -160,15 +160,15 @@ export default function EducacaoPage() {
           React.createElement("div", { className: area.iconColor }, React.createElement(Icon, null)),
           React.createElement("span", { className: `rounded-full px-2.5 py-1 text-[11px] font-medium ${area.badgeColor}` }, area.badge)
         ),
-        React.createElement("h2", { className: "mb-2 text-xl font-semibold text-white" }, area.title),
-        React.createElement("p", { className: "mb-6 text-sm text-white/50 leading-relaxed flex-1" }, area.description),
+        React.createElement("h2", { className: "mb-2 text-xl font-semibold text-zinc-900" }, area.title),
+        React.createElement("p", { className: "mb-6 text-sm text-zinc-500 leading-relaxed flex-1" }, area.description),
         React.createElement(
           "ul",
           { className: "mb-7 space-y-2" },
           area.features.map(function (f) {
             return React.createElement(
               "li",
-              { key: f, className: "flex items-start gap-2 text-xs text-white/60" },
+              { key: f, className: "flex items-start gap-2 text-xs text-zinc-500" },
               React.createElement(IconCheck, null),
               f
             );
@@ -179,7 +179,7 @@ export default function EducacaoPage() {
           { className: "mt-auto" },
           React.createElement(
             "p",
-            { className: "mb-3 text-[11px] text-white/30" },
+            { className: "mb-3 text-[11px] text-zinc-400" },
             area.plan
           ),
           React.createElement(
@@ -207,7 +207,7 @@ export default function EducacaoPage() {
       "button",
       {
         onClick: function () { window.location.href = "/educacao/laboratorios"; },
-        className: "w-full rounded-2xl border border-white/8 bg-[rgba(15,23,42,0.8)] p-6 text-left transition-all hover:border-white/20 hover:bg-white/3",
+        className: "w-full rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm transition-all hover:border-cyan-200 hover:bg-cyan-50/40",
       },
       React.createElement(
         "div",
@@ -217,16 +217,16 @@ export default function EducacaoPage() {
           null,
           React.createElement(
             "div",
-            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-300" },
-            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-emerald-400" }),
+            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-900" },
+            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-cyan-500" }),
             "Acesso Público"
           ),
-          React.createElement("h3", { className: "text-lg font-semibold text-white flex items-center gap-2" },
-            React.createElement(FuturisticIcon, { name: "flask", className: "h-6 w-6 text-emerald-400/85" }),
+          React.createElement("h3", { className: "text-lg font-semibold text-zinc-900 flex items-center gap-2" },
+            React.createElement(FuturisticIcon, { name: "flask", className: "h-6 w-6 text-cyan-600" }),
             "Laboratórios Científicos Interativos"),
           React.createElement(
             "p",
-            { className: "mt-1 text-sm text-white/50" },
+            { className: "mt-1 text-sm text-zinc-500" },
             "Simulações físicas em tempo real, motor de cálculo simbólico (SymPy + NumPy), plotter de funções, sandbox Python e estatística — tudo no navegador."
           )
         ),
@@ -234,7 +234,7 @@ export default function EducacaoPage() {
           "div",
           { className: "flex flex-wrap gap-1.5 shrink-0" },
           ["Projétil", "Pêndulo", "Ondas", "Funções", "SymPy", "Química", "Circuitos", "Sorting", "Python", "Estatística"].map(function (lab) {
-            return React.createElement("span", { key: lab, className: "rounded-xl border border-white/8 bg-white/4 px-2 py-1 text-xs text-white/50" }, lab);
+            return React.createElement("span", { key: lab, className: "rounded-xl border border-zinc-200 bg-zinc-100 px-2 py-1 text-xs text-zinc-500" }, lab);
           })
         )
       )
@@ -253,7 +253,7 @@ export default function EducacaoPage() {
       "button",
       {
         onClick: function () { window.location.href = "/educacao/ciencia"; },
-        className: "w-full rounded-2xl border border-white/8 bg-[rgba(15,23,42,0.8)] p-6 text-left transition-all hover:border-white/20 hover:bg-white/3",
+        className: "w-full rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm transition-all hover:border-cyan-200 hover:bg-cyan-50/40",
       },
       React.createElement(
         "div",
@@ -263,16 +263,16 @@ export default function EducacaoPage() {
           null,
           React.createElement(
             "div",
-            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 text-xs text-indigo-300" },
-            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-indigo-400" }),
+            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-900" },
+            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-cyan-500" }),
             "Acesso Público · Anônimo"
           ),
-          React.createElement("h3", { className: "text-lg font-semibold text-white flex items-center gap-2" },
-            React.createElement(FuturisticIcon, { name: "telescope", className: "h-6 w-6 text-indigo-400/85" }),
+          React.createElement("h3", { className: "text-lg font-semibold text-zinc-900 flex items-center gap-2" },
+            React.createElement(FuturisticIcon, { name: "telescope", className: "h-6 w-6 text-cyan-600" }),
             "Ciência & Tecnologia de Ponta"),
           React.createElement(
             "p",
-            { className: "mt-1 text-sm text-white/50" },
+            { className: "mt-1 text-sm text-zinc-500" },
             "Portal especializado: Astronomia, IA & ML, Segurança Digital, Computação Quântica, Bioinformática, Neurociências e muito mais."
           )
         ),
@@ -280,7 +280,7 @@ export default function EducacaoPage() {
           "div",
           { className: "flex flex-wrap gap-1.5 shrink-0" },
           ["Astronomia", "IA & ML", "Segurança", "Quântica", "Bioinformática", "Clima", "Saúde", "Direito"].map(function (area) {
-            return React.createElement("span", { key: area, className: "rounded-xl border border-white/8 bg-white/4 px-2 py-1 text-xs text-white/50" }, area);
+            return React.createElement("span", { key: area, className: "rounded-xl border border-zinc-200 bg-zinc-100 px-2 py-1 text-xs text-zinc-500" }, area);
           })
         )
       )
@@ -299,7 +299,7 @@ export default function EducacaoPage() {
       "button",
       {
         onClick: function () { window.location.href = "/educacao/concursos"; },
-        className: "w-full rounded-2xl border border-white/8 bg-[rgba(15,23,42,0.8)] p-6 text-left transition-all hover:border-white/20 hover:bg-white/3",
+        className: "w-full rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm transition-all hover:border-cyan-200 hover:bg-cyan-50/40",
       },
       React.createElement(
         "div",
@@ -309,16 +309,16 @@ export default function EducacaoPage() {
           null,
           React.createElement(
             "div",
-            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300" },
-            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-amber-400" }),
+            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-900" },
+            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-cyan-500" }),
             "Acesso Público · Anônimo"
           ),
-          React.createElement("h3", { className: "text-lg font-semibold text-white flex items-center gap-2" },
-            React.createElement(FuturisticIcon, { name: "medal", className: "h-6 w-6 text-amber-400/85" }),
+          React.createElement("h3", { className: "text-lg font-semibold text-zinc-900 flex items-center gap-2" },
+            React.createElement(FuturisticIcon, { name: "medal", className: "h-6 w-6 text-cyan-600" }),
             "Concursos & Vestibulares"),
           React.createElement(
             "p",
-            { className: "mt-1 text-sm text-white/50" },
+            { className: "mt-1 text-sm text-zinc-500" },
             "Tutor especializado com questões no formato real, correção de redação ENEM (0-1000) e resumos para: ENEM, OAB, Residência Médica, FUVEST, ENADE e concursos públicos."
           )
         ),
@@ -326,7 +326,7 @@ export default function EducacaoPage() {
           "div",
           { className: "flex flex-wrap gap-1.5 shrink-0" },
           ["ENEM", "OAB", "Residência", "FUVEST", "ENADE", "Concurso"].map(function (e) {
-            return React.createElement("span", { key: e, className: "rounded-xl border border-white/8 bg-white/4 px-2 py-1 text-xs text-white/50" }, e);
+            return React.createElement("span", { key: e, className: "rounded-xl border border-zinc-200 bg-zinc-100 px-2 py-1 text-xs text-zinc-500" }, e);
           })
         )
       )
@@ -343,7 +343,7 @@ export default function EducacaoPage() {
     },
     React.createElement(
       "div",
-      { className: "rounded-2xl border border-white/6 bg-white/2 p-5" },
+      { className: "rounded-2xl border border-zinc-200 bg-zinc-50 p-5" },
       React.createElement(
         "div",
         { className: "flex flex-wrap items-center gap-4" },
@@ -353,10 +353,10 @@ export default function EducacaoPage() {
           React.createElement(
             "div",
             { className: "flex items-center gap-2 mb-1.5" },
-            React.createElement(FuturisticIcon, { name: "lock", className: "h-4 w-4 text-white/50" }),
-            React.createElement("span", { className: "text-sm font-medium text-white/70" }, "Privacidade por Design")
+            React.createElement(FuturisticIcon, { name: "lock", className: "h-4 w-4 text-zinc-500" }),
+            React.createElement("span", { className: "text-sm font-medium text-zinc-600" }, "Privacidade por Design")
           ),
-          React.createElement("p", { className: "text-xs text-white/30 leading-relaxed" },
+          React.createElement("p", { className: "text-xs text-zinc-400 leading-relaxed" },
             "Toda interação pública é totalmente anônima. Nenhum dado pessoal, histórico de conversa ou IP " +
             "é armazenado no servidor. Sessões são efêmeras, ficam apenas no navegador do usuário e são " +
             "descartadas ao fechar a aba. Conforme LGPD (Lei 13.709/2018) e GDPR."
@@ -366,7 +366,7 @@ export default function EducacaoPage() {
           "div",
           { className: "flex flex-wrap gap-2 shrink-0" },
           ["Zero tracking", "Sem cookies", "LGPD compliant", "Privacy by Design", "Anônimo por padrão"].map(function (tag) {
-            return React.createElement("span", { key: tag, className: "rounded-full border border-white/8 px-2.5 py-1 text-xs text-white/30" }, tag);
+            return React.createElement("span", { key: tag, className: "rounded-full border border-zinc-200 px-2.5 py-1 text-xs text-zinc-400" }, tag);
           })
         )
       )
@@ -384,8 +384,8 @@ export default function EducacaoPage() {
     React.createElement(
       "div",
       { className: "mb-8 text-center" },
-      React.createElement("h2", { className: "text-2xl font-semibold text-white" }, "Planos"),
-      React.createElement("p", { className: "mt-1 text-sm text-white/40" }, "Acesso transparente e sem surpresas")
+      React.createElement("h2", { className: "text-2xl font-semibold text-zinc-900" }, "Planos"),
+      React.createElement("p", { className: "mt-1 text-sm text-zinc-500" }, "Acesso transparente e sem surpresas")
     ),
     React.createElement(
       "div",
@@ -417,18 +417,18 @@ export default function EducacaoPage() {
           "div",
           {
             key: plan.name,
-            className: `rounded-2xl border bg-[rgba(15,23,42,0.8)] p-6 ${plan.color}`,
+            className: `rounded-2xl border bg-zinc-50 p-6 ${plan.color}`,
           },
-          React.createElement("h3", { className: "mb-1 text-base font-semibold text-white" }, plan.name),
-          React.createElement("p", { className: "mb-1 text-2xl font-bold text-white" }, plan.price),
-          React.createElement("p", { className: "mb-4 text-xs text-white/40" }, plan.sub),
+          React.createElement("h3", { className: "mb-1 text-base font-semibold text-zinc-900" }, plan.name),
+          React.createElement("p", { className: "mb-1 text-2xl font-bold text-zinc-900" }, plan.price),
+          React.createElement("p", { className: "mb-4 text-xs text-zinc-500" }, plan.sub),
           React.createElement(
             "ul",
             { className: "space-y-1.5" },
             plan.items.map(function (item) {
               return React.createElement(
                 "li",
-                { key: item, className: "flex items-center gap-2 text-xs text-white/60" },
+                { key: item, className: "flex items-center gap-2 text-xs text-zinc-500" },
                 React.createElement(IconCheck, null),
                 item
               );

@@ -19,11 +19,19 @@ class TaskManager:
     def __init__(self) -> None:
         self._tasks: Dict[str, Task] = {}
 
-    def create_tasks(self, descriptions: List[str]) -> List[str]:
+    def create_tasks(
+        self,
+        descriptions: List[str],
+        base_metadata: Dict[str, Any] | None = None,
+    ) -> List[str]:
         ids: List[str] = []
+        shared = dict(base_metadata or {})
         for i, desc in enumerate(descriptions):
             tid = f"task-{i}"
-            self._tasks[tid] = Task(id=tid, description=desc)
+            metadata = dict(shared)
+            metadata["step_index"] = i
+            metadata["total_steps"] = len(descriptions)
+            self._tasks[tid] = Task(id=tid, description=desc, metadata=metadata)
             ids.append(tid)
         return ids
 
