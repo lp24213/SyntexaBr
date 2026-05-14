@@ -15,7 +15,7 @@ export function InfrastructureVisual() {
     // Animate nodes with CSS only — no JS animation loop
     const nodes = svg.querySelectorAll(".infra-node");
     nodes.forEach((node, i) => {
-      (node as SVGCircleElement).style.animationDelay = `${i * 0.15}s`;
+      node.style.animationDelay = `${i * 0.15}s`;
     });
   }, []);
 
