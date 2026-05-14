@@ -14,7 +14,7 @@ const SECTIONS = [
     id: "docencia",
     label: "Docência",
     color: "violet",
-    badge: "bg-violet-500/10 text-violet-300 border-violet-500/20",
+    badge: "bg-[#f1f2f4] text-[#5a5c5e] border-[rgba(20,24,30,0.06)]",
     tools: [
       { id: "correcao", label: "Corrigir Prova", iconName: "check", api: "teacher", desc: "Correção automática com nota e rubrica completa", placeholder: "Cole a resposta discursiva do aluno para correção detalhada..." },
       { id: "prova", label: "Criar Prova", iconName: "clipboard", api: "teacher", desc: "Questões objetivas e discursivas com gabarito e taxonomia de Bloom", placeholder: "Ex: Prova de Física, 3º EM, tema cinemática, 5 objetivas + 2 discursivas..." },
@@ -27,7 +27,7 @@ const SECTIONS = [
     id: "pesquisa",
     label: "Pesquisa Científica",
     color: "sky",
-    badge: "bg-sky-500/10 text-sky-300 border-sky-500/20",
+    badge: "bg-[#f1f2f4] text-[#5a5c5e] border-[rgba(20,24,30,0.06)]",
     tools: [
       { id: "analisar", label: "Analisar Paper", iconName: "microscope", api: "research", desc: "Extrai hipóteses, metodologia, resultados e contribuições", placeholder: "Cole o abstract ou texto completo do artigo para análise estruturada..." },
       { id: "resumir", label: "Resumir Texto", iconName: "doc", api: "research", desc: "Abstract de 150 palavras + pontos principais + implicações", placeholder: "Cole o texto a ser resumido..." },
@@ -40,7 +40,7 @@ const SECTIONS = [
     id: "normas",
     label: "Normas & Revisão",
     color: "emerald",
-    badge: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20",
+    badge: "bg-[#f1f2f4] text-[#5a5c5e] border-[rgba(20,24,30,0.06)]",
     tools: [
       { id: "revisar", label: "Revisão Técnica", iconName: "search", api: "research", desc: "Revisão de clareza, precisão técnica e coesão acadêmica", placeholder: "Cole o texto para revisão técnica e melhorias..." },
       { id: "abnt", label: "Formatar ABNT", iconName: "ruler", api: "research", desc: "NBR 6023, 6024, 10520, 14724 — referências e formatação completa", placeholder: "Cole o texto ou lista de referências para formatação ABNT..." },
@@ -198,7 +198,7 @@ export default function ProfessorPage() {
   if (!token) {
     return React.createElement(AppShell, null,
       React.createElement("div", { className: "flex min-h-[60vh] flex-col items-center justify-center py-12 text-center" },
-        React.createElement(motion.div, { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4 } },
+        React.createElement("div", null,
           React.createElement(LockIcon, null),
           React.createElement("h2", { className: "mt-4 text-2xl font-bold text-zinc-900" }, "Acesso Restrito"),
           React.createElement("p", { className: "mt-2 max-w-sm text-sm text-zinc-500" }, "Área exclusiva para professores e pesquisadores. Faça login ou crie sua conta gratuita."),
@@ -219,7 +219,7 @@ export default function ProfessorPage() {
 
     return React.createElement(AppShell, null,
       React.createElement("div", { className: "flex h-[calc(100vh-11rem)] flex-col" },
-        React.createElement(motion.div, { className: "mb-3 flex items-center justify-between flex-wrap gap-2", initial: { opacity: 0 }, animate: { opacity: 1 } },
+        React.createElement("div", { className: "mb-3 flex items-center justify-between flex-wrap gap-2" },
           React.createElement("div", { className: "flex items-center gap-2" },
             React.createElement("button", { onClick: function () { setActiveTool(null); setMessages([]); }, className: "inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-900" }, React.createElement(BackIcon, null), "Ferramentas"),
             React.createElement(FuturisticIcon, { name: activeTool.iconName, className: "h-6 w-6 text-violet-600/90" }),
@@ -269,11 +269,11 @@ export default function ProfessorPage() {
 
   return React.createElement(AppShell, null,
     React.createElement("div", { className: "py-8 space-y-6" },
-      React.createElement(motion.div, { initial: { opacity: 0 }, animate: { opacity: 1 } },
+      React.createElement("div", null,
         React.createElement("button", { onClick: function () { window.location.href = "/educacao"; }, className: "inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-700 mb-6" }, React.createElement(BackIcon, null), "Educação & Pesquisa")
       ),
-      React.createElement(motion.div, { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4 } },
-        React.createElement("div", { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3 py-1 text-xs text-violet-300" }, "Área Professor / Pesquisador"),
+      React.createElement("div", null,
+        React.createElement("div", { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-[rgba(20,24,30,0.06)] bg-[#f1f2f4] px-3 py-1 text-xs text-[#5a5c5e]" }, "Área Professor / Pesquisador"),
         React.createElement("h1", { className: "text-3xl font-bold text-zinc-900" }, "Ferramentas Avançadas"),
         React.createElement("p", { className: "mt-1 text-sm text-zinc-500" }, `Bem-vindo${profile?.full_name ? ", " + profile.full_name : ""}. Selecione uma categoria e ferramenta.`)
       ),
@@ -305,14 +305,13 @@ export default function ProfessorPage() {
       // Tools grid
       React.createElement("div", { className: "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" },
         (currentSection?.tools || []).map(function (tool, idx) {
-          return React.createElement(motion.button, {
+          return React.createElement("button", {
             key: tool.id,
             onClick: function () { selectTool(tool); },
             className: `group flex flex-col items-start gap-3 rounded-2xl border bg-white p-6 text-left transition-all ${colors.border}`,
-            initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, delay: idx * 0.04 },
           },
             React.createElement("div", { className: "flex w-full items-start justify-between" },
-              React.createElement(FuturisticIcon, { name: tool.iconName, className: "h-8 w-8 text-sky-400/85" }),
+              React.createElement(FuturisticIcon, { name: tool.iconName, className: "h-8 w-8 text-[#1a1c1e]/85" }),
               React.createElement("span", { className: `rounded-full border px-2 py-0.5 text-[10px] ${colors.badge}` }, currentSection?.label)
             ),
             React.createElement("div", null,
@@ -324,7 +323,7 @@ export default function ProfessorPage() {
       ),
 
       // Context input
-      React.createElement(motion.div, { className: "rounded-2xl border border-zinc-200 bg-zinc-50 p-5", initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.3 } },
+      React.createElement("div", { className: "rounded-2xl border border-zinc-200 bg-zinc-50 p-5" },
         React.createElement("p", { className: "mb-2 text-xs font-medium text-zinc-500 uppercase tracking-wider" }, "Contexto persistente (opcional)"),
         React.createElement("textarea", {
           value: context,

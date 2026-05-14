@@ -1,0 +1,36 @@
+name: Kaggle AI Worker Auto-Restart
+
+on:
+  schedule:
+    # Roda a cada 8 horas
+    - cron: '0 */8 * * *'
+  workflow_dispatch:  # permite rodar manualmente
+
+jobs:
+  restart-kaggle-ai:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -q kaggle requests
+
+      - name: Restart Kaggle Notebook & Update Railway
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: |
+          # Configurar Kaggle API
+          mkdir -p ~/.kaggle
+          echo "$KAGGLE_API_TOKEN" > ~/.kaggle/kaggle.json
+          chmod 600 ~/.kaggle/kaggle.json
+
+          # Rodar notebook
+          python scripts/kaggle_auto_restart.py

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: syntexa
+  labels:
+    name: syntexa
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: syntexa-staging
+  labels:
+    name: syntexa-staging
+    environment: staging

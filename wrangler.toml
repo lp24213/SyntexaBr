@@ -4,22 +4,39 @@ compatibility_date = "2024-11-01"
 
 routes = [
   { pattern = "syntexabr.com.br/*", zone_name = "syntexabr.com.br" },
-  { pattern = "www.syntexabr.com.br/*", zone_name = "syntexabr.com.br" }
+  { pattern = "www.syntexabr.com.br/*", zone_name = "syntexabr.com.br" },
+  { pattern = "api.syntexabr.com.br/*", zone_name = "syntexabr.com.br" }
 ]
 
-# Origem do fetch no Worker = FQDN do Container App (HTTPS estável; evita IPv6/resolução quebrada para o hostname customizado).
-# O utilizador e o JS estático usam https://api.syntexabr.com.br (mesmo serviço).
+# ── BACKENDS ─────────────────────────────────────────────
+# Railway = Core Backend (auth, banco, orquestração, streaming)
+# AWS GPU = Cluster de inferência pesada (chat, embeddings, vision, voice)
+# Local = Infra híbrida de fallback (Ollama, RTX, edge inference)
 [vars]
-BACKEND_BASE_URL = "https://api.syntexabr.com.br"
+BACKEND_BASE_URL = "https://syntexa-backend-production.up.railway.app"
+AWS_BASE_URL = "http://98.94.86.193:8000"
+LOCAL_BASE_URL = ""
 FRONTEND_BASE_URL = "https://syntexabr.com.br"
 
+# ── EDGE SECURITY ──────────────────────────────────────
+REQUIRE_CLOUDFLARE = "true"
+JWT_EDGE_VERIFY = "false"
+HMAC_VERIFY = "true"
+RATE_LIMIT_ENABLED = "true"
+RATE_LIMIT_WINDOW = "60"
+RATE_LIMIT_MAX = "200"
+PROXY_TIMEOUT_MS = "45000"
 
+# ── KV BINDING (rate limiting + sessions) ──────────────
+# Criar: wrangler kv:namespace create "VEREDA_KV"
+# [[kv_namespaces]]
+# binding = "VEREDA_KV"
+# id = "<substituir-pelo-id-real-do-kv>"
 
-
-
-
-
-
+# ── SECRETS (configurar via: wrangler secret put <nome>) ─
+# VEREDA_SECRET_KEY
+# AI_WORKER_API_KEY
+# LOCAL_AI_API_KEY
 
 
 

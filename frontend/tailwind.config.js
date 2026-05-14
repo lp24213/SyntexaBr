@@ -5,18 +5,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#f8f9fb",
+        background: "#fafbfc",
         surface: "#ffffff",
-        surfaceMuted: "#f1f5f9",
-        borderStrong: "rgba(15,23,42,0.12)",
-        primary: "#3b82f6",
-        primarySoft: "rgba(59,130,246,0.15)",
-        accent: "#3b82f6",
-        accentSoft: "rgba(59,130,246,0.15)",
+        surfaceMuted: "#f1f2f4",
+        borderStrong: "rgba(20,24,30,0.10)",
+        primary: "#1a1c1e",
+        primarySoft: "rgba(26,28,30,0.08)",
+        accent: "#c8cdd4",
+        accentSoft: "rgba(200,205,212,0.25)",
       },
       borderRadius: {
         "2xl": "1.25rem",
-        syntexa: "var(--radius-lg, 18px)",
+        syntexa: "var(--radius-lg, 16px)",
       },
       boxShadow: {
         "soft-xl": "var(--shadow-card)",

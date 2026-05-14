@@ -1,4 +1,5 @@
 import React from "react";
+import { AppShell } from "../../components/shell";
 
 export const metadata = {
   title: "Documentação Syntexa",
@@ -60,11 +61,12 @@ export default function DocsPage() {
   };
 
   return (
+    <AppShell>
     <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ldJson) }} />
 
-      <header className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <p className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-violet-700">
+      <header className="rounded-3xl border border-white/80 bg-white/75 p-6 shadow-[0_20px_65px_rgba(148,163,184,0.2)] backdrop-blur-xl">
+        <p className="inline-flex rounded-full border border-violet-200/70 bg-violet-50/80 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-violet-700">
           Documentação oficial
         </p>
         <h1 className="mt-3 text-3xl font-semibold text-zinc-900">Syntexa AI</h1>
@@ -76,13 +78,13 @@ export default function DocsPage() {
 
       <section className="mt-6 grid gap-4">
         {DOC_SECTIONS.map((section) => (
-          <article key={section.title} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <article key={section.title} className="rounded-2xl border border-white/85 bg-white/75 p-5 shadow-[0_12px_36px_rgba(148,163,184,0.16)]">
             <h2 className="text-lg font-semibold text-zinc-900">{section.title}</h2>
             <p className="mt-2 text-sm leading-relaxed text-zinc-700">{section.body}</p>
           </article>
         ))}
       </section>
-      <section className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+      <section className="mt-6 rounded-2xl border border-emerald-200/80 bg-emerald-50/85 p-5">
         <h2 className="text-lg font-semibold text-zinc-900">Roadmap público para SEO</h2>
         <p className="mt-2 text-sm text-zinc-700">
           A versão pública do roadmap de lançamento está disponível para indexação em{" "}
@@ -93,5 +95,6 @@ export default function DocsPage() {
         </p>
       </section>
     </main>
+    </AppShell>
   );
 }

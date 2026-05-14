@@ -42,8 +42,8 @@ function GovGuard({ children }) {
   if (!allowed) {
     return React.createElement(AppShell, null,
       React.createElement("div", { className: "flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center px-4" },
-        React.createElement("div", { className: "flex h-20 w-20 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10" },
-          React.createElement(FuturisticIcon, { name: "building", className: "h-12 w-12 text-amber-300/90" })),
+        React.createElement("div", { className: "flex h-20 w-20 items-center justify-center rounded-2xl border border-[rgba(20,24,30,0.06)] bg-[#f1f2f4]" },
+          React.createElement(FuturisticIcon, { name: "building", className: "h-12 w-12 text-[#5a5c5e]/90" })),
         React.createElement("h1", { className: "text-2xl font-bold text-zinc-900" }, "Sistema Institucional"),
         React.createElement("p", { className: "max-w-md text-zinc-600 text-sm leading-relaxed" },
           "O download do sistema offline é aberto, mas este painel governamental exige implantação local e credenciais administrativas da instituição. No site público, o acesso segue restrito por segurança e jurisdição."),
@@ -88,9 +88,8 @@ const PREDICT_SCENARIOS = [
 ];
 
 function StatCard({ label, value, sub, color, trend }) {
-  return React.createElement(motion.div, {
+  return React.createElement("div", {
     className: `rounded-2xl border bg-white p-5 ${color || "border-zinc-200"}`,
-    initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.35 },
   },
     React.createElement("p", { className: "text-xs text-zinc-500 uppercase tracking-wider mb-1" }, label),
     React.createElement("p", { className: "text-3xl font-bold text-zinc-900" }, value ?? "—"),
@@ -103,7 +102,7 @@ function StatCard({ label, value, sub, color, trend }) {
 
 function RegionBar({ name, users, sessions, engagement, maxUsers }) {
   const pct = maxUsers > 0 ? Math.round((users / maxUsers) * 100) : 0;
-  const engColor = engagement >= 70 ? "text-emerald-400" : engagement >= 55 ? "text-amber-400" : "text-red-400";
+  const engColor = engagement >= 70 ? "text-[#5a5c5e]" : engagement >= 55 ? "text-[#5a5c5e]" : "text-red-400";
   return React.createElement("div", { className: "space-y-1.5" },
     React.createElement("div", { className: "flex items-center justify-between text-xs" },
       React.createElement("span", { className: "text-zinc-600 font-medium" }, name),
@@ -230,16 +229,16 @@ function GovernoPageInner() {
   if (authLoading) return React.createElement(AppShell, null, React.createElement("div", { className: "flex min-h-[50vh] items-center justify-center" }, React.createElement("div", { className: "h-6 w-6 animate-spin rounded-full border-2 border-zinc-200 border-t-amber-400" })));
 
   if (!token) return React.createElement(AppShell, null, React.createElement("div", { className: "flex min-h-[60vh] flex-col items-center justify-center py-12 text-center" },
-    React.createElement(motion.div, { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } },
+    React.createElement("div", null,
       React.createElement(ShieldIcon, null),
       React.createElement("h2", { className: "mt-4 text-2xl font-bold text-zinc-900" }, "Acesso Restrito"),
       React.createElement("p", { className: "mt-2 max-w-sm text-sm text-zinc-500" }, "Área exclusiva para credenciais governamentais e administrativas."),
-      React.createElement("button", { onClick: function () { window.location.href = encryptedPath("login"); }, className: "mt-6 rounded-[14px] bg-amber-600/80 border border-amber-500/40 px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-amber-500/90" }, "Entrar com credenciais"),
+      React.createElement("button", { onClick: function () { window.location.href = encryptedPath("login"); }, className: "mt-6 rounded-[14px] bg-[#1a1c1e] border border-[rgba(20,24,30,0.1)] px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-[#1a1c1e]" }, "Entrar com credenciais"),
       React.createElement("button", { onClick: function () { window.location.href = "/educacao"; }, className: "mt-4 inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600" }, React.createElement(BackIcon, null), "Voltar")
     )));
 
   if (profile && !profile.is_admin) return React.createElement(AppShell, null, React.createElement("div", { className: "flex min-h-[60vh] flex-col items-center justify-center py-12 text-center" },
-    React.createElement(motion.div, { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } },
+    React.createElement("div", null,
       React.createElement(ShieldIcon, null),
       React.createElement("h2", { className: "mt-4 text-2xl font-bold text-zinc-900" }, "Acesso Negado"),
       React.createElement("p", { className: "mt-2 max-w-sm text-sm text-zinc-500" }, "Seu perfil não possui credenciais governamentais. Contate um administrador."),
@@ -251,11 +250,11 @@ function GovernoPageInner() {
   return React.createElement(AppShell, null,
     React.createElement("div", { className: "py-8 space-y-6" },
       // Header
-      React.createElement(motion.div, { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4 } },
+      React.createElement("div", null,
         React.createElement("button", { onClick: function () { window.location.href = "/educacao"; }, className: "inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-700 mb-6" }, React.createElement(BackIcon, null), "Educação & Pesquisa"),
         React.createElement("div", { className: "flex items-start justify-between flex-wrap gap-3" },
           React.createElement("div", null,
-            React.createElement("div", { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs text-amber-300" },
+            React.createElement("div", { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-[rgba(20,24,30,0.06)] bg-[#f1f2f4] px-3 py-1 text-xs text-[#5a5c5e]" },
               React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" }),
               "Painel Governamental · Acesso Admin"
             ),
@@ -274,7 +273,7 @@ function GovernoPageInner() {
           return React.createElement("button", {
             key: t.id,
             onClick: function () { setActiveTab(t.id); },
-            className: `rounded-xl border px-4 py-2 text-sm font-medium transition-all ${activeTab === t.id ? "bg-amber-600/70 border-amber-500/40 text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}`,
+            className: `rounded-xl border px-4 py-2 text-sm font-medium transition-all ${activeTab === t.id ? "bg-[#1a1c1e] border-[rgba(20,24,30,0.1)] text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}`,
           }, React.createElement(FuturisticIcon, { name: t.iconName, className: "h-4 w-4 inline-block mr-1.5 align-[-2px]" }), t.label);
         })
       ),
@@ -288,21 +287,21 @@ function GovernoPageInner() {
         statsError && React.createElement("p", { className: "text-sm text-red-400" }, statsError),
         stats && React.createElement(React.Fragment, null,
           stats.disclaimer &&
-            React.createElement("div", { className: "rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-100/90 leading-relaxed" },
+            React.createElement("div", { className: "rounded-xl border border-[rgba(20,24,30,0.06)] bg-[#f8f9fa] px-4 py-3 text-xs text-amber-100/90 leading-relaxed" },
               stats.disclaimer
             ),
           // KPI cards (agregados reais da instalação)
           React.createElement("div", { className: "grid grid-cols-2 gap-4 sm:grid-cols-4" },
-            React.createElement(StatCard, { label: "Total de Usuários", value: stats.total_users?.toLocaleString("pt-BR"), sub: "Cadastrados nesta instalação", color: "border-amber-500/20" }),
-            React.createElement(StatCard, { label: "Usuários Ativos", value: stats.active_users?.toLocaleString("pt-BR"), sub: "Conta ativa", color: "border-amber-500/15" }),
+            React.createElement(StatCard, { label: "Total de Usuários", value: stats.total_users?.toLocaleString("pt-BR"), sub: "Cadastrados nesta instalação", color: "border-[rgba(20,24,30,0.06)]" }),
+            React.createElement(StatCard, { label: "Usuários Ativos", value: stats.active_users?.toLocaleString("pt-BR"), sub: "Conta ativa", color: "border-[rgba(20,24,30,0.06)]" }),
             React.createElement(StatCard, { label: "Sessões de IA", value: stats.total_sessions?.toLocaleString("pt-BR"), sub: "Total histórico", color: "border-zinc-200" }),
-            React.createElement(StatCard, { label: "Engajamento", value: (stats.indicators?.engagement_rate ?? 0) + "%", sub: "Ativos / total", color: stats.indicators?.engagement_rate >= 70 ? "border-emerald-500/20" : "border-amber-500/10" })
+            React.createElement(StatCard, { label: "Engajamento", value: (stats.indicators?.engagement_rate ?? 0) + "%", sub: "Ativos / total", color: stats.indicators?.engagement_rate >= 70 ? "border-[rgba(20,24,30,0.06)]" : "border-[rgba(20,24,30,0.06)]" })
           ),
 
           // Regional — só quando houver dados reais
           (stats.regions || []).length > 0 &&
           React.createElement("div", { className: "grid gap-4 lg:grid-cols-3" },
-            React.createElement(motion.div, { className: "lg:col-span-2 rounded-2xl border border-zinc-200 bg-[rgba(15,23,42,0.9)] p-6", initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.2 } },
+            React.createElement("div", { className: "lg:col-span-2 rounded-2xl border border-zinc-200 bg-white p-6" },
               React.createElement("h2", { className: "mb-4 text-sm font-semibold text-zinc-900" }, "Distribuição Regional — Engajamento"),
               React.createElement("div", { className: "space-y-4" },
                 (stats.regions || []).map(function (r) {
@@ -310,7 +309,7 @@ function GovernoPageInner() {
                 })
               )
             ),
-            React.createElement(motion.div, { className: "rounded-2xl border border-zinc-200 bg-[rgba(15,23,42,0.9)] p-6 flex flex-col items-center", initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.25 } },
+            React.createElement("div", { className: "rounded-2xl border border-zinc-200 bg-white p-6 flex flex-col items-center" },
               React.createElement("h2", { className: "mb-4 self-start text-sm font-semibold text-zinc-900" }, "Distribuição por Região"),
               React.createElement(CanvasChart, { regions: stats.regions || [] }),
             )
@@ -321,8 +320,8 @@ function GovernoPageInner() {
             ),
 
           // Plan distribution
-          React.createElement(motion.div, { className: "grid gap-4 sm:grid-cols-2", initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.3 } },
-            React.createElement("div", { className: "rounded-2xl border border-zinc-200 bg-[rgba(15,23,42,0.9)] p-5" },
+          React.createElement("div", { className: "grid gap-4 sm:grid-cols-2" },
+            React.createElement("div", { className: "rounded-2xl border border-zinc-200 bg-white p-5" },
               React.createElement("h3", { className: "mb-4 text-sm font-semibold text-zinc-900" }, "Distribuição de Planos"),
               React.createElement("div", { className: "space-y-2.5" },
                 Object.entries(stats.plan_distribution || {}).map(function ([name, count]) {
@@ -330,7 +329,7 @@ function GovernoPageInner() {
                 })
               )
             ),
-            React.createElement("div", { className: "rounded-2xl border border-zinc-200 bg-[rgba(15,23,42,0.9)] p-5 space-y-3" },
+            React.createElement("div", { className: "rounded-2xl border border-zinc-200 bg-white p-5 space-y-3" },
               React.createElement("h3", { className: "text-sm font-semibold text-zinc-900" }, "Métricas-chave"),
               [
                 ["Média sessões/usuário", (stats.indicators?.avg_sessions_per_user || 0) + " sessões"],
@@ -352,7 +351,7 @@ function GovernoPageInner() {
       ),
 
       // ── Tab: Relatórios ──────────────────────────────────────────────────
-      activeTab === "relatorio" && React.createElement(motion.div, { className: "rounded-2xl border border-amber-500/15 bg-[rgba(15,23,42,0.9)] p-6 space-y-5", initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } },
+      activeTab === "relatorio" && React.createElement("div", { className: "rounded-2xl border border-[rgba(20,24,30,0.06)] bg-white p-6 space-y-5" },
         React.createElement("div", null,
           React.createElement("h2", { className: "text-base font-semibold text-zinc-900" }, "Gerador de Relatórios Educacionais"),
           React.createElement("p", { className: "mt-0.5 text-xs text-zinc-500" }, "Relatórios automáticos com análise, indicadores e recomendações de políticas públicas")
@@ -362,7 +361,7 @@ function GovernoPageInner() {
             React.createElement("p", { className: "mb-2 text-xs text-zinc-500 uppercase tracking-wider" }, "Tipo"),
             React.createElement("div", { className: "space-y-1.5" },
               REPORT_TYPES.map(function (t) {
-                return React.createElement("button", { key: t, onClick: function () { setReportType(t); }, className: `w-full rounded-xl border px-3 py-1.5 text-left text-xs capitalize transition-all ${reportType === t ? "bg-amber-600/60 border-amber-500/40 text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}` }, t);
+                return React.createElement("button", { key: t, onClick: function () { setReportType(t); }, className: `w-full rounded-xl border px-3 py-1.5 text-left text-xs capitalize transition-all ${reportType === t ? "bg-[#1a1c1e] border-[rgba(20,24,30,0.1)] text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}` }, t);
               })
             )
           ),
@@ -370,7 +369,7 @@ function GovernoPageInner() {
             React.createElement("p", { className: "mb-2 text-xs text-zinc-500 uppercase tracking-wider" }, "Período"),
             React.createElement("div", { className: "space-y-1.5" },
               REPORT_PERIODS.map(function (p) {
-                return React.createElement("button", { key: p, onClick: function () { setReportPeriod(p); }, className: `w-full rounded-xl border px-3 py-1.5 text-left text-xs capitalize transition-all ${reportPeriod === p ? "bg-amber-600/60 border-amber-500/40 text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}` }, p);
+                return React.createElement("button", { key: p, onClick: function () { setReportPeriod(p); }, className: `w-full rounded-xl border px-3 py-1.5 text-left text-xs capitalize transition-all ${reportPeriod === p ? "bg-[#1a1c1e] border-[rgba(20,24,30,0.1)] text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}` }, p);
               })
             )
           ),
@@ -378,7 +377,7 @@ function GovernoPageInner() {
             React.createElement("p", { className: "mb-2 text-xs text-zinc-500 uppercase tracking-wider" }, "Abrangência"),
             React.createElement("div", { className: "space-y-1.5" },
               ["nacional", "sudeste", "nordeste", "sul", "norte", "centro-oeste"].map(function (r) {
-                return React.createElement("button", { key: r, onClick: function () { setReportRegion(r); }, className: `w-full rounded-xl border px-3 py-1.5 text-left text-xs capitalize transition-all ${reportRegion === r ? "bg-amber-600/60 border-amber-500/40 text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}` }, r);
+                return React.createElement("button", { key: r, onClick: function () { setReportRegion(r); }, className: `w-full rounded-xl border px-3 py-1.5 text-left text-xs capitalize transition-all ${reportRegion === r ? "bg-[#1a1c1e] border-[rgba(20,24,30,0.1)] text-zinc-900" : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}` }, r);
               })
             )
           )
@@ -391,25 +390,25 @@ function GovernoPageInner() {
             finally { setReportLoading(false); }
           },
           disabled: reportLoading,
-          className: "rounded-[14px] bg-amber-600/80 border border-amber-500/40 px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-amber-500/90 disabled:opacity-50",
+          className: "rounded-[14px] bg-[#1a1c1e] border border-[rgba(20,24,30,0.1)] px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-[#1a1c1e] disabled:opacity-50",
         }, reportLoading ? React.createElement("span", { className: "flex items-center gap-2" }, React.createElement("span", { className: "h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" }), "Gerando relatório...") : "Gerar relatório com IA"),
         reportError && React.createElement("p", { className: "text-xs text-red-400" }, reportError),
-        reportContent && React.createElement(motion.div, { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-5", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } },
-          React.createElement("p", { className: "mb-3 text-xs font-medium text-amber-300 uppercase tracking-wider" }, "Relatório gerado"),
+        reportContent && React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-5" },
+          React.createElement("p", { className: "mb-3 text-xs font-medium text-[#5a5c5e] uppercase tracking-wider" }, "Relatório gerado"),
           React.createElement("div", { className: "whitespace-pre-wrap text-sm text-zinc-700 leading-relaxed" }, reportContent)
         )
       ),
 
       // ── Tab: Previsões ────────────────────────────────────────────────────
-      activeTab === "previsao" && React.createElement(motion.div, { className: "space-y-5", initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } },
-        React.createElement("div", { className: "rounded-2xl border border-amber-500/15 bg-[rgba(15,23,42,0.9)] p-6" },
+      activeTab === "previsao" && React.createElement("div", { className: "space-y-5" },
+        React.createElement("div", { className: "rounded-2xl border border-[rgba(20,24,30,0.06)] bg-white p-6" },
           React.createElement("h2", { className: "mb-1 text-base font-semibold text-zinc-900 flex items-center gap-2" },
-            React.createElement(FuturisticIcon, { name: "predict", className: "h-5 w-5 text-amber-400/90" }),
+            React.createElement(FuturisticIcon, { name: "predict", className: "h-5 w-5 text-[#5a5c5e]/90" }),
             "Previsões com Inteligência Artificial"),
           React.createElement("p", { className: "mb-5 text-xs text-zinc-500" }, "Análise preditiva baseada em evidências com intervalos de confiança e intervenções recomendadas"),
           React.createElement("div", { className: "mb-4 grid gap-2 sm:grid-cols-2" },
             PREDICT_SCENARIOS.map(function (sc) {
-              return React.createElement("button", { key: sc.id, onClick: function () { setPredictScenario(sc.id); }, className: `flex flex-col items-start rounded-xl border p-3 text-left transition-all ${predictScenario === sc.id ? "border-amber-500/40 bg-amber-500/8 text-amber-300" : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}` },
+              return React.createElement("button", { key: sc.id, onClick: function () { setPredictScenario(sc.id); }, className: `flex flex-col items-start rounded-xl border p-3 text-left transition-all ${predictScenario === sc.id ? "border-[rgba(20,24,30,0.1)] bg-[#f8f9fa] text-[#5a5c5e]" : "border-zinc-200 text-zinc-500 hover:text-zinc-900/80"}` },
                 React.createElement("span", { className: "text-xs font-semibold" }, sc.label),
                 React.createElement("span", { className: "text-[10px] opacity-60 mt-0.5" }, sc.desc)
               );
@@ -430,28 +429,28 @@ function GovernoPageInner() {
               finally { setPredictLoading(false); }
             },
             disabled: predictLoading,
-            className: "rounded-[14px] bg-amber-600/80 border border-amber-500/40 px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-amber-500/90 disabled:opacity-50",
+            className: "rounded-[14px] bg-[#1a1c1e] border border-[rgba(20,24,30,0.1)] px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-[#1a1c1e] disabled:opacity-50",
           }, predictLoading ? React.createElement("span", { className: "flex items-center gap-2" }, React.createElement("span", { className: "h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" }), "Analisando...") : "Gerar previsão")
         ),
         predictError && React.createElement("p", { className: "text-sm text-red-400" }, predictError),
-        predictResult && React.createElement(motion.div, { className: "rounded-2xl border border-amber-500/10 bg-[rgba(15,23,42,0.9)] p-6", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } },
-          React.createElement("p", { className: "mb-3 text-xs font-medium text-amber-300 uppercase tracking-wider" }, "Análise preditiva — " + PREDICT_SCENARIOS.find(s => s.id === predictScenario)?.label),
+        predictResult && React.createElement("div", { className: "rounded-2xl border border-[rgba(20,24,30,0.06)] bg-white p-6" },
+          React.createElement("p", { className: "mb-3 text-xs font-medium text-[#5a5c5e] uppercase tracking-wider" }, "Análise preditiva — " + PREDICT_SCENARIOS.find(s => s.id === predictScenario)?.label),
           React.createElement("div", { className: "whitespace-pre-wrap text-sm text-zinc-700 leading-relaxed" }, predictResult)
         )
       ),
 
       // ── Tab: Políticas ────────────────────────────────────────────────────
-      activeTab === "politica" && React.createElement(motion.div, { className: "space-y-5", initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 } },
-        React.createElement("div", { className: "rounded-2xl border border-amber-500/15 bg-[rgba(15,23,42,0.9)] p-6 space-y-4" },
+      activeTab === "politica" && React.createElement("div", { className: "space-y-5" },
+        React.createElement("div", { className: "rounded-2xl border border-[rgba(20,24,30,0.06)] bg-white p-6 space-y-4" },
           React.createElement("div", null,
             React.createElement("h2", { className: "text-base font-semibold text-zinc-900 flex items-center gap-2" },
-              React.createElement(FuturisticIcon, { name: "building", className: "h-5 w-5 text-amber-400/90" }),
+              React.createElement(FuturisticIcon, { name: "building", className: "h-5 w-5 text-[#5a5c5e]/90" }),
               "Gerador de Políticas Públicas Educacionais"),
             React.createElement("p", { className: "mt-0.5 text-xs text-zinc-500" }, "Propostas completas com diagnóstico, objetivos SMART, estratégias, cronograma e KPIs")
           ),
           React.createElement("div", null,
             React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "Desafio / Problema educacional *"),
-            React.createElement("textarea", { value: policyChallenge, onChange: function (e) { setPolicyChallenge(e.target.value); }, placeholder: "Ex: Alta taxa de evasão escolar no ensino médio nas regiões Norte e Nordeste...", rows: 3, className: "w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-amber-500/30" })
+            React.createElement("textarea", { value: policyChallenge, onChange: function (e) { setPolicyChallenge(e.target.value); }, placeholder: "Ex: Alta taxa de evasão escolar no ensino médio nas regiões Norte e Nordeste...", rows: 3, className: "w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-[rgba(20,24,30,0.06)]" })
           ),
           React.createElement("div", { className: "grid gap-3 sm:grid-cols-2" },
             React.createElement("div", null,
@@ -472,12 +471,12 @@ function GovernoPageInner() {
               finally { setPolicyLoading(false); }
             },
             disabled: policyLoading || !policyChallenge.trim(),
-            className: "rounded-[14px] bg-amber-600/80 border border-amber-500/40 px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-amber-500/90 disabled:opacity-50",
+            className: "rounded-[14px] bg-[#1a1c1e] border border-[rgba(20,24,30,0.1)] px-5 py-2.5 text-sm font-medium text-zinc-900 hover:bg-[#1a1c1e] disabled:opacity-50",
           }, policyLoading ? React.createElement("span", { className: "flex items-center gap-2" }, React.createElement("span", { className: "h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" }), "Elaborando proposta...") : "Elaborar política pública")
         ),
         policyError && React.createElement("p", { className: "text-sm text-red-400" }, policyError),
-        policyResult && React.createElement(motion.div, { className: "rounded-2xl border border-amber-500/10 bg-[rgba(15,23,42,0.9)] p-6", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } },
-          React.createElement("p", { className: "mb-3 text-xs font-medium text-amber-300 uppercase tracking-wider" }, "Proposta de política pública elaborada"),
+        policyResult && React.createElement(motion.div, { className: "rounded-2xl border border-[rgba(20,24,30,0.06)] bg-white p-6", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } },
+          React.createElement("p", { className: "mb-3 text-xs font-medium text-[#5a5c5e] uppercase tracking-wider" }, "Proposta de política pública elaborada"),
           React.createElement("div", { className: "whitespace-pre-wrap text-sm text-zinc-700 leading-relaxed" }, policyResult)
         )
       )

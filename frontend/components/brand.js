@@ -9,10 +9,11 @@ export function Brand(props) {
     (className || "h-36 w-[500px] sm:h-40 sm:w-[620px]");
 
   return React.createElement("img", {
-    src: "/LOGOTIPO.png?v=blue4",
+    src: "/LOGOTIPO.png",
     alt: alt || "Syntexa",
     className: cn,
     decoding: "async",
     loading: "eager",
+    draggable: false,
   });
 }

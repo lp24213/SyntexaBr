@@ -299,17 +299,17 @@ export default function AlunoPage() {
   if (!discipline) {
     return React.createElement(AppShell, null,
       React.createElement("div", { className: "py-8" },
-        React.createElement(motion.div, { initial: { opacity: 0 }, animate: { opacity: 1 } },
+        React.createElement("div", null,
           React.createElement("button", { onClick: function () { window.location.href = "/educacao"; }, className: "inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-700 mb-6" }, React.createElement(BackIcon, null), "Educação & Pesquisa")
         ),
-        React.createElement(motion.div, { className: "mb-8 text-center", initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4 } },
+        React.createElement("div", { className: "mb-8 text-center" },
           React.createElement("div", { className: "mb-3 flex flex-wrap items-center justify-center gap-2" },
-            React.createElement("div", { className: "inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-sky-500/10 px-3 py-1 text-xs text-sky-300" },
+            React.createElement("div", { className: "inline-flex items-center gap-2 rounded-full border border-[rgba(20,24,30,0.06)] bg-[#f1f2f4] px-3 py-1 text-xs text-[#5a5c5e]" },
               React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" }),
               "Área Aluno · Público e Gratuito"
             ),
-            React.createElement("div", { className: "inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/8 px-3 py-1 text-xs text-emerald-400" },
-              React.createElement(FuturisticIcon, { name: "lock", className: "h-3 w-3 text-emerald-400/90" }),
+            React.createElement("div", { className: "inline-flex items-center gap-1.5 rounded-full border border-[rgba(20,24,30,0.06)] bg-[#f8f9fa] px-3 py-1 text-xs text-[#5a5c5e]" },
+              React.createElement(FuturisticIcon, { name: "lock", className: "h-3 w-3 text-[#5a5c5e]/90" }),
               "Sessão anônima · " + sessionId.slice(0, 10) + "…"
             )
           ),
@@ -341,15 +341,14 @@ export default function AlunoPage() {
         // Disciplines
         React.createElement("div", { className: "mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" },
           DISCIPLINES.map(function (d, idx) {
-            return React.createElement(motion.button, {
+            return React.createElement("button", {
               key: d.id,
               onClick: function () { selectDiscipline(d.id); },
-              className: "group flex flex-col items-start gap-2 rounded-2xl border border-zinc-200 bg-white p-5 text-left transition-all hover:border-sky-500/40 hover:bg-sky-500/5",
-              initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, delay: 0.04 + idx * 0.04 },
+              className: "group flex flex-col items-start gap-2 rounded-2xl border border-zinc-200 bg-white p-5 text-left transition-all hover:border-[rgba(20,24,30,0.1)] hover:bg-[#f8f9fa]",
             },
-              React.createElement(FuturisticIcon, { name: d.iconName, className: "h-9 w-9 text-sky-400/85 shrink-0" }),
+              React.createElement(FuturisticIcon, { name: d.iconName, className: "h-9 w-9 text-[#1a1c1e]/85 shrink-0" }),
               React.createElement("div", null,
-                React.createElement("p", { className: "text-sm font-semibold text-zinc-900 group-hover:text-sky-300 transition-colors" }, d.label),
+                React.createElement("p", { className: "text-sm font-semibold text-zinc-900 group-hover:text-[#5a5c5e] transition-colors" }, d.label),
                 React.createElement("p", { className: "text-xs text-zinc-500 leading-tight" }, d.desc)
               )
             );
@@ -361,8 +360,8 @@ export default function AlunoPage() {
           React.createElement("p", { className: "mb-3 text-xs font-medium text-zinc-500 uppercase tracking-wider" }, "Modo de estudo"),
           React.createElement("div", { className: "grid grid-cols-2 sm:grid-cols-5 gap-2" },
             MODES.map(function (m) {
-              return React.createElement("button", { key: m.id, onClick: function () { setMode(m.id); }, className: `flex flex-col items-start rounded-xl border px-3 py-2 transition-all ${mode === m.id ? "border-sky-500/40 bg-sky-500/10 text-sky-300" : "border-zinc-200 text-zinc-500 hover:text-zinc-700 hover:border-zinc-200"}` },
-                React.createElement("span", { className: "text-sm mb-0.5 inline-flex items-center gap-1.5" }, React.createElement(FuturisticIcon, { name: m.iconName, className: "h-4 w-4 text-sky-400/80" }), React.createElement("span", { className: "text-xs font-semibold" }, m.label)),
+              return React.createElement("button", { key: m.id, onClick: function () { setMode(m.id); }, className: `flex flex-col items-start rounded-xl border px-3 py-2 transition-all ${mode === m.id ? "border-[rgba(20,24,30,0.1)] bg-[#f1f2f4] text-[#5a5c5e]" : "border-zinc-200 text-zinc-500 hover:text-zinc-700 hover:border-zinc-200"}` },
+                React.createElement("span", { className: "text-sm mb-0.5 inline-flex items-center gap-1.5" }, React.createElement(FuturisticIcon, { name: m.iconName, className: "h-4 w-4 text-[#1a1c1e]/80" }), React.createElement("span", { className: "text-xs font-semibold" }, m.label)),
                 React.createElement("span", { className: "text-[10px] opacity-60 leading-tight" }, m.desc)
               );
             })
@@ -370,11 +369,11 @@ export default function AlunoPage() {
         ),
 
         // Shortcuts row
-        React.createElement(motion.div, { className: "mt-6 grid gap-3 sm:grid-cols-2", initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.4 } },
+        React.createElement("div", { className: "mt-6 grid gap-3 sm:grid-cols-2" },
           React.createElement("button", { onClick: goToLabs, className: "rounded-2xl border border-zinc-200 bg-zinc-100 p-4 text-left hover:border-zinc-200 transition-all" },
             React.createElement("div", { className: "flex items-center justify-between" },
               React.createElement("div", null,
-                React.createElement("p", { className: "text-sm font-medium text-zinc-900 flex items-center gap-2" }, React.createElement(FuturisticIcon, { name: "flask", className: "h-4 w-4 text-sky-400/80" }), "Laboratórios Científicos"),
+                React.createElement("p", { className: "text-sm font-medium text-zinc-900 flex items-center gap-2" }, React.createElement(FuturisticIcon, { name: "flask", className: "h-4 w-4 text-[#1a1c1e]/80" }), "Laboratórios Científicos"),
                 React.createElement("p", { className: "text-xs text-zinc-500 mt-0.5" }, "Pêndulo, ondas, sorting, SymPy, sandbox Python")
               ),
               React.createElement("svg", { className: "h-4 w-4 text-zinc-400", viewBox: "0 0 24 24", fill: "none" },
@@ -394,7 +393,7 @@ export default function AlunoPage() {
         ),
 
         // Privacy notice
-        React.createElement(motion.div, { className: "mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-center", initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.5 } },
+        React.createElement("div", { className: "mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-center" },
           React.createElement("p", { className: "text-xs text-zinc-400" },
             "Sessão 100% anônima — nenhuma mensagem ou dado pessoal é armazenado no servidor. " +
             "Histórico salvo apenas na memória do seu navegador. Conforme LGPD (Lei 13.709/2018)."
@@ -413,10 +412,10 @@ export default function AlunoPage() {
   return React.createElement(AppShell, null,
     React.createElement("div", { className: "flex h-[calc(100vh-11rem)] flex-col" },
       // Header
-      React.createElement(motion.div, { className: "mb-3 flex items-center justify-between flex-wrap gap-2", initial: { opacity: 0 }, animate: { opacity: 1 } },
+      React.createElement("div", { className: "mb-3 flex items-center justify-between flex-wrap gap-2" },
         React.createElement("div", { className: "flex items-center gap-2 flex-wrap" },
           React.createElement("button", { onClick: function () { setDiscipline(null); setMessages([]); }, className: "inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-900" }, React.createElement(BackIcon, null), "Disciplinas"),
-          chosen && React.createElement(FuturisticIcon, { name: chosen.iconName, className: "h-6 w-6 text-sky-400/85" }),
+          chosen && React.createElement(FuturisticIcon, { name: chosen.iconName, className: "h-6 w-6 text-[#1a1c1e]/85" }),
           React.createElement("span", { className: "text-sm font-medium text-zinc-900" }, chosen?.label),
           React.createElement("span", { className: `hidden rounded-full border px-2 py-0.5 text-[10px] sm:inline ${currentLevel?.color || ""}` }, currentLevel?.label),
           React.createElement("span", { className: "hidden rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] text-zinc-500 sm:inline" }, currentLang?.full)
@@ -433,7 +432,7 @@ export default function AlunoPage() {
       ),
 
       // Settings panel
-      AnimatePresence && showSettings && React.createElement(motion.div, { className: "mb-3 rounded-xl border border-zinc-200 bg-white p-4", initial: { opacity: 0, height: 0 }, animate: { opacity: 1, height: "auto" }, exit: { opacity: 0, height: 0 } },
+      showSettings && React.createElement("div", { className: "mb-3 rounded-xl border border-zinc-200 bg-white p-4" },
         React.createElement("div", { className: "flex flex-wrap gap-4" },
           React.createElement("div", null,
             React.createElement("p", { className: "mb-1.5 text-xs text-zinc-500" }, "Nível"),
@@ -461,8 +460,8 @@ export default function AlunoPage() {
               React.createElement("span", { className: "text-[10px] text-zinc-400" }, "Essa explicação foi:"),
               [
                 { id: "facil", label: "Fácil demais ↑", color: pendingFeedback === "facil" ? "border-amber-400/50 bg-amber-500/10 text-amber-300" : "border-zinc-200 text-zinc-400 hover:text-amber-300" },
-                { id: "otimo", label: "Ótima", color: pendingFeedback === "otimo" ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-300" : "border-zinc-200 text-zinc-400 hover:text-emerald-300" },
-                { id: "dificil", label: "Difícil ↓", color: pendingFeedback === "dificil" ? "border-sky-400/50 bg-sky-500/10 text-sky-300" : "border-zinc-200 text-zinc-400 hover:text-sky-300" },
+                { id: "otimo", label: "Ótima", color: pendingFeedback === "otimo" ? "border-[rgba(20,24,30,0.1)] bg-[#f1f2f4] text-[#5a5c5e]" : "border-zinc-200 text-zinc-400 hover:text-[#5a5c5e]" },
+                { id: "dificil", label: "Difícil ↓", color: pendingFeedback === "dificil" ? "border-sky-400/50 bg-[#f1f2f4] text-[#5a5c5e]" : "border-zinc-200 text-zinc-400 hover:text-[#5a5c5e]" },
               ].map(function (fb) {
                 return React.createElement("button", {
                   key: fb.id,
@@ -494,7 +493,7 @@ export default function AlunoPage() {
                 placeholder: "Cole ou escreva sua redação aqui...\n\nA correção avaliará: norma culta, compreensão do tema, coerência, coesão e proposta de intervenção (0-1000).",
                 rows: 8,
                 disabled: streaming,
-                className: "w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-sky-500/30 transition-colors disabled:opacity-50",
+                className: "w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-[rgba(20,24,30,0.06)] transition-colors disabled:opacity-50",
               }),
               React.createElement("span", { className: "absolute bottom-3 right-3 text-[10px] text-zinc-400 pointer-events-none" },
                 essayText.length + " chars · ~" + essayText.trim().split(/\s+/).filter(Boolean).length + " palavras"
@@ -504,14 +503,14 @@ export default function AlunoPage() {
               React.createElement("button", {
                 onClick: streaming ? handleStop : handleSend,
                 disabled: !streaming && essayText.trim().length < 50,
-                className: `flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all ${streaming ? "border-red-500/30 bg-red-500/10 text-red-300" : "border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 disabled:opacity-30"}`,
+                className: `flex-1 rounded-xl border py-2.5 text-sm font-medium transition-all ${streaming ? "border-red-500/30 bg-red-500/10 text-red-300" : "border-[rgba(20,24,30,0.06)] bg-[#f1f2f4] text-[#5a5c5e] hover:bg-sky-500/20 disabled:opacity-30"}`,
               }, streaming ? "Parar correção" : React.createElement("span", { className: "inline-flex items-center justify-center gap-2" }, React.createElement(FuturisticIcon, { name: "doc", className: "h-4 w-4" }), "Corrigir Redação ENEM")),
               React.createElement("button", { onClick: function () { setEssayText(""); }, className: "rounded-xl border border-zinc-200 px-4 text-xs text-zinc-500 hover:text-zinc-700" }, "Limpar")
             )
           )
         // Normal input
         : React.createElement("div", { className: "mt-3 flex items-end gap-2" },
-            React.createElement("div", { className: "flex-1 rounded-2xl border border-zinc-200 bg-white px-4 py-3 focus-within:border-sky-500/40 transition-colors" },
+            React.createElement("div", { className: "flex-1 rounded-2xl border border-zinc-200 bg-white px-4 py-3 focus-within:border-[rgba(20,24,30,0.1)] transition-colors" },
               React.createElement("div", { className: "mb-1 flex items-center gap-1.5" },
                 React.createElement("span", { className: "text-[10px] text-zinc-400 inline-flex items-center gap-1" }, currentMode && React.createElement(FuturisticIcon, { name: currentMode.iconName, className: "h-3 w-3 opacity-70" }), currentMode?.label, " · ", currentLevel?.label, " · ", currentLang?.label)
               ),
@@ -528,7 +527,7 @@ export default function AlunoPage() {
             React.createElement("button", {
               onClick: streaming ? handleStop : handleSend,
               disabled: !streaming && !input.trim(),
-              className: `flex h-11 w-11 items-center justify-center rounded-xl transition-all ${streaming ? "bg-red-600/70 hover:bg-red-500/90 border border-red-500/40" : "bg-sky-600/80 hover:bg-sky-500/90 border border-sky-500/40 disabled:opacity-40"} text-zinc-900`,
+              className: `flex h-11 w-11 items-center justify-center rounded-xl transition-all ${streaming ? "bg-red-600/70 hover:bg-red-500/90 border border-red-500/40" : "bg-[#1a1c1e] hover:bg-sky-500/90 border border-[rgba(20,24,30,0.1)] disabled:opacity-40"} text-zinc-900`,
             }, streaming ? React.createElement(StopIcon, null) : React.createElement(SendIcon, null))
           )
     )

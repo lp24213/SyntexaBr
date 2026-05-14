@@ -1,0 +1,20 @@
+Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/892fb11f-9b45-4417-9bf2-c603412bb9c9/vol_udm8mqmlkd4xsoon
+2026-05-10 20:17:11.953 UTC [35] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-05-10 20:17:11.961 UTC [35] LOG:  redo starts at 0/1B9FC20
+Certificate will not expire
+pgbackrest: restore-gate WAL_RECOVER_FROM_BUCKET= POSTGRES_RECOVERY_TARGET_TIME= PG_VERSION=present RESTORED_MARKER=missing PGDATA=/var/lib/postgresql/data/pgdata
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2026-05-10 20:17:11.479 UTC [9] LOG:  starting PostgreSQL 18.3 (Debian 18.3-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-05-10 20:17:11.479 UTC [9] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-05-10 20:17:11.479 UTC [9] LOG:  listening on IPv6 address "::", port 5432
+2026-05-10 20:17:11.485 UTC [9] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-05-10 20:17:11.524 UTC [35] LOG:  database system was interrupted; last known up at 2026-05-10 20:15:50 UTC
+2026-05-10 20:17:12.004 UTC [35] LOG:  invalid record length at 0/1BE9D98: expected at least 24, got 0
+2026-05-10 20:17:12.004 UTC [35] LOG:  redo done at 0/1BE9D60 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.04 s
+2026-05-10 20:17:12.023 UTC [33] LOG:  checkpoint starting: end-of-recovery immediate wait
+Starting Container
+2026-05-10 20:17:12.066 UTC [33] LOG:  checkpoint complete: wrote 41 buffers (0.3%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.010 s, sync=0.019 s, total=0.050 s; sync files=12, longest=0.018 s, average=0.002 s; distance=296 kB, estimate=296 kB; lsn=0/1BE9D98, redo lsn=0/1BE9D98
+2026-05-10 20:17:12.087 UTC [9] LOG:  database system is ready to accept connections
+Stopping Container

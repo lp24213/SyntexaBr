@@ -1,0 +1,13 @@
+{
+  "policy_version": 1,
+  "objective_weights": {
+    "latency": 0.3,
+    "quality": 0.3,
+    "cost": 0.15,
+    "energy": 0.1,
+    "security_risk": 0.15
+  },
+  "fallback": {
+    "external_provider_enabled": false
+  }
+}

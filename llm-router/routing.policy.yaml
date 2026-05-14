@@ -1,0 +1,33 @@
+policy_version: 1
+objective_weights:
+  latency: 0.30
+  quality: 0.30
+  cost: 0.15
+  energy: 0.10
+  security_risk: 0.15
+targets:
+  - id: local-gpu-trt
+    runtime: gpu
+    acceleration: tensorrt
+    allowed_for_sensitive_data: true
+  - id: local-gpu-vllm
+    runtime: gpu
+    acceleration: vllm
+    allowed_for_sensitive_data: true
+  - id: local-cpu-onnx
+    runtime: cpu
+    acceleration: onnx
+    allowed_for_sensitive_data: true
+  - id: edge-wasm
+    runtime: wasm
+    acceleration: wasm
+    allowed_for_sensitive_data: false
+  - id: quantum-sim
+    runtime: quantum_simulator
+    acceleration: qiskit
+    allowed_for_sensitive_data: false
+fallback:
+  external_provider_enabled: false
+  allowed_only_for:
+    - benchmark
+    - explicit_operator_override

@@ -139,6 +139,43 @@ class Settings(BaseSettings):
     openai_endpoint: str | None = Field(default=None, validation_alias="OPENAI_ENDPOINT")
     openai_api_key: str | None = Field(default=None, validation_alias="OPENAI_API_KEY")
     openai_model: str | None = Field(default=None, validation_alias="OPENAI_MODEL")
+
+    # ── Split Architecture: Gateway Mode & AI Workers ─────────────────
+    gateway_mode: bool = Field(
+        default=False, validation_alias="GATEWAY_MODE",
+        description="Se True, NÃO carrega IA pesada no startup (modo Railway leve).",
+    )
+    ai_worker_url: str | None = Field(
+        default=None, validation_alias="AI_WORKER_URL",
+        description="URL do AI Worker (Kaggle/GPU externo).",
+    )
+    ai_worker_api_key: str | None = Field(
+        default=None, validation_alias="AI_WORKER_API_KEY",
+    )
+    local_ai_url: str | None = Field(
+        default=None, validation_alias="LOCAL_AI_URL",
+        description="URL do servidor local privado (Ollama).",
+    )
+    local_ai_api_key: str | None = Field(
+        default=None, validation_alias="LOCAL_AI_API_KEY",
+    )
+
+    # ── Hybrid Architecture: AWS GPU + Local Fallback ───────────────────
+    aws_base_url: str | None = Field(
+        default=None, validation_alias="AWS_BASE_URL",
+        description="URL do cluster GPU na AWS (vLLM / TGI).",
+    )
+    local_base_url: str | None = Field(
+        default=None, validation_alias="LOCAL_BASE_URL",
+        description="URL da infra local híbrida (Ollama / llama.cpp fallback).",
+    )
+    ai_router_timeout_sec: float = Field(
+        default=120.0, validation_alias="AI_ROUTER_TIMEOUT_SEC",
+    )
+    ai_router_fallback_enabled: bool = Field(
+        default=True, validation_alias="AI_ROUTER_FALLBACK_ENABLED",
+    )
+
     # ExLlama (exllamav2) endpoint — servidor HTTP que expõe exllama
     exllama_endpoint: str | None = Field(
         default=None, validation_alias="EXLLAMA_ENDPOINT"
@@ -624,6 +661,10 @@ def _validate_production_settings(s: Settings) -> None:
             "Defina uma chave forte (>=32 chars) no .env."
         )
 
+    # Gateway não carrega LLM local; pular validação de endpoint
+    if bool(getattr(s, "gateway_mode", False)):
+        return
+
     insecure_admin_pw = {"", "admin123", "password", "123456"}
     if (s.admin_password or "").strip() in insecure_admin_pw or len((s.admin_password or "").strip()) < 10:
         raise ValueError(
@@ -660,4 +701,7 @@ def _validate_production_settings(s: Settings) -> None:
         )
 
 
-_validate_production_settings(settings)
+# NOTA: Validação de produção removida do import síncrono.
+# Executar somente em runtime via startup event do FastAPI.
+# Isso evita que o container Railway morra antes do healthcheck subir.
+# def _validate_production_settings(...) → usar validate_runtime_settings() no startup.

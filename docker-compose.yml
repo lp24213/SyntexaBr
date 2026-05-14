@@ -1,0 +1,172 @@
+# ============================================================
+# VEREDA / SYNTEXA — Development Environment (Local Hybrid)
+# ============================================================
+version: "3.9"
+
+services:
+  # ── PostgreSQL ───────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: syntexa-postgres
+    environment:
+      POSTGRES_USER: syntexa
+      POSTGRES_PASSWORD: syntexadev
+      POSTGRES_DB: syntexa
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U syntexa -d syntexa"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - syntexa-dev
+
+  # ── Redis ────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: syntexa-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - syntexa-dev
+
+  # ── Railway Core Gateway (porta 8000) ────────────────────
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.railway
+    container_name: syntexa-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - GATEWAY_MODE=true
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+psycopg2://syntexa:syntexadev@postgres:5432/syntexa
+      - REDIS_URL=redis://redis:6379/0
+      - AWS_BASE_URL=http://ai-worker:8001
+      - LOCAL_BASE_URL=http://local-hybrid:8002
+      - AI_ROUTER_FALLBACK_ENABLED=true
+      - VEREDA_SECRET_KEY=dev-secret-key-change-me-32chars-min
+      - VEREDA_ADMIN_EMAIL=admin@syntexabr.com.br
+      - VEREDA_ADMIN_PASSWORD=admin123
+      - FRONTEND_BASE_URL=http://localhost:3000
+      - API_PUBLIC_BASE_URL=http://localhost:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ai-worker:
+        condition: service_healthy
+      local-hybrid:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 2
+      start_period: 5s
+    networks:
+      - syntexa-dev
+    restart: unless-stopped
+
+  # ── AI Worker (simula AWS GPU localmente) ─────────────────
+  ai-worker:
+    build:
+      context: ./infrastructure/ai-worker
+      dockerfile: Dockerfile
+    container_name: syntexa-ai-worker
+    ports:
+      - "8001:8001"
+    environment:
+      - AI_WORKER_API_KEY=dev-worker-key
+      - EMBEDDING_BACKEND=fastembed
+      - FASTEMBED_MODEL_NAME=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      - DEFAULT_LLM_MODEL=microsoft/DialoGPT-medium
+      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
+      - OLLAMA_ENDPOINT=http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks:
+      - syntexa-dev
+    restart: unless-stopped
+
+  # ── Local Hybrid (fallback) ────────────────────────────────
+  local-hybrid:
+    build:
+      context: ./infrastructure/local-hybrid
+      dockerfile: Dockerfile.local
+    container_name: syntexa-local-hybrid
+    ports:
+      - "8002:8002"
+    environment:
+      - OLLAMA_ENDPOINT=http://ollama:11434
+      - LOCAL_AI_API_KEY=local-dev-key
+      - REDIS_URL=redis://redis:6379/0
+      - SERVICE_MODE=all
+    depends_on:
+      ollama:
+        condition: service_started
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8002/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - syntexa-dev
+    restart: unless-stopped
+
+  # ── Ollama (LLM local) ───────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: syntexa-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - syntexa-dev
+    restart: unless-stopped
+
+  # ── NGINX (gateway local) ────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: syntexa-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./infrastructure/aws-gpu-cluster/config/nginx.gpu.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - gateway
+      - ai-worker
+      - local-hybrid
+    networks:
+      - syntexa-dev
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+  ollama-models:
+
+networks:
+  syntexa-dev:
+    driver: bridge

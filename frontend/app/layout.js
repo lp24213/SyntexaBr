@@ -104,7 +104,7 @@ export default function RootLayout(props) {
     ),
     React.createElement(
       "body",
-      { className: "antialiased bg-[#f8f9fb] text-[#111827]" },
+      { className: "antialiased bg-[#fafbfc] text-[#1a1c1e]" },
       React.createElement(AppWrapper, null, children)
     )
   );

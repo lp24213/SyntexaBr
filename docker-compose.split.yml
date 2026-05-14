@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  # ── Gateway (Railway) ─────────────────────────────────────────────
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.railway
+    ports:
+      - "8000:8000"
+    environment:
+      - GATEWAY_MODE=true
+      - AI_WORKER_URL=http://ai-worker:8001
+      - LOCAL_AI_URL=http://local-private-ai:8002
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - VEREDA_SECRET_KEY=${VEREDA_SECRET_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 2
+      start_period: 5s
+    depends_on:
+      - ai-worker
+      - local-private-ai
+    restart: unless-stopped
+
+  # ── AI Worker (Kaggle / GPU externo) ──────────────────────────────
+  ai-worker:
+    build:
+      context: .
+      dockerfile: infrastructure/ai-worker/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - AI_WORKER_API_KEY=${AI_WORKER_API_KEY}
+      - EMBEDDING_BACKEND=fastembed
+      - FASTEMBED_MODEL_NAME=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      - DEFAULT_LLM_MODEL=microsoft/DialoGPT-medium
+      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
+      - OLLAMA_ENDPOINT=${OLLAMA_ENDPOINT}
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+
+  # ── Local Private AI (Ollama / servidor local) ────────────────────
+  local-private-ai:
+    build:
+      context: .
+      dockerfile: infrastructure/local-private-ai/Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - OLLAMA_ENDPOINT=${OLLAMA_ENDPOINT:-http://host.docker.internal:11434}
+      - OLLAMA_DEFAULT_MODEL=${OLLAMA_DEFAULT_MODEL:-llama3}
+      - LOCAL_AI_API_KEY=${LOCAL_AI_API_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped

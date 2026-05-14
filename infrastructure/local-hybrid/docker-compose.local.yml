@@ -1,0 +1,116 @@
+# ============================================================
+# VEREDA / SYNTEXA — INFRA LOCAL HÍBRIDA
+# Fallback automático + inferência edge + ambiente offline
+# ============================================================
+version: "3.9"
+
+services:
+  # ── Ollama (LLM Local) ───────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: syntexa-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+    # GPU opcional (se NVIDIA Container Toolkit instalado localmente)
+    # runtime: nvidia
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    networks:
+      - local-hybrid
+    restart: unless-stopped
+
+  # ── Local AI Proxy (FastAPI) ─────────────────────────────
+  local-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    container_name: syntexa-local-ai
+    ports:
+      - "8002:8002"
+    environment:
+      - OLLAMA_ENDPOINT=http://ollama:11434
+      - LOCAL_AI_API_KEY=${LOCAL_AI_API_KEY:-local-dev-key}
+      - REDIS_URL=redis://redis:6379/0
+      - SERVICE_MODE=all
+    depends_on:
+      - ollama
+      - redis
+    volumes:
+      - local-cache:/app/cache
+      - local-models:/app/models
+    networks:
+      - local-hybrid
+    restart: unless-stopped
+
+  # ── Redis Local ──────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: syntexa-redis-local
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    networks:
+      - local-hybrid
+    restart: unless-stopped
+
+  # ── Sync Agent (AWS ↔ Local) ─────────────────────────────
+  sync-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    container_name: syntexa-sync-agent
+    environment:
+      - SYNC_MODE=agent
+      - AWS_BASE_URL=${AWS_BASE_URL:-}
+      - LOCAL_AI_API_KEY=${LOCAL_AI_API_KEY:-local-dev-key}
+      - SYNC_INTERVAL_SECONDS=300
+    depends_on:
+      - redis
+      - local-ai
+    volumes:
+      - local-cache:/app/cache
+    command: python -m sync_agent
+    networks:
+      - local-hybrid
+    restart: unless-stopped
+
+  # ── Fallback Health Monitor ──────────────────────────────
+  health-monitor:
+    image: alpine/curl:latest
+    container_name: syntexa-health-monitor
+    environment:
+      - AWS_BASE_URL=${AWS_BASE_URL:-}
+      - LOCAL_HEALTH_URL=http://local-ai:8002/health
+      - REDIS_URL=redis://redis:6379/0
+      - CHECK_INTERVAL=30
+    depends_on:
+      - redis
+      - local-ai
+    volumes:
+      - ./scripts/health-check.sh:/app/health-check.sh:ro
+    command: /bin/sh -c "while true; do /app/health-check.sh; sleep ${CHECK_INTERVAL:-30}; done"
+    networks:
+      - local-hybrid
+    restart: unless-stopped
+
+volumes:
+  ollama-models:
+  local-cache:
+  local-models:
+  redis-data:
+
+networks:
+  local-hybrid:
+    driver: bridge

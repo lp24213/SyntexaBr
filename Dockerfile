@@ -8,7 +8,7 @@ RUN apt-get update \
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
- && pip install --no-cache-dir "psycopg2-binary>=2.9.9" "azure-storage-queue>=12.14.0" "azure-storage-blob>=12.14.0"
+ && pip install --no-cache-dir "psycopg2-binary>=2.9.9"
 
 COPY vereda_backend ./vereda_backend
 COPY vereda_ai ./vereda_ai

@@ -4,10 +4,18 @@ import threading
 import time
 from typing import Any
 
-from vereda_ai.core.config import settings as ai_settings
-from vereda_ai.syntexa_core.runtime_model import runtime_readiness_report
 from vereda_backend.core.config import settings
 from vereda_backend.services import events
+
+
+def _get_ai_settings():
+    from vereda_ai.core.config import settings as _s
+    return _s
+
+
+def _runtime_readiness_report():
+    from vereda_ai.syntexa_core.runtime_model import runtime_readiness_report
+    return runtime_readiness_report()
 
 _LOCK = threading.Lock()
 _STARTED = False
@@ -24,6 +32,7 @@ _SNAPSHOT: dict[str, Any] = {
 
 def _should_enforce() -> bool:
     env_backend = str(getattr(settings, "environment", "local") or "local").lower()
+    ai_settings = _get_ai_settings()
     env_ai = str(getattr(ai_settings, "environment", "local") or "local").lower()
     strict = bool(getattr(ai_settings, "own_model_strict_no_fallback", False))
     return strict or env_backend in {"prod", "production"} or env_ai in {"prod", "production"}
@@ -34,7 +43,7 @@ def _is_syntexa_native_default() -> bool:
 
 
 def _check_once() -> dict[str, Any]:
-    report = runtime_readiness_report()
+    report = _runtime_readiness_report()
     checks = report.get("checks") or []
     detail = ""
     if checks and isinstance(checks, list):

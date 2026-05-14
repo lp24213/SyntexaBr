@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  syntexa-ai:
+    build: .
+    container_name: syntexa-ai-oracle
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - LOCAL_LLM_MODEL=${LOCAL_LLM_MODEL:-microsoft/DialoGPT-medium}
+      - AI_DEVICE=${AI_DEVICE:-auto}
+    volumes:
+      - model_cache:/root/.cache/huggingface
+    restart: unless-stopped
+    # Para GPU (quando tiver créditos OCI GPU):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  model_cache:

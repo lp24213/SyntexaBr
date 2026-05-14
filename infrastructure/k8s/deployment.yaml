@@ -1,0 +1,247 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syntexa-backend
+  namespace: syntexa
+  labels:
+    app: syntexa-backend
+    version: v3.0.0
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: syntexa-backend
+  template:
+    metadata:
+      labels:
+        app: syntexa-backend
+        version: v3.0.0
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - syntexa-backend
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: backend
+          image: syntexa/backend:v3.0.0
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: syntexa-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: syntexa-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: syntexa-secrets
+                  key: redis-url
+            - name: VEREDA_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: syntexa-secrets
+                  key: secret-key
+            - name: AWS_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: syntexa-secrets
+                  key: aws-base-url
+            - name: AI_WORKER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: syntexa-secrets
+                  key: ai-worker-api-key
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+      terminationGracePeriodSeconds: 60
+---
+# AI Worker Deployment (GPU)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syntexa-ai-worker
+  namespace: syntexa
+  labels:
+    app: syntexa-ai-worker
+    version: v3.0.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: syntexa-ai-worker
+  template:
+    metadata:
+      labels:
+        app: syntexa-ai-worker
+        version: v3.0.0
+    spec:
+      nodeSelector:
+        accelerator: nvidia-gpu
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: ai-worker
+          image: syntexa/ai-worker-gpu:v3.0.0
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8001
+          resources:
+            requests:
+              memory: "8Gi"
+              cpu: "2000m"
+              nvidia.com/gpu: 1
+            limits:
+              memory: "16Gi"
+              cpu: "4000m"
+              nvidia.com/gpu: 1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 10
+---
+# Local Hybrid Fallback
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syntexa-local-hybrid
+  namespace: syntexa
+  labels:
+    app: syntexa-local-hybrid
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: syntexa-local-hybrid
+  template:
+    metadata:
+      labels:
+        app: syntexa-local-hybrid
+    spec:
+      containers:
+        - name: local-hybrid
+          image: syntexa/local-hybrid:v3.0.0
+          ports:
+            - name: http
+              containerPort: 8002
+          env:
+            - name: OLLAMA_ENDPOINT
+              value: "http://localhost:11434"
+            - name: SERVICE_MODE
+              value: "all"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+# Redis Cache
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syntexa-redis
+  namespace: syntexa
+  labels:
+    app: syntexa-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: syntexa-redis
+  template:
+    metadata:
+      labels:
+        app: syntexa-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          command:
+            - redis-server
+            - --appendonly
+            - "yes"
+            - --maxmemory
+            - "1gb"
+            - --maxmemory-policy
+            - allkeys-lru
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc

@@ -25,9 +25,9 @@ const EXAMS = [
     label: "OAB",
     iconName: "scale",
     full: "Exame da Ordem dos Advogados do Brasil",
-    color: "from-amber-50 to-yellow-50",
-    border: "border-amber-200",
-    badge: "text-amber-700 border-amber-200 bg-amber-50",
+    color: "from-zinc-50 to-zinc-100",
+    border: "border-zinc-200",
+    badge: "text-[#5a5c5e] border-zinc-200 bg-zinc-50",
     subjects: ["Direito Constitucional", "Civil", "Penal", "Trabalhista", "Tributário", "Processual"],
     tags: ["FGV", "CESPE", "Primeira fase", "Segunda fase", "Peça prática"],
     tip: "Cite artigos de lei, jurisprudência (STF/STJ) e a doutrina majoritária nas respostas.",
@@ -241,8 +241,8 @@ function ConcursoChat({ exam, mode, subject, language, onBack }) {
   };
 
   return React.createElement(
-    motion.div,
-    { initial: { opacity: 0, x: 16 }, animate: { opacity: 1, x: 0 }, className: "flex flex-col h-full" },
+    "div",
+    { className: "flex flex-col h-full" },
 
     // Header
     React.createElement("div", { className: `mb-4 flex items-center justify-between gap-3 rounded-2xl border ${exam.border} bg-gradient-to-r ${exam.color} p-4 flex-wrap` },
@@ -263,11 +263,11 @@ function ConcursoChat({ exam, mode, subject, language, onBack }) {
     // Messages
     React.createElement("div", { className: "flex-1 overflow-y-auto space-y-4 pr-1" },
       messages.map((msg, i) =>
-        React.createElement(motion.div, { key: i, initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 }, className: `flex ${msg.role === "user" ? "justify-end" : "justify-start"}` },
+        React.createElement("div", { key: i, className: `flex ${msg.role === "user" ? "justify-end" : "justify-start"}` },
           React.createElement("div", {
             className: msg.role === "user"
               ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-white border border-zinc-200 px-4 py-3 text-sm text-zinc-900"
-              : "max-w-[90%] rounded-2xl rounded-tl-sm border border-zinc-200 bg-[rgba(12,20,40,0.7)] px-4 py-3",
+              : "max-w-[90%] rounded-2xl rounded-tl-sm border border-zinc-200 bg-[#f1f2f4] px-4 py-3",
           },
             msg.role === "user"
               ? React.createElement("p", { className: "text-sm" }, msg.content)
@@ -299,9 +299,8 @@ function ConcursoChat({ exam, mode, subject, language, onBack }) {
 function ExamSelector({ onSelect }) {
   return React.createElement("div", { className: "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" },
     EXAMS.map((exam, idx) =>
-      React.createElement(motion.button, {
+      React.createElement("button", {
         key: exam.id,
-        initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.06 * idx },
         onClick: () => onSelect(exam),
         className: `rounded-2xl border ${exam.border} bg-gradient-to-br ${exam.color} p-5 text-left transition-all hover:scale-[1.01] hover:border-zinc-300`,
       },
@@ -328,7 +327,7 @@ function ModeSelector({ exam, language, setLanguage, onConfirm }) {
   const [mode, setMode] = useState("chat");
   const [subject, setSubject] = useState("");
 
-  return React.createElement(motion.div, { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 }, className: "max-w-lg mx-auto space-y-5" },
+  return React.createElement("div", { className: "max-w-lg mx-auto space-y-5" },
     React.createElement("div", { className: `rounded-2xl border ${exam.border} bg-gradient-to-r ${exam.color} p-4 flex items-center gap-3` },
       React.createElement(FuturisticIcon, { name: exam.iconName, className: "h-8 w-8 text-sky-400/85" }),
       React.createElement("div", null,
@@ -377,7 +376,7 @@ export default function ConcursosPage() {
     React.createElement("div", { className: "mx-auto max-w-5xl px-4 py-10" },
 
       // Hero (only on select)
-      stage === "select" && React.createElement(motion.div, { initial: { opacity: 0, y: -10 }, animate: { opacity: 1, y: 0 }, className: "mb-8 text-center" },
+      stage === "select" && React.createElement("div", { className: "mb-8 text-center" },
         React.createElement("div", { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs text-zinc-500" },
           React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" }),
           "Acesso público · Sessão 100% anônima"
@@ -408,7 +407,7 @@ export default function ConcursosPage() {
       ),
 
       // Privacy (only on select)
-      stage === "select" && React.createElement(motion.div, { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.5 }, className: "mt-8 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-center" },
+      stage === "select" && React.createElement("div", { className: "mt-8 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-center" },
         React.createElement("p", { className: "text-xs text-zinc-400" }, "100% anônimo — nenhum dado, pergunta ou redação é armazenado. LGPD (Lei 13.709/2018).")
       )
     )

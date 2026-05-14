@@ -142,6 +142,7 @@ async def _public_chat_impl(
     optional_user: Optional[models.User] = None,
 ) -> ChatResponse:
     """Implementação compartilhada para /api/public-chat e /v1/public-chat."""
+    from vereda_backend.core.config import settings
     ip = _client_ip(http_request)
     check_public_chat_tier(
         ip,
@@ -149,6 +150,26 @@ async def _public_chat_impl(
         detail="Limite diário de mensagens atingido. Aguarde ou use uma conta com plano adequado.",
     )
     request, _files = await _parse_public_chat_body(http_request)
+
+    # Gateway mode: responde com stub sem tentar IA pesada
+    if getattr(settings, "gateway_mode", False):
+        return ChatResponse(
+            id="chatcmpl-gateway-stub",
+            object="chat.completion",
+            model=request.model,
+            choices=[
+                ChatChoice(
+                    index=0,
+                    message=ChatMessage(
+                        role="assistant",
+                        content="Olá! Sou a Syntexa AI. Estou online e pronta para ajudar. Como posso assistir você hoje?",
+                    ),
+                    finish_reason="stop",
+                )
+            ],
+            usage=ChatUsage(prompt_tokens=2, completion_tokens=15, total_tokens=17),
+        )
+
     session_title = _public_session_title(ip)
     session = (
         db.query(models.ChatSession)
@@ -331,12 +352,21 @@ def _stream_events(
             db.commit()
 
 
+def _gateway_stream_stub():
+    import json
+    content = "Olá! Sou a Syntexa AI. Estou online e pronta para ajudar. Como posso assistir você hoje?"
+    for word in content.split():
+        yield f"data: {json.dumps({'content': word + ' '})}\n\n"
+    yield f"data: {json.dumps({'content': ''})}\n\n"
+
+
 async def _public_chat_stream_impl(
     http_request: Request,
     db: Session,
     optional_user: Optional[models.User] = None,
 ):
     """Stream compartilhado para /api/public-chat/stream e /v1/public-chat/stream."""
+    from vereda_backend.core.config import settings
     ip = _client_ip(http_request)
     check_public_chat_tier(
         ip,
@@ -344,6 +374,18 @@ async def _public_chat_stream_impl(
         detail="Limite diário de mensagens atingido. Aguarde ou use uma conta com plano adequado.",
     )
     request, _ = await _parse_public_chat_body(http_request)
+
+    # Gateway mode: stream stub sem tentar IA pesada
+    if getattr(settings, "gateway_mode", False):
+        return StreamingResponse(
+            _gateway_stream_stub(),
+            media_type="text/event-stream; charset=utf-8",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
+        )
     session_title = _public_session_title(ip)
     session = (
         db.query(models.ChatSession)

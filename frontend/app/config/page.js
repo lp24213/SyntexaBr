@@ -106,7 +106,7 @@ export default function ConfigPage() {
         React.createElement(
           "p",
           { className: "text-sm text-zinc-600" },
-          "Use Planos para assinatura, Perfil para dados pessoais e o painel Admin (se aplicável) para gestão da plataforma."
+          "Use Planos para assinatura e Perfil para dados pessoais e segurança."
         )
       ),
       React.createElement(

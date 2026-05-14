@@ -1,0 +1,88 @@
+# ============================================================
+# VEREDA / SYNTEXA — AWS GPU Container
+# Base: NVIDIA CUDA + Python 3.12
+# ============================================================
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
+ENV HF_HOME=/root/.cache/huggingface
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 \
+    python3.12-pip \
+    python3.12-dev \
+    python3.12-venv \
+    build-essential \
+    git \
+    curl \
+    wget \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libgl1 \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Criar venv e instalar dependências Python
+RUN python3.12 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Upgrade pip
+RUN pip install --upgrade pip setuptools wheel
+
+# Instalar dependências pesadas (layers separadas para cache)
+RUN pip install \
+    torch==2.3.0 \
+    torchvision \
+    torchaudio \
+    --index-url https://download.pytorch.org/whl/cu121
+
+RUN pip install \
+    vllm==0.4.2 \
+    transformers==4.41.0 \
+    accelerate \
+    sentence-transformers \
+    fastembed \
+    onnxruntime-gpu \
+    opencv-python \
+    pytesseract \
+    pymupdf \
+    python-docx \
+    openpyxl \
+    piper-tts \
+    TTS \
+    openai-whisper \
+    soundfile \
+    librosa \
+    numpy \
+    scipy \
+    sympy \
+    fastapi \
+    uvicorn \
+    httpx \
+    pydantic \
+    pydantic-settings \
+    python-multipart \
+    orjson \
+    structlog \
+    prometheus-client
+
+# Criar diretório da aplicação
+WORKDIR /app
+
+# Copiar código da aplicação
+COPY main.py /app/main.py
+COPY config/ /app/config/
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expor portas
+EXPOSE 8000 8001 8002 8003
+
+# Entrypoint dinâmico baseado em SERVICE_MODE
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

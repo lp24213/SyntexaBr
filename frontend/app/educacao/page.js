@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
 import { AppShell } from "../../components/shell";
 import { FuturisticIcon } from "../../components/icons/futuristic-icons";
 
@@ -119,13 +118,8 @@ export default function EducacaoPage() {
   const handleNav = (href) => { window.location.href = href; };
 
   const heroSection = React.createElement(
-    motion.div,
-    {
-      className: "mb-16 text-center",
-      initial: { opacity: 0, y: 20 },
-      animate: { opacity: 1, y: 0 },
-      transition: { duration: 0.5 },
-    },
+    "div",
+    { className: "mb-16 text-center" },
     React.createElement(
       "div",
       { className: "mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-1.5 text-xs text-zinc-500" },
@@ -146,13 +140,10 @@ export default function EducacaoPage() {
     AREAS.map(function (area, idx) {
       const Icon = ICONS[area.key];
       return React.createElement(
-        motion.div,
+        "div",
         {
           key: area.key,
           className: `relative flex flex-col overflow-hidden rounded-2xl border bg-gradient-to-b ${area.accent} bg-white p-7 shadow-sm transition-all duration-200 ${area.borderColor}`,
-          initial: { opacity: 0, y: 24 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.4, delay: 0.1 + idx * 0.08 },
         },
         React.createElement(
           "div",
@@ -196,13 +187,8 @@ export default function EducacaoPage() {
   );
 
   const labsSection = React.createElement(
-    motion.div,
-    {
-      className: "mt-10",
-      initial: { opacity: 0, y: 16 },
-      animate: { opacity: 1, y: 0 },
-      transition: { duration: 0.4, delay: 0.35 },
-    },
+    "div",
+    { className: "mt-10" },
     React.createElement(
       "button",
       {
@@ -242,13 +228,8 @@ export default function EducacaoPage() {
   );
 
   const scienceSection = React.createElement(
-    motion.div,
-    {
-      className: "mt-4",
-      initial: { opacity: 0, y: 16 },
-      animate: { opacity: 1, y: 0 },
-      transition: { duration: 0.4, delay: 0.42 },
-    },
+    "div",
+    { className: "mt-4" },
     React.createElement(
       "button",
       {
@@ -288,13 +269,8 @@ export default function EducacaoPage() {
   );
 
   const concursosSection = React.createElement(
-    motion.div,
-    {
-      className: "mt-4",
-      initial: { opacity: 0, y: 16 },
-      animate: { opacity: 1, y: 0 },
-      transition: { duration: 0.4, delay: 0.46 },
-    },
+    "div",
+    { className: "mt-4" },
     React.createElement(
       "button",
       {
@@ -334,13 +310,8 @@ export default function EducacaoPage() {
   );
 
   const privacySection = React.createElement(
-    motion.div,
-    {
-      className: "mt-8",
-      initial: { opacity: 0 },
-      animate: { opacity: 1 },
-      transition: { duration: 0.4, delay: 0.5 },
-    },
+    "div",
+    { className: "mt-8" },
     React.createElement(
       "div",
       { className: "rounded-2xl border border-zinc-200 bg-zinc-50 p-5" },
@@ -374,13 +345,8 @@ export default function EducacaoPage() {
   );
 
   const plansSection = React.createElement(
-    motion.div,
-    {
-      className: "mt-20",
-      initial: { opacity: 0, y: 16 },
-      animate: { opacity: 1, y: 0 },
-      transition: { duration: 0.5, delay: 0.4 },
-    },
+    "div",
+    { className: "mt-20" },
     React.createElement(
       "div",
       { className: "mb-8 text-center" },

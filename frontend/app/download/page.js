@@ -413,10 +413,10 @@ export default function DownloadPage() {
                 React.createElement(
                   "a",
                   {
-                    href: "/admin/mobile-release",
+                    href: "/docs",
                     className: "inline-flex items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50",
                   },
-                  "Abrir runbook TI de distribuição"
+                  "Abrir documentação técnica"
                 ))
             )
           )

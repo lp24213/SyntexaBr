@@ -15,6 +15,8 @@ from typing import Any, Iterator
 from vereda_ai.core.config import settings
 from vereda_ai.syntexa_core.model_registry import get_registry
 from vereda_ai.syntexa_core.runtime_model import maybe_runtime_reply, maybe_runtime_reply_stream
+from vereda_ai.syntexa_core.neural_engine import is_neural_available
+from vereda_ai.syntexa_core.sovereign_orchestrator import orchestrated_generate, orchestrated_generate_stream
 
 # Intents fixos (expandir em model_registry / datasets)
 # Alinhado a `vereda_backend.core.deep_run` (evita importar o backend daqui).
@@ -341,7 +343,8 @@ def generate_reply(messages: list[dict[str, Any]], **_kwargs: Any) -> str:
     """
     Ordem (acrescenta sem apagar):
     1) Se o sistema trouxe KB e/ou trechos da web — sintetizar e **somar** nota sobre RAG/training.
-    2) Caso contrário — resposta por intents / sumarização interna (`_reply_for_intent`).
+    2) Se motor neural disponível — geração real com transformers (20B+ params, 4-bit).
+    3) Caso contrário — resposta por intents / sumarização interna (`_reply_for_intent`).
     """
     runtime_reply = maybe_runtime_reply(messages)
     if runtime_reply:
@@ -366,6 +369,13 @@ def generate_reply(messages: list[dict[str, Any]], **_kwargs: Any) -> str:
         if composed:
             return composed + _syntexa_pipeline_footer()
 
+    # Motor neural real (20B+ params, 4-bit) via orquestrador production-grade
+    if is_neural_available():
+        try:
+            return orchestrated_generate(messages, max_new_tokens=512, temperature=0.7, top_p=0.9)
+        except Exception as e:
+            logger.warning("[hybrid_engine] Orchestrator falhou: %s", e)
+
     return _reply_for_intent(intent, user_text)
 
 
@@ -381,6 +391,15 @@ def generate_reply_stream(messages: list[dict[str, Any]], **_kwargs: Any) -> Ite
         raise RuntimeError(
             f"IA própria ativa ('{active.name}') sem runtime pronto; fallback bloqueado em modo estrito."
         )
+
+    # Streaming via orquestrador production-grade
+    if is_neural_available():
+        try:
+            yield from orchestrated_generate_stream(messages, max_new_tokens=512, temperature=0.7, top_p=0.9)
+            return
+        except Exception as e:
+            logger.warning("[hybrid_engine] Orchestrator stream falhou: %s", e)
+
     text = generate_reply(messages, **_kwargs)
     if text:
         yield text

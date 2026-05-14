@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from vereda_ai.core.config import settings as ai_settings
 from vereda_backend.core.admin_allowed_ips import load_allowed_ips, save_allowed_ips
 from vereda_backend.core.access_control import audit_log
 from vereda_backend.core.config import settings as backend_settings
@@ -20,17 +19,52 @@ from vereda_backend.schemas.knowledge import (
     KnowledgeBaseItemCreate,
     KnowledgeBaseItemPublic,
 )
-from vereda_ai.syntexa_core.model_registry import (
-    get_registry as get_syntexa_registry,
-    reload_registry as reload_syntexa_registry,
-    set_active_model as set_syntexa_active_model,
-)
-from vereda_ai.syntexa_core.promotion_attestation import (
-    build_llm_promotion_attestation,
-    compact_audit_record,
-    verify_attestation_document,
-)
-from vereda_ai.syntexa_core.runtime_model import runtime_readiness_report
+
+
+# ── Lazy getters para vereda_ai (evita carregar IA no import deste módulo) ──
+_ai_settings_obj = None
+
+def _get_ai_settings():
+    global _ai_settings_obj
+    if _ai_settings_obj is None:
+        from vereda_ai.core.config import settings as _s
+        _ai_settings_obj = _s
+    return _ai_settings_obj
+
+
+def _get_syntexa_registry():
+    from vereda_ai.syntexa_core.model_registry import get_registry
+    return get_registry()
+
+
+def _reload_syntexa_registry():
+    from vereda_ai.syntexa_core.model_registry import reload_registry
+    return reload_registry()
+
+
+def _set_syntexa_active_model(name: str):
+    from vereda_ai.syntexa_core.model_registry import set_active_model
+    return set_active_model(name)
+
+
+def _build_llm_promotion_attestation(**kwargs):
+    from vereda_ai.syntexa_core.promotion_attestation import build_llm_promotion_attestation
+    return build_llm_promotion_attestation(**kwargs)
+
+
+def _compact_audit_record(doc):
+    from vereda_ai.syntexa_core.promotion_attestation import compact_audit_record
+    return compact_audit_record(doc)
+
+
+def _verify_attestation_document(doc):
+    from vereda_ai.syntexa_core.promotion_attestation import verify_attestation_document
+    return verify_attestation_document(doc)
+
+
+def _runtime_readiness_report():
+    from vereda_ai.syntexa_core.runtime_model import runtime_readiness_report
+    return runtime_readiness_report()
 
 
 router = APIRouter(prefix="/admin")
@@ -229,7 +263,7 @@ def export_training_dataset(
 
 @router.get("/llm/registry")
 def admin_llm_registry(_: models.User = Depends(get_current_admin)) -> dict:
-    reg = get_syntexa_registry()
+    reg = _get_syntexa_registry()
     return {
         "active": reg.active,
         "models": [
@@ -247,7 +281,7 @@ def admin_llm_registry(_: models.User = Depends(get_current_admin)) -> dict:
 
 @router.post("/llm/registry/reload")
 def admin_llm_registry_reload(_: models.User = Depends(get_current_admin)) -> dict:
-    reg = reload_syntexa_registry()
+    reg = _reload_syntexa_registry()
     return {"ok": True, "active": reg.active, "models_count": len(reg.models)}
 
 
@@ -258,7 +292,7 @@ def admin_set_active_llm(
     _: models.User = Depends(get_current_admin),
 ) -> dict:
     _ensure_llm_promotion_allowed(request)
-    reg = set_syntexa_active_model(body.model_name.strip())
+    reg = _set_syntexa_active_model(body.model_name.strip())
     return {"ok": True, "active": reg.active}
 
 
@@ -270,21 +304,21 @@ def admin_promote_blue_green(
     current_admin: models.User = Depends(get_current_admin),
 ) -> dict:
     _ensure_llm_promotion_allowed(request)
-    previous = get_syntexa_registry().active
+    previous = _get_syntexa_registry().active
     candidate = body.candidate_model.strip()
     try:
-        reg = set_syntexa_active_model(candidate)
+        reg = _set_syntexa_active_model(candidate)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
-    report = runtime_readiness_report()
+    report = _runtime_readiness_report()
     if not bool(report.get("ready", False)):
         rolled_back = False
         if body.rollback_on_fail and previous and previous != candidate:
             try:
-                set_syntexa_active_model(previous)
+                _set_syntexa_active_model(previous)
                 rolled_back = True
             except Exception:
                 rolled_back = False
@@ -299,7 +333,7 @@ def admin_promote_blue_green(
             },
         )
     policy_snap = get_policy_snapshot()
-    att_full, _ = build_llm_promotion_attestation(
+    att_full, _ = _build_llm_promotion_attestation(
         promotion_type="llm_promote_blue_green",
         previous_active=previous,
         candidate_model=candidate,
@@ -320,7 +354,7 @@ def admin_promote_blue_green(
         action="llm_promote_blue_green",
         user_id=current_admin.id,
         resource="llm_registry",
-        detail=compact_audit_record(att_full)[:2000],
+        detail=_compact_audit_record(att_full)[:2000],
     )
     return resp
 
@@ -334,15 +368,15 @@ def admin_llm_rollback(
     """
     Volta o modelo ativo no registry. Não passa por change-freeze (resposta a incidente).
     """
-    previous = get_syntexa_registry().active
+    previous = _get_syntexa_registry().active
     target = body.target_model.strip()
     try:
-        reg = set_syntexa_active_model(target)
+        reg = _set_syntexa_active_model(target)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    report = runtime_readiness_report()
+    report = _runtime_readiness_report()
     policy_snap = get_policy_snapshot()
-    att_full, _ = build_llm_promotion_attestation(
+    att_full, _ = _build_llm_promotion_attestation(
         promotion_type="llm_rollback",
         previous_active=previous,
         candidate_model=target,
@@ -357,7 +391,7 @@ def admin_llm_rollback(
         action="llm_rollback",
         user_id=current_admin.id,
         resource="llm_registry",
-        detail=compact_audit_record(att_full)[:2000],
+        detail=_compact_audit_record(att_full)[:2000],
     )
     return {
         "ok": True,
@@ -376,16 +410,16 @@ def admin_promote_canary(
     current_admin: models.User = Depends(get_current_admin),
 ) -> dict:
     _ensure_llm_promotion_allowed(request)
-    previous = get_syntexa_registry().active
+    previous = _get_syntexa_registry().active
     candidate = body.candidate_model.strip()
     try:
-        reg = set_syntexa_active_model(candidate)
+        reg = _set_syntexa_active_model(candidate)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     history: list[dict] = []
     stable = True
     for i in range(int(body.checks)):
-        report = runtime_readiness_report()
+        report = _runtime_readiness_report()
         ok = bool(report.get("ready", False))
         history.append({"check": i + 1, "ready": ok, "runtime": report})
         if not ok:
@@ -409,7 +443,7 @@ def admin_promote_canary(
         rolled_back = False
         if body.rollback_on_fail and previous and previous != candidate:
             try:
-                set_syntexa_active_model(previous)
+                _set_syntexa_active_model(previous)
                 rolled_back = True
             except Exception:
                 rolled_back = False
@@ -424,9 +458,9 @@ def admin_promote_canary(
                 "slo": slo,
             },
         )
-    final_report = runtime_readiness_report()
+    final_report = _runtime_readiness_report()
     policy_snap = get_policy_snapshot()
-    att_full, _ = build_llm_promotion_attestation(
+    att_full, _ = _build_llm_promotion_attestation(
         promotion_type="llm_promote_canary",
         previous_active=previous,
         candidate_model=candidate,
@@ -456,7 +490,7 @@ def admin_promote_canary(
         action="llm_promote_canary",
         user_id=current_admin.id,
         resource="llm_registry",
-        detail=compact_audit_record(att_full)[:2000],
+        detail=_compact_audit_record(att_full)[:2000],
     )
     return resp
 
@@ -464,9 +498,9 @@ def admin_promote_canary(
 @router.get("/llm/readiness")
 def admin_llm_readiness(_: models.User = Depends(get_current_admin)) -> dict:
     env_backend = str(getattr(backend_settings, "environment", "local") or "local").lower()
-    env_ai = str(getattr(ai_settings, "environment", "local") or "local").lower()
-    strict_no_fallback = bool(getattr(ai_settings, "own_model_strict_no_fallback", False))
-    report = runtime_readiness_report()
+    env_ai = str(getattr(_get_ai_settings(), "environment", "local") or "local").lower()
+    strict_no_fallback = bool(getattr(_get_ai_settings(), "own_model_strict_no_fallback", False))
+    report = _runtime_readiness_report()
     return {
         "environment": {"backend": env_backend, "ai": env_ai},
         "strict_no_fallback": strict_no_fallback,
@@ -487,7 +521,7 @@ def admin_llm_verify_attestation(
     _: models.User = Depends(get_current_admin),
 ) -> dict:
     """Valida o digest SHA-256 de um documento de promoção/rollback (offline-safe após export)."""
-    ok, msg, recomputed = verify_attestation_document(body.document)
+    ok, msg, recomputed = _verify_attestation_document(body.document)
     return {
         "ok": True,
         "valid": ok,

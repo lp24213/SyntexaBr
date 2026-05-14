@@ -1,0 +1,20 @@
+policy_version: 1
+inbound_controls:
+  prompt_injection_defense: true
+  anti_jailbreak: true
+  context_leak_prevention: true
+  pii_detection: true
+runtime_controls:
+  execution_sandbox: true
+  memory_isolation: true
+  runtime_verification: true
+model_controls:
+  integrity_hash_check: true
+  cryptographic_signature_check: true
+  trusted_artifacts_only: true
+outbound_controls:
+  unsafe_tool_action_block: true
+  high_risk_action_requires_human_approval: true
+audit:
+  trace_all_decisions: true
+  retention_days: 90

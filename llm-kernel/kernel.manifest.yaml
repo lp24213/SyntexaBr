@@ -1,0 +1,31 @@
+version: 0.1.0
+program: syntexabr-neural-core
+sovereignty:
+  mode: strict_local_first
+  external_fallback_enabled: false
+  benchmark_external_enabled: true
+  required_response_provenance: true
+primary_runtime:
+  type: local
+  engine: syntexa_native
+  artifact_format: safetensors
+  model_signature_required: true
+modules:
+  - llm-core
+  - llm-runtime
+  - llm-router
+  - llm-memory
+  - llm-training
+  - llm-embeddings
+  - llm-tokenizer
+  - llm-inference
+  - llm-security
+  - llm-quantum
+  - llm-agents
+  - llm-reasoning
+  - llm-context-engine
+  - llm-multimodal
+  - llm-voice
+  - llm-vision
+  - llm-autonomous
+  - llm-kernel

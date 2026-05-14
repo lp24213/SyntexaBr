@@ -4,12 +4,22 @@ import json
 from datetime import datetime
 from typing import Any, Optional
 
-from vereda_backend.ai_runtime import agent_system
 from vereda_backend.core.config import settings
 from vereda_backend.core.access_control import audit_log
 from vereda_backend.core.chat_context import get_chat_request_context
 from vereda_backend.db import models
 from vereda_backend.db.session import SessionLocal
+
+# Lazy import: NÃO carrega agent_system (e toda a stack de IA) no import deste módulo
+_agent_system = None
+
+
+def _get_agent_system():
+    global _agent_system
+    if _agent_system is None:
+        from vereda_backend.ai_runtime import agent_system
+        _agent_system = agent_system
+    return _agent_system
 
 
 _LOCK = threading.Lock()
@@ -158,7 +168,7 @@ def _run_once(task: models.AutonomyTask) -> None:
         # Pipeline: Planner -> Task decomposition -> Executor
         # (AgentSystem já encapsula isso). Guardrail: cap de passos por tier.
         allow_sensitive = bool(user and getattr(user, "is_admin", False)) or _task_has_sensitive_approval(task)
-        result = agent_system.handle_request(
+        result = _get_agent_system().handle_request(
             task.prompt,
             execution_context={
                 "user_id": str(task.user_id or "autonomy-anon"),

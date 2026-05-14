@@ -1,4 +1,5 @@
 import { getClientLocale } from "./i18n";
+export { getClientLocale } from "./i18n";
 
 /**
  * API pública (produção): build estático usa sempre este host (sem override acidental no Pages).
@@ -450,7 +451,7 @@ export async function chatCompletionWithMedia(token, history, files, sessionId) 
 
 export async function publicChat(history) {
   const locale = getClientLocale();
-  const resp = await fetchWithResilience( "/public-chat", {
+  const resp = await fetchWithResilience( "/v1/public-chat", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept-Language": locale },
     body: JSON.stringify({
@@ -475,7 +476,7 @@ export async function publicChatStream(history, onChunk, signal) {
   const guard = createStreamGuard(signal);
   try {
     const locale = getClientLocale();
-    const resp = await fetchWithResilience( "/public-chat/stream", {
+    const resp = await fetchWithResilience( "/v1/public-chat/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept-Language": locale },
       body: JSON.stringify({

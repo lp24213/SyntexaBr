@@ -1,0 +1,19 @@
+name = "syntexa-gateway"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[env.production]
+routes = [
+  { pattern = "api.syntexabr.com.br/*", zone_name = "syntexabr.com.br" },
+  { pattern = "syntexa.syntexabr.com.br/*", zone_name = "syntexabr.com.br" }
+]
+
+# Variáveis de ambiente
+[vars]
+AWS_BASE_URL = "http://98.94.86.193:8000"
+RAILWAY_BASE_URL = "https://syntexa-backend-production.up.railway.app"
+ENVIRONMENT = "production"
+
+# Secrets (configurar via wrangler secret put)
+# VEREDA_SECRET_KEY
+# STRIPE_SECRET_KEY

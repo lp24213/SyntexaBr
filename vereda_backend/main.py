@@ -21,9 +21,6 @@ from vereda_backend.api import routes as api_routes
 from vereda_backend.db.session import Base, engine
 from vereda_backend.db import models
 from vereda_backend.core.security import get_password_hash
-from vereda_backend.core.runtime_watchdog import start_runtime_watchdog
-from vereda_backend.services.autonomy_manager import start_autonomy_manager
-from vereda_backend.services.autonomous_evolution import start_evolution_loop
 
 
 def _migrate_db() -> None:
@@ -149,6 +146,13 @@ def create_app() -> FastAPI:
     if _ORJSONResponse is not None:
         app_kw["default_response_class"] = _ORJSONResponse
     app = FastAPI(**app_kw)
+
+    # ── HEALTHCHECK INSTANTÂNEO: registrado ANTES de tudo ──
+    # O Railway faz healthcheck imediatamente; esta rota deve responder
+    # mesmo se o banco, Redis, IA ou qualquer outra dependência estiver offline.
+    @app.get("/health")
+    def health_instant() -> dict:
+        return {"status": "ok"}
 
     origins = settings.frontend_origins or ["*"]
     allow_any_origin = "*" in origins
@@ -292,50 +296,80 @@ def create_app() -> FastAPI:
         return index_path.read_text(encoding="utf-8")
 
     @app.on_event("startup")
-    def on_startup() -> None:
-        # 1. Migra colunas faltantes em tabelas existentes (SQLite não tem ALTER COLUMN)
-        _migrate_db()
-        # 2. Cria tabelas novas (institutional_clients, etc.)
-        Base.metadata.create_all(bind=engine)
+    async def on_startup() -> None:
+        import asyncio
 
-        from vereda_backend.db.session import SessionLocal
+        # ── Healthcheck já responde antes de qualquer carga pesada ──
+        # DB migration, admin seed e IA runtime rodam em background
+        # para não bloquear o boot do FastAPI.
 
-        db = SessionLocal()
-        try:
-            # Garante que o admin configurado no .env existe e está atualizado.
-            # Se o e-mail mudou, cria um novo. Se já existe, sincroniza senha e flags.
-            admin = (
-                db.query(models.User)
-                .filter(models.User.email == settings.admin_email)
-                .first()
-            )
-            if not admin:
-                # Desativa qualquer outro admin existente para evitar duplicatas
-                old_admins = db.query(models.User).filter(models.User.is_admin == True).all()
-                for old in old_admins:
-                    old.is_admin = False
-                admin = models.User(
-                    email=settings.admin_email,
-                    full_name="Administrador Syntexa",
-                    hashed_password=get_password_hash(settings.admin_password),
-                    is_active=True,
-                    is_admin=True,
-                    role="user",
-                )
-                db.add(admin)
-                db.commit()
+        async def _heavy_startup() -> None:
+            try:
+                _migrate_db()
+                Base.metadata.create_all(bind=engine)
+            except Exception as exc:
+                log.warning("DB migration/create skipped: %s", exc)
+
+            try:
+                from vereda_backend.db.session import SessionLocal
+                db = SessionLocal()
+                try:
+                    admin = (
+                        db.query(models.User)
+                        .filter(models.User.email == settings.admin_email)
+                        .first()
+                    )
+                    if not admin:
+                        old_admins = db.query(models.User).filter(models.User.is_admin == True).all()
+                        for old in old_admins:
+                            old.is_admin = False
+                        admin = models.User(
+                            email=settings.admin_email,
+                            full_name="Administrador Syntexa",
+                            hashed_password=get_password_hash(settings.admin_password),
+                            is_active=True,
+                            is_admin=True,
+                            role="user",
+                        )
+                        db.add(admin)
+                        db.commit()
+                    else:
+                        admin.hashed_password = get_password_hash(settings.admin_password)
+                        admin.is_active = True
+                        admin.is_admin = True
+                        db.commit()
+                finally:
+                    db.close()
+            except Exception as exc:
+                log.warning("Admin seed skipped: %s", exc)
+
+            is_gateway_mode = bool(getattr(settings, "gateway_mode", False))
+            if not is_gateway_mode:
+                try:
+                    from vereda_backend.core.runtime_watchdog import start_runtime_watchdog
+                    start_runtime_watchdog()
+                except Exception as e:
+                    log.warning("Runtime watchdog skipped: %s", e)
+                try:
+                    from vereda_backend.services.autonomy_manager import start_autonomy_manager
+                    start_autonomy_manager()
+                except Exception as e:
+                    log.warning("Autonomy manager skipped: %s", e)
+                if bool(getattr(settings, "autonomy_evolution_loop_enabled", False)):
+                    try:
+                        from vereda_backend.services.autonomous_evolution import start_evolution_loop
+                        start_evolution_loop()
+                    except Exception as e:
+                        log.warning("Evolution loop skipped: %s", e)
+                try:
+                    from vereda_backend.core.sovereign_integration import init_sovereign_runtime
+                    init_sovereign_runtime()
+                except Exception as e:
+                    log.warning("Sovereign runtime initialization skipped: %s", e)
             else:
-                # Atualiza senha e garante flags corretas
-                admin.hashed_password = get_password_hash(settings.admin_password)
-                admin.is_active = True
-                admin.is_admin = True
-                db.commit()
-        finally:
-            db.close()
-        start_runtime_watchdog()
-        start_autonomy_manager()
-        if bool(getattr(settings, "autonomy_evolution_loop_enabled", False)):
-            start_evolution_loop()
+                log.info("Gateway mode: IA-heavy services NOT loaded on startup.")
+
+        asyncio.create_task(_heavy_startup())
 
     return app
 

@@ -1,0 +1,30 @@
+version: 1
+decision_inputs:
+  - queue_depth
+  - expected_latency_ms
+  - budget_per_1k_tokens
+  - energy_budget_watts
+  - complexity_score
+targets:
+  cpu:
+    enabled: true
+    framework: onnxruntime
+  gpu_cuda:
+    enabled: true
+    framework: pytorch
+  gpu_tensorrt:
+    enabled: true
+    framework: tensorrt
+  edge_wasm:
+    enabled: true
+    framework: wasm
+  quantum_simulator:
+    enabled: true
+    framework: qiskit
+  quantum_cloud:
+    enabled: false
+    framework: pennylane
+selection_defaults:
+  prefer_local: true
+  enforce_security_policy: true
+  energy_aware: true

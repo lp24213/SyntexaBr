@@ -1,19 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import { useRouter, usePathname } from "next/navigation";
-import { motion } from "framer-motion";
 import { Brand } from "./brand";
 import { Button } from "./ui/button";
 import { encryptedPath } from "../lib/routes";
 import { getAdminMe, listChatSessions } from "../lib/api";
 import { FuturisticIcon } from "./icons/futuristic-icons";
 import { formatDateTime, getClientLocale, t } from "../lib/i18n";
+import { QuantumCodeStream } from "./quantum-code-stream";
 
-var BinaryRain = dynamic(function () {
-  return import("./BinaryRain");
-}, { ssr: false });
 
 function IconChat() {
   return React.createElement(
@@ -70,54 +66,51 @@ function IconPlans() {
 }
 
 var baseNavItems = [
-  { path: "chat", labelKey: "chat", icon: IconChat },
-  { path: "plans", labelKey: "plans", icon: IconPlans },
+  { path: "/chat", labelKey: "chat", icon: IconChat },
+  { path: "/plans", labelKey: "plans", icon: IconPlans },
 ];
 
 // Atalhos de Educação — sempre visíveis
 var eduNavItems = [
-  { path: "educacao", labelKey: "educationResearch", icon: "book" },
-  { path: "educacao-laboratorios", labelKey: "labs", icon: "microscope" },
-  { path: "educacao-ciencia", labelKey: "scienceTech", icon: "telescope" },
-  { path: "educacao-concursos", labelKey: "competitions", icon: "medal" },
+  { path: "/educacao", labelKey: "educationResearch", icon: "book" },
+  { path: "/educacao/aluno", labelKey: "aluno", icon: "users" },
+  { path: "/educacao/laboratorios", labelKey: "labs", icon: "microscope" },
+  { path: "/educacao/ciencia", labelKey: "scienceTech", icon: "telescope" },
+  { path: "/educacao/concursos", labelKey: "competitions", icon: "medal" },
+  { path: "/educacao/governo", labelKey: "government", icon: "globe" },
 ];
 
 var teacherEduItems = [
-  { path: "educacao-professor", labelKey: "teacherArea", icon: "userTie" },
+  { path: "/educacao/professor", labelKey: "teacherArea", icon: "userTie" },
 ];
 
 var practicalNavItems = [
   {
-    href:
-      encryptedPath("chat") +
-      "&q=" +
-      encodeURIComponent(
-        "Syntexa, ative seu modo completo e me apresente todas as capacidades multimodais de forma prática."
-      ),
+    href: "/chat?q=" + encodeURIComponent("Syntexa, ative seu modo completo e me apresente todas as capacidades multimodais de forma prática."),
     labelKey: "fullAi",
     icon: "spark",
   },
-  { href: encryptedPath("chat") + "&mode=bank&q=" + encodeURIComponent("Quero organizar meu controle de banco, pix e fluxo de caixa."), labelKey: "bankFinance", icon: "chart" },
-  { href: encryptedPath("chat") + "&mode=agro&q=" + encodeURIComponent("Monte um plano de gestão para agronegócio com custos e produção."), labelKey: "agro", icon: "bolt" },
-  { href: encryptedPath("chat") + "&mode=tax&q=" + encodeURIComponent("Me ajude com impostos no Brasil, nota fiscal e regularização."), labelKey: "taxes", icon: "doc" },
-  { href: encryptedPath("chat") + "&mode=sales_whatsapp&q=" + encodeURIComponent("Crie uma rotina de vendas e mensagens para WhatsApp."), labelKey: "whatsappSales", icon: "chat" },
+  { href: "/chat?mode=bank&q=" + encodeURIComponent("Quero organizar meu controle de banco, pix e fluxo de caixa."), labelKey: "bankFinance", icon: "chart" },
+  { href: "/chat?mode=agro&q=" + encodeURIComponent("Monte um plano de gestão para agronegócio com custos e produção."), labelKey: "agro", icon: "bolt" },
+  { href: "/chat?mode=tax&q=" + encodeURIComponent("Me ajude com impostos no Brasil, nota fiscal e regularização."), labelKey: "taxes", icon: "doc" },
+  { href: "/chat?mode=sales_whatsapp&q=" + encodeURIComponent("Crie uma rotina de vendas e mensagens para WhatsApp."), labelKey: "whatsappSales", icon: "chat" },
 ];
 
 var generalNavItems = [
-  { path: "chat", labelKey: "chat", icon: "chat" },
-  { path: "plans", labelKey: "plans", icon: "chart" },
-  { path: "portal", labelKey: "portal", icon: "globe" },
+  { path: "/chat", labelKey: "chat", icon: "chat" },
+  { path: "/plans", labelKey: "plans", icon: "chart" },
+  { path: "/portal", labelKey: "portal", icon: "globe" },
+  { path: "/download", labelKey: "download", icon: "download" },
 ];
 
 var accountNavItems = [
-  { path: "profile", labelKey: "profile", icon: "users" },
-  { path: "config", labelKey: "settings", icon: "gear" },
-  { path: "portal", labelKey: "portal", icon: "map" },
+  { path: "/profile", labelKey: "profile", icon: "users" },
+  { path: "/config", labelKey: "settings", icon: "gear" },
+  { path: "/portal", labelKey: "portal", icon: "map" },
 ];
 
 var accountAdminExtraItems = [
-  { path: "download", labelKey: "offlineSystem", icon: "download" },
-  { path: "admin-integrations", labelKey: "apiTokens", icon: "key" },
+  { path: "/download", labelKey: "offlineSystem", icon: "download" },
 ];
 
 export function ChatLayout(props) {
@@ -174,15 +167,19 @@ export function ChatLayout(props) {
 
   function logout() {
     window.localStorage.removeItem("syntexa_token");
-    window.location.href = encryptedPath("login");
+    window.location.href = "/login";
   }
 
   return React.createElement(
     "div",
-    { className: "relative flex h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-hidden bg-[#ececf0] text-zinc-900" },
+    { className: "relative flex h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-hidden bg-transparent text-[#1a1c1e]" },
+    React.createElement("div", { className: "fixed inset-0 z-0 pointer-events-none" },
+      React.createElement("div", { className: "absolute inset-0 bg-[linear-gradient(180deg,#fafbfc_0%,#f5f6f8_50%,#f3f4f5_100%)]" }),
+      React.createElement(QuantumCodeStream, null)
+    ),
     React.createElement(
       "div",
-      { className: "fixed top-0 left-0 w-full z-30 flex items-center justify-between h-10 px-4 bg-[#ececf0] border-b border-zinc-200 shadow-sm select-none" },
+      { className: "fixed top-0 left-0 w-full z-30 flex items-center justify-between h-10 px-4 border-b border-[rgba(20,24,30,0.06)] bg-white/80 shadow-[0_2px_12px_rgba(15,20,30,0.04)] backdrop-blur-[16px] select-none" },
       React.createElement("div", { className: "flex items-center gap-2" },
         React.createElement("span", { className: "inline-block w-3 h-3 rounded-full bg-[#ff5f56] border border-zinc-300 mr-1" }),
         React.createElement("span", { className: "inline-block w-3 h-3 rounded-full bg-[#ffbd2e] border border-zinc-300 mr-1" }),
@@ -198,40 +195,37 @@ export function ChatLayout(props) {
           ? React.createElement(
               React.Fragment,
               null,
-              React.createElement("span", { className: "hidden sm:inline text-xs font-medium text-zinc-600" }, t("authenticatedAccount", locale)),
+              React.createElement("span", { className: "hidden sm:inline text-xs font-medium text-[#5a5c5e]" }, t("authenticatedAccount", locale)),
               React.createElement("button", {
                 type: "button",
                 onClick: logout,
-                className: "rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm font-medium text-zinc-700 hover:bg-zinc-100",
+                className: "rounded-xl border border-[rgba(20,24,30,0.08)] bg-[#f3f4f5] px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm font-medium text-[#1a1c1e] hover:bg-[#e8e9eb]",
               }, t("logout", locale))
             )
           : React.createElement(
               React.Fragment,
               null,
-              React.createElement("span", { className: "hidden sm:inline text-xs font-medium text-zinc-500" }, t("publicMode", locale)),
+              React.createElement("span", { className: "hidden sm:inline text-xs font-medium text-[#5a5c5e]" }, t("publicMode", locale)),
               React.createElement("button", {
                 type: "button",
-                onClick: function () { window.location.href = encryptedPath("login"); },
-                className: "rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm font-medium text-zinc-700 hover:bg-zinc-100",
+                onClick: function () { window.location.href = "/login"; },
+                className: "rounded-xl border border-[rgba(20,24,30,0.08)] bg-[#f3f4f5] px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm font-medium text-[#1a1c1e] hover:bg-[#e8e9eb]",
               }, t("login", locale))
             )
       )
     ),
     React.createElement(
-      motion.aside,
+      "aside",
       {
-        className: "syntexa-sidebar hidden h-full max-h-full min-w-[220px] w-[260px] max-w-[320px] shrink-0 overflow-y-auto px-5 py-6 sm:flex sm:flex-col bg-[#f7f7fa] border-r border-zinc-200",
+        className: "syntexa-sidebar hidden h-full max-h-full min-w-[220px] w-[260px] max-w-[320px] shrink-0 overflow-y-auto px-5 py-6 sm:flex sm:flex-col border-r border-[rgba(20,24,30,0.06)] bg-white/70 backdrop-blur-[16px]",
         style: { paddingTop: 48 },
-        initial: { opacity: 0, x: -12 },
-        animate: { opacity: 1, x: 0 },
-        transition: { duration: 0.25 },
       },
       React.createElement(
         "div",
         { className: "mb-6 flex items-center border-b border-zinc-200 pb-6" },
         React.createElement(
           "a",
-          { href: encryptedPath("chat"), className: "flex h-28 min-h-[112px] w-[320px] items-center justify-center" },
+          { href: "/chat", className: "flex h-28 min-h-[112px] w-[320px] items-center justify-center" },
           React.createElement(Brand, { className: "h-24 w-full max-w-[300px] object-contain" })
         )
       ),
@@ -283,10 +277,10 @@ export function ChatLayout(props) {
         { className: "mt-4 border-t border-zinc-200 pt-3" },
         React.createElement("p", { className: "mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600" }, t("general", locale)),
         generalNavItems.map(function (item) {
-          var href = encryptedPath(item.path);
+          var href = item.path;
           var pathNorm = (pathname || "").replace(/\/$/, "") || "/";
           var hrefNorm = href.replace(/\/$/, "") || href;
-          var active = pathNorm === "/" + item.path || pathNorm === href || pathNorm === hrefNorm;
+          var active = pathNorm === item.path || pathNorm === href || pathNorm === hrefNorm;
           return React.createElement(
             "a",
             {
@@ -294,7 +288,7 @@ export function ChatLayout(props) {
               href: href,
               className: "flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors " + (active ? "bg-zinc-100 text-zinc-900" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"),
             },
-            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-cyan-400/75" }),
+            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-[#8e9094]" }),
             React.createElement("span", null, t(item.labelKey, locale))
           );
         })
@@ -304,7 +298,7 @@ export function ChatLayout(props) {
         { className: "mt-3 border-t border-zinc-200 pt-3" },
         React.createElement("p", { className: "mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600" }, t("specializations", locale)),
         practicalNavItems.map(function (item) {
-          var href = item.href || encryptedPath(item.path);
+          var href = item.href || item.path;
           return React.createElement(
             "a",
             {
@@ -312,7 +306,7 @@ export function ChatLayout(props) {
               href: href,
               className: "flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900",
             },
-            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-cyan-400/75" }),
+            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-[#8e9094]" }),
             React.createElement("span", null, t(item.labelKey, locale))
           );
         })
@@ -322,7 +316,7 @@ export function ChatLayout(props) {
         { className: "mt-3 border-t border-zinc-200 pt-3" },
         React.createElement("p", { className: "mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600" }, t("tools", locale)),
         eduNavItems.concat((role === "teacher" || role === "researcher") ? teacherEduItems : []).map(function (item) {
-          var href = item.href || encryptedPath(item.path);
+          var href = item.href || item.path;
           return React.createElement(
             "a",
             {
@@ -330,7 +324,7 @@ export function ChatLayout(props) {
               href: href,
               className: "flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900",
             },
-            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-cyan-400/75" }),
+            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-[#8e9094]" }),
             React.createElement("span", null, t(item.labelKey, locale))
           );
         })
@@ -340,7 +334,7 @@ export function ChatLayout(props) {
         { className: "mt-3 border-t border-zinc-200 pt-3" },
         React.createElement("p", { className: "mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600" }, t("account", locale)),
         accountNavItems.concat(isAdmin ? accountAdminExtraItems : []).map(function (item) {
-          var href = encryptedPath(item.path);
+          var href = item.path;
           return React.createElement(
             "a",
             {
@@ -348,7 +342,7 @@ export function ChatLayout(props) {
               href: href,
               className: "flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900",
             },
-            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-cyan-400/75" }),
+            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-[#8e9094]" }),
             React.createElement("span", null, t(item.labelKey, locale))
           );
         })
@@ -370,29 +364,25 @@ export function ChatLayout(props) {
     ),
     React.createElement(
       "div",
-      { className: "flex min-h-0 min-w-0 flex-1 flex-col w-full max-w-full overflow-hidden bg-[#f7f7fa]" },
+      { className: "flex min-h-0 min-w-0 flex-1 flex-col w-full max-w-full overflow-hidden bg-transparent" },
       // ...existing code...
       React.createElement(
-        motion.main,
+        "main",
         {
           className: "chat-main flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden",
-          style: { paddingTop: 48, background: "transparent", color: "#111827", position: "relative", isolation: "isolate" },
-          initial: { opacity: 0, y: 6 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.22 },
+          style: { paddingTop: 48, background: "transparent", color: "#1a1c1e", position: "relative", isolation: "isolate" },
         },
         React.createElement("div", {
           className: "pointer-events-none absolute inset-0 z-0",
-          style: { background: "linear-gradient(180deg,#f7f7fa,#eef0f4)" },
+          style: { background: "linear-gradient(180deg,rgba(250,251,252,0.8),rgba(245,246,248,0.95))" },
           "aria-hidden": true,
         }),
-        React.createElement(BinaryRain, null),
         React.createElement("div", { className: "content-layer relative z-10 w-full h-full flex flex-col justify-between min-h-0" }, children)
       ),
       React.createElement(
         "footer",
         {
-          className: "hidden sm:block border-t border-zinc-200 px-3 py-2 sm:px-5 sm:py-3 text-center text-[11px] text-zinc-400 shrink-0 bg-[#f7f7fa]",
+          className: "hidden sm:block border-t border-[rgba(20,24,30,0.06)] px-3 py-2 sm:px-5 sm:py-3 text-center text-[11px] text-[#8e9094] shrink-0 bg-white/70",
           suppressHydrationWarning: true,
         },
         "© ",

@@ -71,21 +71,71 @@ def _service_llm() -> Dict[str, Any]:
         return {"status": "down", "error": str(exc)[:120]}
 
 
+def _service_sovereign_router() -> Dict[str, Any]:
+    """Expõe estatísticas do LLM Router v2 + Quantum Orchestrator."""
+    try:
+        from vereda_backend.core.llm_router_v2 import get_router
+        from vereda_backend.core.quantum_orchestrator import get_quantum_engine, get_scheduler
+        
+        router = get_router()
+        quantum = get_quantum_engine()
+        scheduler = get_scheduler()
+        
+        return {
+            "status": "up",
+            "router_v2": router.get_stats(),
+            "quantum_engine": {
+                "history_size": len(quantum.decision_history),
+                "pyqpanda_available": getattr(__import__("vereda_backend.core.quantum_orchestrator", fromlist=[""]), "_PYQPANDA_AVAILABLE", False),
+                "pennylane_available": getattr(__import__("vereda_backend.core.quantum_orchestrator", fromlist=[""]), "_PENNYLANE_AVAILABLE", False),
+            },
+            "scheduler": scheduler.get_stats(),
+        }
+    except Exception as exc:
+        return {"status": "not_initialized", "error": str(exc)[:120]}
+
+
+def _service_neural_engine() -> Dict[str, Any]:
+    """Health check do motor neural soberano — runtime, circuit breaker, métricas."""
+    try:
+        from vereda_ai.syntexa_core.sovereign_orchestrator import get_system_health
+        return get_system_health()
+    except Exception as exc:
+        return {"status": "not_initialized", "error": str(exc)[:200]}
+
+
 @router.get("/health")
 def health_check():
     """
-    Sempre responde (não remove o endpoint). Campos legados: status, service.
-    Acrescenta: uptime_seconds, timestamp_utc, healthy, services.
+    CRITICAL: Responde INSTANTANEAMENTE (<1ms).
+    NÃO acessa DB, Redis, Stripe, IA, Kaggle, APIs externas.
+    Railway healthcheck usa este endpoint.
+    """
+    return {
+        "status": "ok",
+        "service": "vereda-ai",
+        "version": "2.0.0-split",
+        "uptime_seconds": _uptime_seconds(),
+        "timestamp_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+
+
+@router.get("/health/detailed")
+def health_check_detailed():
+    """
+    Health detalhado — pode acessar DB, Redis, LLM, etc.
+    Use para monitoramento interno, NÃO para Railway healthcheck.
     """
     db = _service_database()
     redis = _service_redis()
     llm = _mask_llm_for_public(_service_llm())
+    sovereign = _service_sovereign_router()
+    neural = _service_neural_engine()
 
     db_ok = db.get("status") == "up"
+    neural_ok = neural.get("healthy", False)
     overall_ok = db_ok
 
-    # `status` permanece "ok" enquanto o processo responde (compatível com checks antigos).
-    # `ready` / `healthy` indicam se o stack está utilizável (ex.: DB).
     payload: Dict[str, Any] = {
         "status": "ok",
         "service": "vereda-ai",
@@ -97,6 +147,8 @@ def health_check():
             "database": db,
             "redis": redis,
             "llm": llm,
+            "sovereign_ai": sovereign,
+            "neural_engine": neural,
         },
     }
     return payload

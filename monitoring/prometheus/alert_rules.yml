@@ -40,3 +40,83 @@ groups:
         annotations:
           summary: "Latência p95 de chat elevada"
           description: "P95 de latência acima de 3000ms por 10 minutos."
+
+      - alert: SyntexaGPUHighUtilization
+        expr: nvidia_gpu_utilization_gpu > 95
+        for: 5m
+        labels:
+          severity: warning
+          service: syntexa-ai-worker
+        annotations:
+          summary: "GPU com utilização muito alta"
+          description: "GPU {{ $labels.gpu }} está acima de 95% por 5 minutos."
+
+      - alert: SyntexaGPUVRAMCritical
+        expr: (nvidia_gpu_memory_used_bytes / nvidia_gpu_memory_total_bytes) > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          service: syntexa-ai-worker
+        annotations:
+          summary: "VRAM GPU crítica"
+          description: "VRAM da GPU {{ $labels.gpu }} acima de 95%."
+
+      - alert: SyntexaInferenceQueueDeep
+        expr: syntexa_queue_pending_tasks > 50
+        for: 5m
+        labels:
+          severity: warning
+          service: syntexa-ai-worker
+        annotations:
+          summary: "Fila de inferência profunda"
+          description: "{{ $value }} tarefas pendentes na fila de inferência."
+
+      - alert: SyntexaCircuitBreakerOpen
+        expr: syntexa_circuit_breaker_state == 2
+        for: 1m
+        labels:
+          severity: critical
+          service: syntexa-backend
+        annotations:
+          summary: "Circuit breaker OPEN"
+          description: "Circuit breaker {{ $labels.service }} está OPEN. Failover ativado."
+
+      - alert: SyntexaFallbackActive
+        expr: syntexa_fallback_active == 1
+        for: 5m
+        labels:
+          severity: warning
+          service: syntexa-backend
+        annotations:
+          summary: "Fallback ativo por tempo prolongado"
+          description: "Infra local fallback ativa há mais de 5 minutos."
+
+      - alert: SyntexaHighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: critical
+          service: syntexa-gateway
+        annotations:
+          summary: "Taxa de erro HTTP crítica"
+          description: "Taxa de erro acima de 10% nos últimos 3 minutos."
+
+      - alert: SyntexaRedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: syntexa-redis
+        annotations:
+          summary: "Redis com memória alta"
+          description: "Redis usando mais de 90% da memória alocada."
+
+      - alert: SyntexaBackendDown
+        expr: up{job="syntexa-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: syntexa-backend
+        annotations:
+          summary: "Backend VEREDA indisponível"
+          description: "Backend não responde há mais de 2 minutos."

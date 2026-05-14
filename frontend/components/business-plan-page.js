@@ -353,12 +353,7 @@ export function BusinessPlanPage({ plans, onSubscribe }) {
         }}
       />
 
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="text-center"
-      >
+      <div className="space-y-5">
         <div className="mx-auto mb-3 flex h-32 w-32 items-center justify-center rounded-2xl border border-emerald-200 bg-transparent shadow-sm">
           <img src="/LOGOTIPO.png?v=blue3" alt="Logotipo Syntexa Desktop" className="h-28 w-28 rounded-md object-contain" />
         </div>
@@ -371,7 +366,7 @@ export function BusinessPlanPage({ plans, onSubscribe }) {
           Plano operativo de negócio + roadmap de execução: foco em lançamento, primeiros pagantes e evolução contínua
           com métricas de produto.
         </p>
-      </motion.div>
+      </div>
 
       <div className="no-print flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-linear-to-br from-emerald-50/90 to-white p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-5">
         <div className="text-sm text-zinc-700">

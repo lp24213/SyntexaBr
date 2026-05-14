@@ -1,0 +1,13 @@
+"""Healthcheck do AI Worker — NÃO carrega modelos."""
+from __future__ import annotations
+
+from typing import Any
+
+from fastapi import APIRouter
+
+router = APIRouter()
+
+
+@router.get("/health")
+def health_check() -> dict[str, Any]:
+    return {"status": "ok", "service": "syntexa-ai-worker"}

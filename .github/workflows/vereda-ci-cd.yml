@@ -1,0 +1,217 @@
+name: VEREDA / SYNTEXA CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  # ── BACKEND TESTS ────────────────────────────────────────
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: syntexa
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: syntexa_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-research.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run backend tests
+        env:
+          DATABASE_URL: postgresql+psycopg2://syntexa:test@localhost:5432/syntexa_test
+          REDIS_URL: redis://localhost:6379/0
+          VEREDA_SECRET_KEY: test-secret-key-32-chars-minimum
+          ENVIRONMENT: test
+        run: |
+          pytest tests/ -v --cov=vereda_backend --cov-report=xml --cov-report=term
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+
+  # ── FRONTEND TESTS ───────────────────────────────────────
+  frontend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Test
+        working-directory: frontend
+        run: npm test -- --watchAll=false --coverage
+
+  # ── LINT & TYPE CHECK ────────────────────────────────────
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install lint tools
+        run: |
+          pip install ruff mypy black
+
+      - name: Ruff check
+        run: ruff check vereda_backend/ llm-core/ llm-reasoning/ llm-multimodal/ llm-voice/
+
+      - name: Black check
+        run: black --check vereda_backend/ llm-core/ llm-reasoning/ llm-multimodal/ llm-voice/
+
+      - name: MyPy type check
+        run: mypy vereda_backend/ llm-core/ llm-reasoning/
+
+  # ── SECURITY SCAN ────────────────────────────────────────
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Bandit
+        uses: PyCQA/bandit@main
+        with:
+          args: "-r vereda_backend/ -f json -o bandit-report.json"
+
+      - name: Upload Bandit results
+        uses: actions/upload-artifact@v3
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  # ── DEPLOY STAGING ───────────────────────────────────────
+  deploy-staging:
+    needs: [backend-tests, frontend-tests, lint]
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Railway (Staging)
+        uses: railway/cli-action@v1
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: syntexa-backend-staging
+
+      - name: Deploy Worker (Staging)
+        run: |
+          npm install -g wrangler
+          wrangler deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  # ── DEPLOY PRODUCTION ────────────────────────────────────
+  deploy-production:
+    needs: [backend-tests, frontend-tests, lint, security]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Railway (Production)
+        uses: railway/cli-action@v1
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: syntexa-backend-production
+
+      - name: Deploy Worker (Production)
+        run: |
+          npm install -g wrangler
+          wrangler deploy --env production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy GPU Cluster
+        run: |
+          echo "Deploying GPU cluster..."
+          # Trigger AWS GPU deployment via SSH or AWS API
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Post-deploy health check
+        run: |
+          curl -sf https://api.syntexabr.com.br/health || exit 1
+          curl -sf https://syntexabr.com.br/health || exit 1
+
+  # ── E2E TESTS ────────────────────────────────────────────
+  e2e-tests:
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Playwright
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: Run E2E tests
+        working-directory: frontend
+        run: npx playwright test
+        env:
+          BASE_URL: https://staging.syntexabr.com.br

@@ -1,0 +1,4 @@
+/download/SyntexaAI-Setup-1.0.0.exe https://api.syntexabr.com.br/v1/desktop/binary/SyntexaAI-Setup-1.0.0.exe 307
+/download/SyntexaAI-linux-x64.tar.gz https://api.syntexabr.com.br/v1/desktop/binary/SyntexaAI-linux-x64.tar.gz 307
+/download/SyntexaAI-macos-universal.dmg https://api.syntexabr.com.br/v1/desktop/binary/SyntexaAI-macos-universal.dmg 307
+/download/* https://api.syntexabr.com.br/v1/desktop/binary/:splat 307

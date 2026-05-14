@@ -248,8 +248,8 @@ function ScienceChatPanel({ area, level, language, onBack }) {
   };
 
   return React.createElement(
-    motion.div,
-    { initial: { opacity: 0, x: 20 }, animate: { opacity: 1, x: 0 }, className: "flex flex-col h-full" },
+    "div",
+    { className: "flex flex-col h-full" },
 
     // Header
     React.createElement(
@@ -262,7 +262,7 @@ function ScienceChatPanel({ area, level, language, onBack }) {
           onClick: onBack,
           className: "rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
         }, "←"),
-        React.createElement(FuturisticIcon, { name: area.iconName, className: "h-8 w-8 text-sky-400/85" }),
+        React.createElement(FuturisticIcon, { name: area.iconName, className: "h-8 w-8 text-[#1a1c1e]/85" }),
         React.createElement(
           "div",
           null,
@@ -307,11 +307,9 @@ function ScienceChatPanel({ area, level, language, onBack }) {
       ),
       messages.map((msg, i) =>
         React.createElement(
-          motion.div,
+          "div",
           {
             key: i,
-            initial: { opacity: 0, y: 6 },
-            animate: { opacity: 1, y: 0 },
             className: `flex ${msg.role === "user" ? "justify-end" : "justify-start"}`,
           },
           React.createElement(
@@ -329,7 +327,7 @@ function ScienceChatPanel({ area, level, language, onBack }) {
                   React.createElement(MathText, { text: msg.content || "" }),
                   msg.streaming && React.createElement(
                     "span",
-                    { className: "inline-block w-1.5 h-3 ml-1 bg-zinc-1000 rounded-sm animate-pulse" }
+                    { className: "inline-block w-1.5 h-3 ml-1 bg-[#f1f2f4] rounded-sm animate-pulse" }
                   )
                 )
           )
@@ -358,7 +356,7 @@ function ScienceChatPanel({ area, level, language, onBack }) {
           disabled: !streaming && !input.trim(),
           className: `rounded-2xl px-4 py-2 text-sm font-medium transition-all ${
             streaming
-              ? "border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20"
+              ? "border border-red-500/30 bg-red-500/10 text-[#5a5c5e] hover:bg-red-500/20"
               : "border border-zinc-200 bg-zinc-50 text-zinc-900 hover:bg-zinc-100 disabled:opacity-30"
           }`,
         },
@@ -383,12 +381,12 @@ export default function CienciaPage() {
 
       // ── Hero ──────────────────────────────────────────────────────────
       !activeArea && React.createElement(
-        motion.div,
-        { initial: { opacity: 0, y: -12 }, animate: { opacity: 1, y: 0 }, className: "mb-8 text-center" },
+        "div",
+        { className: "mb-8 text-center" },
         React.createElement(
           "div",
           { className: "mb-3 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs text-zinc-500" },
-          React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" }),
+          React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-[#5a5c5e] animate-pulse" }),
           "Acesso público · Sessão 100% anônima"
         ),
         React.createElement("h1", { className: "text-3xl font-bold text-zinc-900 mb-2" }, "Ciência & Tecnologia"),
@@ -400,9 +398,8 @@ export default function CienciaPage() {
 
       // ── Settings bar ──────────────────────────────────────────────────
       !activeArea && React.createElement(
-        motion.div,
-        { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.1 },
-          className: "mb-8 flex flex-wrap items-center gap-3 justify-center" },
+        "div",
+        { className: "mb-8 flex flex-wrap items-center gap-3 justify-center" },
 
         React.createElement("span", { className: "text-xs text-zinc-400" }, "Nível:"),
         LEVELS.map((l) =>
@@ -446,19 +443,16 @@ export default function CienciaPage() {
         { className: "grid gap-4 sm:grid-cols-2 lg:grid-cols-2" },
         SCIENCE_AREAS.map((area, idx) =>
           React.createElement(
-            motion.button,
+            "button",
             {
               key: area.id,
-              initial: { opacity: 0, y: 16 },
-              animate: { opacity: 1, y: 0 },
-              transition: { delay: 0.08 * idx },
               onClick: () => setActiveArea(area),
               className: `rounded-2xl border ${area.border} bg-gradient-to-br ${area.color} p-5 text-left transition-all hover:scale-[1.01] hover:border-zinc-200`,
             },
             React.createElement(
               "div",
               { className: "flex items-start gap-3 mb-3" },
-              React.createElement(FuturisticIcon, { name: area.iconName, className: "h-7 w-7 mt-0.5 text-sky-400/80" }),
+              React.createElement(FuturisticIcon, { name: area.iconName, className: "h-7 w-7 mt-0.5 text-[#1a1c1e]/80" }),
               React.createElement(
                 "div",
                 { className: "flex-1" },
@@ -483,9 +477,8 @@ export default function CienciaPage() {
 
       // ── Privacy notice (bottom of grid) ─────────────────────────────
       !activeArea && React.createElement(
-        motion.div,
-        { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.7 },
-          className: "mt-8 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-center" },
+        "div",
+        { className: "mt-8 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-center" },
         React.createElement("p", { className: "text-xs text-zinc-400" },
           "Privacidade garantida — nenhuma mensagem, IP ou dado pessoal é armazenado. " +
           "Sessões são efêmeras e ficam apenas na memória do seu navegador. " +

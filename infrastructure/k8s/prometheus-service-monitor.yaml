@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: syntexa-metrics
+  namespace: syntexa
+  labels:
+    app: syntexa
+spec:
+  selector:
+    matchLabels:
+      app: syntexa-backend
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: syntexa-ai-worker-metrics
+  namespace: syntexa
+  labels:
+    app: syntexa
+spec:
+  selector:
+    matchLabels:
+      app: syntexa-ai-worker
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 15s

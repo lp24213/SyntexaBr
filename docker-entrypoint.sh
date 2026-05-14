@@ -7,8 +7,9 @@ DBURL="${DATABASE_URL:-}"
 case "$DBURL" in
   sqlite*|"") WORKERS=1 ;;
 esac
+PORT="${PORT:-8000}"
 exec python -m uvicorn vereda_backend.main:app \
-  --host 0.0.0.0 --port 8000 \
+  --host 0.0.0.0 --port "$PORT" \
   --workers "$WORKERS" \
   --timeout-keep-alive "$TO" \
   --proxy-headers \
