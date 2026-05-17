@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from vereda_backend.db import models
 from vereda_backend.db.session import get_db
 from vereda_backend.schemas.chat import (
+    ChatChoice,
     ChatMessage,
     ChatRequest,
     ChatResponse,
@@ -151,24 +152,42 @@ async def _public_chat_impl(
     )
     request, _files = await _parse_public_chat_body(http_request)
 
-    # Gateway mode: responde com stub sem tentar IA pesada
+    # Gateway mode: usar apenas proxy para AI Worker local/soberano.
+    # PROIBIDO fallback para OpenAI/Claude/Groq (V38).
     if getattr(settings, "gateway_mode", False):
-        return ChatResponse(
-            id="chatcmpl-gateway-stub",
-            object="chat.completion",
-            model=request.model,
-            choices=[
-                ChatChoice(
-                    index=0,
-                    message=ChatMessage(
-                        role="assistant",
-                        content="Olá! Sou a Syntexa AI. Estou online e pronta para ajudar. Como posso assistir você hoje?",
-                    ),
-                    finish_reason="stop",
+        try:
+            from vereda_backend.core.ai_proxy_client import proxy_chat_completion_sync
+            messages = [m.model_dump() for m in request.messages]
+            result = proxy_chat_completion_sync(
+                messages=messages,
+                model=request.model,
+                stream=False,
+                temperature=0.7,
+                max_tokens=min(request.max_tokens or 2048, 4096),
+            )
+            content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            if not content:
+                content = result.get("content", "")
+            if content:
+                return ChatResponse(
+                    id="chatcmpl-gateway-proxy",
+                    object="chat.completion",
+                    model=request.model,
+                    choices=[
+                        ChatChoice(
+                            index=0,
+                            message=ChatMessage(role="assistant", content=content),
+                            finish_reason="stop",
+                        )
+                    ],
+                    usage=ChatUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
                 )
-            ],
-            usage=ChatUsage(prompt_tokens=2, completion_tokens=15, total_tokens=17),
-        )
+        except Exception as exc:
+            logger.error("[Syntexa V38] Gateway AI Worker falhou: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="[Syntexa V38] Runtime de inferência local indisponível. Nenhum fallback externo configurado.",
+            )
 
     session_title = _public_session_title(ip)
     session = (
@@ -235,6 +254,7 @@ async def _public_chat_impl(
     retries = 4
     backoff_s = 0.5
     response = None
+    last_exc: Exception | None = None
     for attempt in range(retries):
         try:
             response = create_chat_completion(
@@ -245,14 +265,15 @@ async def _public_chat_impl(
             )
             break
         except Exception as exc:
+            last_exc = exc
             if attempt >= retries - 1:
-                logger.exception("Erro interno em public-chat: %s", exc)
+                logger.exception("[Syntexa V38] Erro interno em public-chat: %s", exc)
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Servico de IA indisponivel no momento.",
+                    detail="[Syntexa V38] Inference runtime indisponível. Verifique o estado do motor LLM local.",
                 )
             logger.warning(
-                "Falha transitória public-chat (tentativa %s/%s): %s",
+                "[Syntexa V38] Falha transitória public-chat (tentativa %s/%s): %s",
                 attempt + 1,
                 retries,
                 exc,
@@ -261,7 +282,7 @@ async def _public_chat_impl(
     if response is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Servico de IA indisponivel no momento.",
+            detail="[Syntexa V38] Inference runtime indisponível. Verifique o estado do motor LLM local.",
         )
     if response.choices:
         usage = response.usage
@@ -353,11 +374,14 @@ def _stream_events(
 
 
 def _gateway_stream_stub():
-    import json
-    content = "Olá! Sou a Syntexa AI. Estou online e pronta para ajudar. Como posso assistir você hoje?"
-    for word in content.split():
-        yield f"data: {json.dumps({'content': word + ' '})}\n\n"
-    yield f"data: {json.dumps({'content': ''})}\n\n"
+    """
+    PROIBIDO retornar placeholder hardcoded (V38).
+    Levanta erro real para que o frontend exiba status técnico.
+    """
+    raise RuntimeError(
+        "[Syntexa V38] Gateway stream stub invocado — nenhum runtime LLM real respondeu. "
+        "Verifique disponibilidade do motor de inferência local."
+    )
 
 
 async def _public_chat_stream_impl(
@@ -375,17 +399,44 @@ async def _public_chat_stream_impl(
     )
     request, _ = await _parse_public_chat_body(http_request)
 
-    # Gateway mode: stream stub sem tentar IA pesada
+    # Gateway mode: usar apenas proxy para AI Worker local/soberano.
+    # PROIBIDO fallback para OpenAI/Claude/Groq (V38).
     if getattr(settings, "gateway_mode", False):
-        return StreamingResponse(
-            _gateway_stream_stub(),
-            media_type="text/event-stream; charset=utf-8",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "X-Accel-Buffering": "no",
-            },
-        )
+        try:
+            from vereda_backend.core.ai_proxy_client import proxy_chat_completion_async
+            messages = [m.model_dump() for m in request.messages]
+            result = await proxy_chat_completion_async(
+                messages=messages,
+                model=request.model,
+                stream=False,
+                temperature=0.7,
+                max_tokens=min(request.max_tokens or 2048, 4096),
+            )
+            content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            if not content:
+                content = result.get("content", "")
+            if content:
+                async def _proxy_stream(content):
+                    import json
+                    for word in content.split():
+                        yield f"data: {json.dumps({'content': word + ' '})}\n\n"
+                    yield f"data: {json.dumps({'content': ''})}\n\n"
+                return StreamingResponse(
+                    _proxy_stream(content),
+                    media_type="text/event-stream; charset=utf-8",
+                    headers={
+                        "Cache-Control": "no-cache",
+                        "Connection": "keep-alive",
+                        "X-Accel-Buffering": "no",
+                    },
+                )
+        except Exception as exc:
+            logger.error("[Syntexa V38] Gateway AI Worker stream falhou: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="[Syntexa V38] Runtime de inferência local indisponível. Nenhum fallback externo configurado.",
+            )
+
     session_title = _public_session_title(ip)
     session = (
         db.query(models.ChatSession)
