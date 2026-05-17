@@ -16,6 +16,7 @@ from vereda_backend.schemas.chat import (
     ChatMessage,
     ChatRequest,
     ChatResponse,
+    ChatUsage,
 )
 from vereda_backend.core.security import get_current_user_optional
 from vereda_backend.services.chat_engine import create_chat_completion, stream_chat_completion
