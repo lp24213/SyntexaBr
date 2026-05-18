@@ -32,21 +32,24 @@ class LLMProvider(Protocol):
 
 
 class DummyLLMProvider:
+    """
+    REMOVIDO DO PIPELINE (V38).
+    Não pode existir fallback fake. Levanta RuntimeError para forçar fail fast.
+    """
     name: ProviderName = "dummy"
 
     def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
-        # Importante: o Dummy é apenas fallback/dev. Não deve "ecoar" a pergunta,
-        # porque isso parece bug para o usuário e mascara falta de configuração.
-        #
-        # Para ter respostas completas, configure DEFAULT_LLM=syntexa_native (padrão)
-        # ou um endpoint HTTP próprio (LOCAL_LLM_ENDPOINT, EXLLAMA_ENDPOINT, etc.).
-        # Veja `.env.example` na raiz do projeto.
-        has_any_user = any((m.get("role") or "").lower() == "user" for m in messages)
-        if not has_any_user:
-            return "Olá! Sou a Syntexa. Envie sua pergunta para começarmos."
-        return (
-            "O núcleo de geração da Syntexa está indisponível neste momento. "
-            "Tente novamente em instantes."
+        raise RuntimeError(
+            "[Syntexa V38] Nenhum provedor LLM real disponível. "
+            "Configure OLLAMA_ENDPOINT, LOCAL_LLM_ENDPOINT, VLLM_ENDPOINT, "
+            "ou garanta que o motor neural local Syntexa esteja ativo."
+        )
+
+    def chat_stream(self, messages: list[dict[str, Any]], **kwargs: Any) -> Iterator[str]:
+        raise RuntimeError(
+            "[Syntexa V38] Nenhum provedor LLM real disponível. "
+            "Configure OLLAMA_ENDPOINT, LOCAL_LLM_ENDPOINT, VLLM_ENDPOINT, "
+            "ou garanta que o motor neural local Syntexa esteja ativo."
         )
 
     def embed(self, texts: list[str], **kwargs: Any) -> list[list[float]]:
@@ -62,14 +65,25 @@ class SyntexaNativeLLMProvider:
     name: ProviderName = "syntexa_native"
 
     def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
-        from vereda_ai.syntexa_core.hybrid_engine import generate_reply
-
-        return generate_reply(messages)
+        # Chama a instância AWS com o modelo Syntexa próprio (34M params)
+        url = "http://54.210.101.255:8000/generate"
+        payload = {
+            "messages": messages,
+            "max_new_tokens": kwargs.get("max_tokens", 80),
+            "temperature": kwargs.get("temperature", 0.7),
+        }
+        try:
+            resp = requests.post(url, json=payload, timeout=(5, 60))
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("response", "")
+        except Exception as exc:
+            logger.warning("AWS LLM falhou: %s", exc)
+            return f"[Erro: modelo não respondeu — {exc}]"
 
     def chat_stream(self, messages: list[dict[str, Any]], **kwargs: Any) -> Iterator[str]:
-        from vereda_ai.syntexa_core.hybrid_engine import generate_reply_stream
-
-        yield from generate_reply_stream(messages)
+        # Por enquanto entrega tudo de uma vez (servidor AWS não suporta stream ainda)
+        yield self.chat(messages, **kwargs)
 
     def embed(self, texts: list[str], **kwargs: Any) -> list[list[float]]:
         from vereda_ai.syntexa_core.hybrid_engine import native_embed
@@ -321,6 +335,108 @@ class OpenAIProvider(HTTPJSONLLMProvider):
         yield from super().chat_stream(messages, **kwargs)
 
 
+class DeepSeekProvider(HTTPJSONLLMProvider):
+    """DeepSeek API — compatível OpenAI (/v1/chat/completions)."""
+    name: ProviderName = "deepseek"
+
+    def __init__(self, base_url: str, api_key: str, model: str):
+        super().__init__(name="deepseek", base_url=base_url, api_key=api_key)
+        self._model = (model or "deepseek-chat").strip()
+
+    def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
+        kwargs.setdefault("model", self._model)
+        return super().chat(messages, **kwargs)
+
+    def chat_stream(self, messages: list[dict[str, Any]], **kwargs: Any) -> Iterator[str]:
+        kwargs.setdefault("model", self._model)
+        yield from super().chat_stream(messages, **kwargs)
+
+
+class GeminiProvider(HTTPJSONLLMProvider):
+    """Google Gemini via endpoint OpenAI-compatible (/v1beta/openai/chat/completions)."""
+    name: ProviderName = "gemini"
+
+    def __init__(self, base_url: str, api_key: str, model: str):
+        super().__init__(name="gemini", base_url=base_url, api_key=api_key)
+        self._model = (model or "gemini-1.5-flash").strip()
+
+    def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
+        kwargs.setdefault("model", self._model)
+        return super().chat(messages, **kwargs)
+
+    def chat_stream(self, messages: list[dict[str, Any]], **kwargs: Any) -> Iterator[str]:
+        kwargs.setdefault("model", self._model)
+        yield from super().chat_stream(messages, **kwargs)
+
+
+class AnthropicProvider(HTTPJSONLLMProvider):
+    """
+    Anthropic Claude via Messages API.
+    Converte mensagens OpenAI-style para formato Anthropic e converte a resposta de volta.
+    Streaming via SSE compatível (eventos de texto progressivo).
+    """
+    name: ProviderName = "anthropic"
+
+    def __init__(self, base_url: str, api_key: str, model: str):
+        # Anthropic base padrão: https://api.anthropic.com
+        super().__init__(name="anthropic", base_url=base_url, api_key=api_key)
+        self._model = (model or "claude-3-5-sonnet-20241022").strip()
+
+    def _to_anthropic_messages(self, messages: list[dict[str, Any]]) -> tuple[str | None, list[dict[str, Any]]]:
+        """Extrai system prompt e converte restante para formato Anthropic."""
+        system_text: str | None = None
+        anthropic_msgs: list[dict[str, Any]] = []
+        for m in messages:
+            role = (m.get("role") or "").lower()
+            content = str(m.get("content") or "")
+            if role == "system":
+                system_text = content
+                continue
+            if role in ("user", "assistant"):
+                anthropic_msgs.append({"role": role, "content": content})
+        return system_text, anthropic_msgs
+
+    def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
+        system_text, anthropic_msgs = self._to_anthropic_messages(messages)
+        payload: dict[str, Any] = {
+            "model": self._model,
+            "messages": anthropic_msgs,
+            "max_tokens": kwargs.get("max_tokens", 4096),
+        }
+        if system_text:
+            payload["system"] = system_text
+        if "temperature" in kwargs:
+            payload["temperature"] = kwargs["temperature"]
+        _to = kwargs.get("timeout")
+        if _to is None:
+            _to = (
+                float(getattr(settings, "llm_connect_timeout", 3.0)),
+                float(getattr(settings, "llm_read_timeout", 120.0)),
+            )
+        resp = self._post_with_retry("/v1/messages", payload=payload, timeout=_to)
+        data = resp.json()
+        content_blocks = data.get("content") or []
+        out_parts: list[str] = []
+        for block in content_blocks:
+            if isinstance(block, dict) and block.get("type") == "text":
+                out_parts.append(str(block.get("text", "")))
+        return "".join(out_parts)
+
+    def chat_stream(self, messages: list[dict[str, Any]], **kwargs: Any) -> Iterator[str]:
+        system_text, anthropic_msgs = self._to_anthropic_messages(messages)
+        payload: dict[str, Any] = {
+            "model": self._model,
+            "messages": anthropic_msgs,
+            "max_tokens": kwargs.get("max_tokens", 4096),
+            "stream": True,
+        }
+        if system_text:
+            payload["system"] = system_text
+        if "temperature" in kwargs:
+            payload["temperature"] = kwargs["temperature"]
+        yield from self._stream_openai_sse("/v1/messages", payload)
+
+
 class FutureSyntexaProvider(SyntexaNativeLLMProvider):
     """
     Placeholder da IA proprietária Syntexa (próximos checkpoints treinados internamente).
@@ -401,175 +517,31 @@ class LLMEngine:
         self._providers: dict[ProviderName, LLMProvider] = {}
         self._provider_runtime_health: dict[str, float] = {}
         self._provider_runtime_failures: dict[str, int] = {}
-        sovereign_mode = bool(getattr(settings, "own_model_sovereign_mode", True))
-        strict_no_fallback = bool(getattr(settings, "own_model_strict_no_fallback", False))
-        prefer_external_if_configured = bool(
-            getattr(settings, "prefer_external_llm_when_configured", False)
-        )
 
-        # Registra dummy apenas como "último recurso" fora de produção.
-        # Em produção, a intenção é usar provedores reais (HTTP próprio / Azure / etc.) sem fallback sintético.
-        dummy = DummyLLMProvider()
+        # ── MOTOR SOBERANO SOMENTE ───────────────────────────────
+        # REMOVIDO: Todos os providers externos (OpenAI, Anthropic, Gemini,
+        # DeepSeek, Azure, Ollama, vLLM, ExLlama, HTTP genérico).
+        # A Syntexa opera EXCLUSIVAMENTE com a Foundation Model própria.
+        # ─────────────────────────────────────────────────────────
 
-        # Núcleo proprietário Syntexa (sempre disponível — não depende de endpoints externos).
+        # Núcleo proprietário Syntexa Foundation Model.
         self.register_provider(SyntexaNativeLLMProvider())
 
-        # Ollama (local :11434 ou cloud): gera texto; embeddings/RAG seguem no núcleo nativo dentro de OllamaLLMProvider.
-        if (not sovereign_mode) and getattr(settings, "ollama_endpoint", None):
-            _om = (getattr(settings, "ollama_model", None) or "llama3.2").strip()
-            self.register_provider(
-                OllamaLLMProvider(
-                    base_url=str(settings.ollama_endpoint).strip(),
-                    model=_om,
-                    api_key=getattr(settings, "ollama_api_key", None),
-                )
-            )
-
-        # Opcional: servidor HTTP local/externo compatível com OpenAI/vLLM.
-        if (not sovereign_mode) and settings.local_llm_endpoint:
-            http_provider = HTTPJSONLLMProvider(
-                name="local_http", base_url=settings.local_llm_endpoint
-            )
-            self.register_provider(http_provider)
-        if (not sovereign_mode) and getattr(settings, "openai_endpoint", None) and getattr(settings, "openai_api_key", None):
-            self.register_provider(
-                OpenAIProvider(
-                    base_url=getattr(settings, "openai_endpoint"),
-                    api_key=getattr(settings, "openai_api_key"),
-                    model=getattr(settings, "openai_model", None) or "gpt-4o-mini",
-                )
-            )
-        self.register_provider(FutureSyntexaProvider())
-
-        # ExLlama (gateway HTTP) — registra como 'exllama' quando configurado
-        if (not sovereign_mode) and getattr(settings, "exllama_endpoint", None):
-            exll = HTTPJSONLLMProvider(
-                name="exllama", base_url=getattr(settings, "exllama_endpoint")
-            )
-            self.register_provider(exll)
-        # Azure TGI / Remote HTTP providers
-        if (not sovereign_mode) and getattr(settings, "azure_tgi_endpoint", None):
-            tgi = HTTPJSONLLMProvider(
-                name="azure_tgi", base_url=getattr(settings, "azure_tgi_endpoint")
-            )
-            self.register_provider(tgi)
-        if (
-            (not sovereign_mode)
-            and
-            getattr(settings, "azure_openai_endpoint", None)
-            and getattr(settings, "azure_openai_key", None)
-            and getattr(settings, "azure_openai_deployment", None)
-        ):
-            ao = AzureOpenAIProvider(
-                endpoint=getattr(settings, "azure_openai_endpoint"),
-                api_key=getattr(settings, "azure_openai_key"),
-                deployment=getattr(settings, "azure_openai_deployment"),
-            )
-            self.register_provider(ao)
-        if (not sovereign_mode) and getattr(settings, "remote_llm_endpoint", None):
-            remote = HTTPJSONLLMProvider(
-                name="remote", base_url=getattr(settings, "remote_llm_endpoint")
-            )
-            self.register_provider(remote)
-
-        # Produção: DEFAULT_LLM=syntexa_native OU endpoint de inferência próprio na Azure/VM.
-        env = (getattr(settings, "environment", "") or "").strip().lower()
-        is_prod = env in {"prod", "production"}
-        if is_prod:
-            any_external = any(
-                getattr(settings, k, None)
-                for k in (
-                    "ollama_endpoint",
-                    "exllama_endpoint",
-                    "local_llm_endpoint",
-                    "azure_tgi_endpoint",
-                    "azure_openai_endpoint",
-                    "remote_llm_endpoint",
-                )
-            )
-            dl = (default_provider or settings.default_llm or "").strip().lower()
-            if (not sovereign_mode) and (not any_external) and dl not in ("syntexa_native",):
-                raise RuntimeError(
-                    "Produção: use DEFAULT_LLM=syntexa_native (motor proprietário) ou configure um endpoint "
-                    "de inferência (OLLAMA_ENDPOINT, EXLLAMA_ENDPOINT, LOCAL_LLM_ENDPOINT, …)."
-                )
-
-        # Respeita DEFAULT_LLM; syntexa_native usa contexto da web + lógica interna (sem roubar para Azure).
-        configured_default = (default_provider or settings.default_llm or dummy.name).strip().lower()
-        if (not sovereign_mode) and is_prod and configured_default not in self._providers and configured_default != "dummy":
-            raise RuntimeError(
-                f"Produção: DEFAULT_LLM='{configured_default}' não está disponível no runtime. "
-                "Verifique endpoint/credenciais e variáveis de ambiente."
-            )
-        if configured_default in self._providers and configured_default != "dummy":
-            self._default = configured_default
-        elif configured_default == "syntexa_native" or (settings.default_llm or "").strip().lower() == "syntexa_native":
-            self._default = "syntexa_native"
-        elif "azure_openai" in self._providers:
-            self._default = "azure_openai"
-        elif "azure_tgi" in self._providers:
-            self._default = "azure_tgi"
-        elif "exllama" in self._providers:
-            self._default = "exllama"
-        elif "ollama" in self._providers:
-            self._default = "ollama"
-        elif "openai" in self._providers:
-            self._default = "openai"
-        elif "local_http" in self._providers:
-            self._default = "local_http"
-        elif "syntexa_native" in self._providers:
-            self._default = "syntexa_native"
-        elif configured_default in self._providers:
+        # Default: sempre a IA própria. Não há fallback para terceiros.
+        configured_default = (default_provider or settings.default_llm or "").strip().lower()
+        if configured_default in self._providers:
             self._default = configured_default
         else:
-            self.register_provider(dummy)
-            self._default = dummy.name
-
-        # Modo soberano: quando estrito, força o núcleo proprietário como motor textual primário,
-        # mesmo que haja endpoints externos configurados no ambiente.
-        if strict_no_fallback and "syntexa_native" in self._providers:
             self._default = "syntexa_native"
 
-        # -----------------------------------------------------------------
-        # Motor textual principal (causa raiz de respostas “quebradas”):
-        # O default histórico DEFAULT_LLM=syntexa_native activa o hybrid_engine
-        # (regras + síntese de web), não o modelo Ollama/HTTP — mesmo com OLLAMA_ENDPOINT
-        # configurado. Aqui: se o utilizador deixou o default “native” mas há API de
-        # chat real registada, essa API passa a ser o _default. syntexa_native continua
-        # registado (embeddings/RAG); não é cadeia de fallback em tempo de execução.
-        # -----------------------------------------------------------------
-        if (
-            prefer_external_if_configured
-            and self._default == "syntexa_native"
-            and not (strict_no_fallback or is_prod)
-        ):
-            for _name in (
-                "ollama",
-                "local_http",
-                "openai",
-                "azure_openai",
-                "azure_tgi",
-                "exllama",
-                "remote",
-            ):
-                if _name in self._providers:
-                    self._default = _name
-                    logger.info(
-                        "Chat: motor textual = %s (API LLM). syntexa_native não é o primário "
-                        "enquanto este endpoint estiver configurado.",
-                        _name,
-                    )
-                    break
-
-        if self._default == "syntexa_native" and (strict_no_fallback or is_prod):
-            ok, reason = runtime_ready_for_active_model()
-            if not ok:
-                raise RuntimeError(
-                    "Modo estrito sem fallback ativado: runtime da IA própria não está pronto. "
-                    f"Detalhe: {reason}"
-                )
-        if sovereign_mode:
-            self._default = "syntexa_native"
+        # Verifica se o runtime da IA própria está pronto
+        ok, reason = runtime_ready_for_active_model()
+        if not ok:
+            logger.warning(
+                "[LLMEngine] Runtime da IA própria não está pronto: %s. "
+                "Treine o modelo: python -m vereda_ai.syntexa_core.foundation_trainer_cli --data dataset.jsonl",
+                reason,
+            )
 
     def available_providers(self) -> list[str]:
         return sorted(self._providers.keys())
@@ -654,35 +626,87 @@ class LLMEngine:
         domain: str | None,
         min_confidence: float,
     ) -> list[str]:
+        """
+        Ordem de prioridade (arquitetura soberana V37):
+        1) Runtime local / soberano (syntexa_native, future_syntexa)
+        2) Inferência local (ollama, local_http, exllama, vllm, tgi)
+        3) Providers externos SOMENTE se external_providers_enabled=True e não soberano
+        4) Dummy (sempre último recurso; levanta exceção)
+        """
         sovereign_mode = bool(getattr(settings, "own_model_sovereign_mode", True))
+        external_enabled = bool(getattr(settings, "external_providers_enabled", False))
+
+        # Modo soberano: apenas providers próprios
         if sovereign_mode:
             if requested and self._is_sovereign_provider(requested):
                 return [requested]
             if self._default in self._providers and self._is_sovereign_provider(self._default):
                 return [self._default]
-            return [x for x in self._providers.keys() if self._is_sovereign_provider(x)] or ["syntexa_native"]
+            sovereign = [x for x in self._providers.keys() if self._is_sovereign_provider(x)]
+            return sovereign or ["syntexa_native"]
+
         if requested:
             return [requested]
+
         if not bool(getattr(settings, "llm_smart_fallback_enabled", True)):
             return [self._default]
+
+        # Classificação de providers
+        local_providers = {"syntexa_native", "future_syntexa", "ollama", "local_http", "exllama", "vllm", "azure_tgi"}
+        external_providers = {"openai", "deepseek", "gemini", "anthropic", "azure_openai", "remote"}
+
         all_names = [name for name in self._providers.keys() if name != "dummy"]
         if not all_names:
             return [self._default]
+
+        # Domain override respeita a classificação: se for local, vai primeiro; se for externo, só se permitido
         overrides = self._domain_overrides()
         if domain and overrides.get(domain) in self._providers:
             preferred = overrides[domain]
             tail = [x for x in all_names if x != preferred]
+            # Se externo não permitido, move para depois dos locais
+            if preferred in external_providers and not external_enabled:
+                local_tail = [x for x in tail if x in local_providers]
+                ext_tail = [x for x in tail if x in external_providers]
+                return [*local_tail, preferred, *ext_tail]
             return [preferred, *tail]
-        scored: list[tuple[float, str]] = []
+
+        # Separa locais e externos
+        locals_ordered: list[str] = []
+        externals_ordered: list[str] = []
         for name in all_names:
-            scored.append((self._provider_confidence(name, domain), name))
-        scored.sort(reverse=True)
-        filtered = [name for score, name in scored if score >= min_confidence]
-        if self._default in all_names and self._default not in filtered:
-            filtered.insert(0, self._default)
-        if not filtered:
-            filtered = [name for _, name in scored]
-        return filtered or [self._default]
+            if name in local_providers:
+                locals_ordered.append(name)
+            elif name in external_providers:
+                if external_enabled:
+                    externals_ordered.append(name)
+            else:
+                # Provider desconhecido: assume local se não estiver na lista externa
+                locals_ordered.append(name)
+
+        # Ordena cada grupo por confiança/runtime health
+        def _sort_by_confidence(names: list[str]) -> list[str]:
+            scored = [(self._provider_confidence(n, domain), n) for n in names]
+            scored.sort(reverse=True)
+            return [n for _, n in scored if _ >= min_confidence] or [n for _, n in scored]
+
+        locals_sorted = _sort_by_confidence(locals_ordered)
+        externals_sorted = _sort_by_confidence(externals_ordered)
+
+        # Garante que o default vá primeiro se for local; se for externo e não permitido, ignora
+        default = self._default
+        if default in locals_sorted:
+            locals_sorted.remove(default)
+            locals_sorted.insert(0, default)
+        elif default in externals_sorted:
+            if not external_enabled:
+                externals_sorted.remove(default)
+            else:
+                externals_sorted.remove(default)
+                externals_sorted.insert(0, default)
+
+        result = [*locals_sorted, *externals_sorted]
+        return result or [self._default]
 
     def register_provider(self, provider: LLMProvider) -> None:
         logger.info("Registrando provedor LLM: %s", provider.name)
