@@ -351,61 +351,27 @@ export default {
     ) {
       const name = pathname.slice("/download/".length);
       const base = (env.BACKEND_BASE_URL || "").replace(/\/$/, "");
-      return Response.redirect(`${base}/v1/desktop/binary/${encodeURIComponent(name)}`, 302);
+      return Response.redirect(`${base}/v1/desktop/assets/${encodeURIComponent(name)}`, 302);
     }
 
-    // 8. Public chat stub — responde direto do edge enquanto AWS Worker não está acessível
+    // 8. Public chat — PROIBIDO stub/resposta hardcoded (V38).
+    // Sempre proxy para backend real; se indisponível, retorna erro técnico.
     if (pathname === "/public-chat" || pathname === "/public-chat/stream") {
-      const chatResponse = "Olá! Sou a Syntexa AI. Estou online e pronta para ajudar. Como posso assistir você hoje?";
-      if (pathname === "/public-chat/stream") {
-        const encoder = new TextEncoder();
-        const words = chatResponse.split(" ");
-        const stream = new ReadableStream({
-          start(controller) {
-            let i = 0;
-            const push = () => {
-              if (i >= words.length) {
-                controller.enqueue(encoder.encode("data: {\"content\":\"\"}\n\n"));
-                controller.close();
-                return;
-              }
-              controller.enqueue(encoder.encode(`data: {"content":"${words[i]} "}\n\n`));
-              i++;
-              setTimeout(push, 60);
-            };
-            push();
-          }
-        });
-        return new Response(stream, {
-          status: 200,
+      const backendBase = env.BACKEND_BASE_URL;
+      if (!backendBase) {
+        return new Response(JSON.stringify({
+          status: "error",
+          detail: "[Syntexa V38] Backend indisponível. Nenhum fallback textual permitido.",
+        }), {
+          status: 503,
           headers: {
-            "Content-Type": "text/event-stream; charset=utf-8",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
+            "Content-Type": "application/json",
             ...corsHeaders(origin, env),
             ...securityHeaders(),
           },
         });
       }
-      return new Response(JSON.stringify({
-        id: "chatcmpl-" + crypto.randomUUID().slice(0, 12),
-        object: "chat.completion",
-        created: Math.floor(Date.now() / 1000),
-        model: "syntexa-large",
-        choices: [{
-          index: 0,
-          message: { role: "assistant", content: chatResponse },
-          finish_reason: "stop"
-        }],
-        usage: { prompt_tokens: 2, completion_tokens: 15, total_tokens: 17 }
-      }), {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(origin, env),
-          ...securityHeaders(),
-        },
-      });
+      return proxyRequest(request, backendBase, origin, env);
     }
 
     // 9. Smart Routing
