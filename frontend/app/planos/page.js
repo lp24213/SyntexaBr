@@ -7,6 +7,23 @@ import { BusinessPlanPage } from "../../components/business-plan-page";
 
 var plans = [
   {
+    key: "free",
+    name: "Gratuito",
+    tag: "Sem cartão",
+    price: "R$ 0",
+    priceLabel: "/mês",
+    priceStudent: "R$ 0",
+    studentLabel: "para sempre",
+    description: "120 mensagens por dia para experimentar. Chat, pesquisa na web e respostas inteligentes — sem cartão.",
+    features: [
+      "120 mensagens por dia",
+      "Chat com pesquisa na web",
+      "Respostas com contexto e citações",
+      "Sem cartão de crédito",
+    ],
+    highlighted: false,
+  },
+  {
     key: "basic",
     name: "Básico",
     tag: "Para começar",
@@ -14,12 +31,12 @@ var plans = [
     priceLabel: "/mês",
     priceStudent: "R$ 19,50",
     studentLabel: "estudante/mês",
-    description: "Para quem quer estudar IA, testar ideias e ter um copiloto pessoal.",
+    description: "500 mensagens/mês, upload de arquivos e respostas mais completas. Ideal para estudantes e freelancers.",
     features: [
-      "Até 500 mensagens/mês",
-      "Chat com texto, imagem e áudio",
-      "Modelos otimizados para estudo e pesquisa",
-      "Suporte por e-mail em horário comercial",
+      "500 mensagens/mês",
+      "Upload de PDF, Word, Excel e imagens",
+      "Respostas detalhadas com fontes",
+      "Exportação para PDF e Word",
     ],
     highlighted: false,
   },
@@ -31,29 +48,29 @@ var plans = [
     priceLabel: "/mês",
     priceStudent: "R$ 49,50",
     studentLabel: "estudante/mês",
-    description: "Para uso diário em estudo, trabalho e projetos de produto.",
+    description: "Mensagens ilimitadas, geração de imagem/vídeo/áudio, código e contexto estendido. Para profissionais.",
     features: [
       "Mensagens ilimitadas (uso justo)",
+      "Geração de imagem, vídeo e áudio",
+      "Análise de código e dados",
       "Contexto estendido para projetos longos",
-      "Ferramentas de código, dados e documentos",
-      "Upload de imagem, vídeo e áudio com análise multimodal",
     ],
     highlighted: true,
   },
   {
     key: "master",
     name: "Master",
-    tag: "Institucional",
+    tag: "Empresas",
     price: "R$ 199",
     priceLabel: "/mês",
     priceStudent: "R$ 99,50",
     studentLabel: "estudante/mês",
-    description: "Infraestrutura de IA modular para escolas, universidades e equipes.",
+    description: "Tudo ilimitado + agentes avançados, suporte prioritário, múltiplos usuários e ferramentas empresariais.",
     features: [
-      "Tudo do plano Médio",
-      "Agentes avançados e automações guiadas",
-      "Integração institucional (SSO, auditoria, múltiplos usuários)",
-      "Suporte dedicado e condições especiais para turmas",
+      "Tudo do plano Médio, sem limites",
+      "Agentes autônomos e automações",
+      "Múltiplos usuários e SSO",
+      "Suporte prioritário e SLA dedicado",
     ],
     highlighted: false,
   },
@@ -74,6 +91,13 @@ export default function PlanosPage() {
   }, []);
 
   async function handleSubscribe(planKey) {
+    if (planKey === "free") {
+      // Plano gratuito: redireciona para cadastro/chat sem checkout.
+      if (typeof window === "undefined") return;
+      const token = window.localStorage.getItem("syntexa_token");
+      window.location.href = token ? "/chat" : "/cadastro";
+      return;
+    }
     try {
       const token = typeof window !== "undefined" ? window.localStorage.getItem("syntexa_token") : null;
       var url = await createStripeCheckout(planKey, token || undefined);
