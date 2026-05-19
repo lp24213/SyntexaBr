@@ -527,7 +527,25 @@ class LLMEngine:
         # Núcleo proprietário Syntexa Foundation Model.
         self.register_provider(SyntexaNativeLLMProvider())
 
-        # Default: sempre a IA própria. Não há fallback para terceiros.
+        # Bridge transitório (Fase 1): permite Ollama (cloud ou self-hosted) coexistir
+        # com o motor próprio enquanto a Foundation Model é treinada. Ativado SOMENTE
+        # se OLLAMA_ENDPOINT estiver configurado no .env. Não substitui o syntexa_native.
+        try:
+            _ollama_ep = (getattr(settings, "ollama_endpoint", None) or "").strip()
+            if _ollama_ep:
+                _ollama_model = (getattr(settings, "ollama_model", None) or "llama3.2").strip()
+                _ollama_key = (getattr(settings, "ollama_api_key", None) or "").strip() or None
+                self.register_provider(
+                    OllamaLLMProvider(
+                        base_url=_ollama_ep,
+                        model=_ollama_model,
+                        api_key=_ollama_key,
+                    )
+                )
+        except Exception as _exc:
+            logger.warning("Falha ao registrar OllamaLLMProvider: %s", _exc)
+
+        # Default: respeita DEFAULT_LLM se o provider foi registrado; senão, syntexa_native.
         configured_default = (default_provider or settings.default_llm or "").strip().lower()
         if configured_default in self._providers:
             self._default = configured_default
