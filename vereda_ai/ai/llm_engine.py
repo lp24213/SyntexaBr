@@ -212,6 +212,10 @@ class HTTPJSONLLMProvider:
                         timeout=(connect_timeout, read_timeout),
                     )
                 resp.raise_for_status()
+                # FIX UTF-8: requests usa ISO-8859-1 quando o servidor não envia
+                # charset no Content-Type (caso comum em SSE), causando double-encoding
+                # de acentos (á → Ã¡). Forçamos UTF-8 antes de iterar as linhas.
+                resp.encoding = "utf-8"
                 try:
                     for line in resp.iter_lines(decode_unicode=True):
                         if not line:
