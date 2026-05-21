@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 import requests
@@ -13,6 +14,27 @@ logger = logging.getLogger(__name__)
 
 RESEND_API_URL = "https://api.resend.com/emails"
 BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+
+
+def _post_with_retry(url: str, json: dict[str, Any], headers: dict[str, str], timeout: int = 30, retries: int = 3) -> requests.Response:
+    """Faz POST com retry e backoff exponencial."""
+    last_exc: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            resp = requests.post(url, json=json, headers=headers, timeout=timeout)
+            resp.raise_for_status()
+            return resp
+        except requests.Timeout as exc:
+            last_exc = exc
+            logger.warning("Timeout no envio de e-mail (tentativa %s/%s): %s", attempt, retries, exc)
+            if attempt < retries:
+                time.sleep(2 ** attempt)  # backoff: 2s, 4s
+        except Exception as exc:
+            last_exc = exc
+            logger.warning("Falha no envio de e-mail (tentativa %s/%s): %s", attempt, retries, exc)
+            if attempt < retries:
+                time.sleep(2 ** attempt)
+    raise last_exc or RuntimeError("Falha após todas as tentativas de envio de e-mail")
 
 
 def _get_resend_api_key() -> str | None:
@@ -53,16 +75,16 @@ def _send_resend_email(subject: str, html: str, to: str | None = None) -> None:
   }
 
   try:
-    resp = requests.post(
+    resp = _post_with_retry(
       RESEND_API_URL,
       json=payload,
       headers={
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
       },
-      timeout=10,
+      timeout=30,
+      retries=3,
     )
-    resp.raise_for_status()
     logger.info("[Resend] E-mail enviado com sucesso para %s | assunto: %s", to_email, subject)
   except requests.HTTPError as exc:
     msg = (
@@ -99,7 +121,7 @@ def _send_brevo_email(subject: str, html: str, to: str | None = None) -> None:
   }
 
   try:
-    resp = requests.post(
+    resp = _post_with_retry(
       BREVO_API_URL,
       json=payload,
       headers={
@@ -107,9 +129,9 @@ def _send_brevo_email(subject: str, html: str, to: str | None = None) -> None:
         "accept": "application/json",
         "content-type": "application/json",
       },
-      timeout=10,
+      timeout=30,
+      retries=3,
     )
-    resp.raise_for_status()
     logger.info("[Brevo] E-mail enviado com sucesso para %s | assunto: %s", to_email, subject)
   except requests.HTTPError as exc:
     msg = (
