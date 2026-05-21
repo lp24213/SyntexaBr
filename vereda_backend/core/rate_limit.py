@@ -13,12 +13,24 @@ Uso:
         ...
 """
 
+import os
 import threading
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 from fastapi import HTTPException, Request, status
+
+
+TEST_KEY: str | None = os.environ.get("SYNTEXA_TEST_KEY") or None
+
+
+def is_test_request(request: Request) -> bool:
+    """Retorna True se o header X-Syntexa-Test-Key corresponder à env var SYNTEXA_TEST_KEY."""
+    if not TEST_KEY:
+        return False
+    header = request.headers.get("x-syntexa-test-key")
+    return header == TEST_KEY
 
 
 def get_client_ip(request: Request) -> str:

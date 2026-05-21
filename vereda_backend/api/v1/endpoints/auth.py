@@ -33,6 +33,7 @@ from vereda_backend.core.security import (
 from vereda_backend.core.config import settings
 from vereda_backend.core.rate_limit import (
     get_client_ip,
+    is_test_request,
     login_limiter,
     register_limiter,
     password_reset_limiter,
@@ -509,10 +510,11 @@ def public_register(
     Cadastro público com validação mais solta: aceita o JSON vindo do frontend
     e garante apenas os campos mínimos para criar o usuário e enviar o código.
     """
-    register_limiter.check(
-        get_client_ip(request),
-        detail="Muitos cadastros deste IP. Aguarde 1 hora.",
-    )
+    if not is_test_request(request):
+        register_limiter.check(
+            get_client_ip(request),
+            detail="Muitos cadastros deste IP. Aguarde 1 hora.",
+        )
     email = (payload.get("email") or "").strip()
     password = payload.get("password") or ""
     full_name = payload.get("full_name") or None
