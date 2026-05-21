@@ -25,6 +25,7 @@ import {
   desktopBootDiagnostic,
 } from "../../lib/desktop-api";
 import { t, getClientLocale } from "../../lib/i18n";
+import { sanitizeOutput } from "../../lib/sanitizeOutput";
 
 /**
  * V46 — Limpa marcações de Markdown que ficam visíveis como caracteres
@@ -33,7 +34,7 @@ import { t, getClientLocale } from "../../lib/i18n";
  * Preserva quebras de linha e listas com `- ` (vira `• `).
  */
 function cleanAssistantText(input) {
-  var s = String(input == null ? "" : input);
+  var s = sanitizeOutput(String(input == null ? "" : input));
   if (!s) return s;
   // Code fences ```lang ... ```  → mantém só o miolo
   s = s.replace(/```[a-zA-Z0-9_-]*\n?([\s\S]*?)```/g, function (_m, body) {
@@ -504,11 +505,12 @@ export default function ChatPage() {
         setCanStop(true);
         try {
           await desktopChatStream(nextHistory, function (chunk) {
+            var safeChunk = sanitizeOutput(chunk);
             setMessages((prev) => {
               var p = prev.slice();
               var last = p[p.length - 1];
               if (last && last.role === "assistant") {
-                p[p.length - 1] = { ...last, content: last.content + chunk };
+                p[p.length - 1] = { ...last, content: last.content + safeChunk };
               }
               return p;
             });
@@ -553,7 +555,7 @@ export default function ChatPage() {
         try {
           if (hasMedia) {
             reply = await chatCompletionWithMedia(token, nextHistory, attachments);
-            setMessages((prev) => prev.concat([{ role: "assistant", content: reply }]));
+            setMessages((prev) => prev.concat([{ role: "assistant", content: sanitizeOutput(reply) }]));
           } else {
             setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
             const controller = new AbortController();
@@ -561,11 +563,12 @@ export default function ChatPage() {
             setCanStop(true);
             try {
               await chatCompletionStream(token, nextHistory, function (chunk) {
+                var safeChunk = sanitizeOutput(chunk);
                 setMessages((prev) => {
                   var p = prev.slice();
                   var last = p[p.length - 1];
                   if (last && last.role === "assistant") {
-                    p[p.length - 1] = { ...last, content: last.content + chunk };
+                    p[p.length - 1] = { ...last, content: last.content + safeChunk };
                   }
                   return p;
                 });
@@ -584,7 +587,7 @@ export default function ChatPage() {
           setPlan("anon");
           if (hasMedia) {
             reply = await publicChatWithMedia(nextHistory, attachments);
-            setMessages((prev) => prev.concat([{ role: "assistant", content: reply }]));
+            setMessages((prev) => prev.concat([{ role: "assistant", content: sanitizeOutput(reply) }]));
           } else {
             setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
             const controller = new AbortController();
@@ -592,11 +595,12 @@ export default function ChatPage() {
             setCanStop(true);
             try {
               await publicChatStream(nextHistory, function (chunk) {
+                var safeChunk = sanitizeOutput(chunk);
                 setMessages((prev) => {
                   var p = prev.slice();
                   var last = p[p.length - 1];
                   if (last && last.role === "assistant") {
-                    p[p.length - 1] = { ...last, content: last.content + chunk };
+                    p[p.length - 1] = { ...last, content: last.content + safeChunk };
                   }
                   return p;
                 });
@@ -610,7 +614,7 @@ export default function ChatPage() {
       } else {
         if (hasMedia) {
           reply = await publicChatWithMedia(nextHistory, attachments);
-          setMessages((prev) => prev.concat([{ role: "assistant", content: reply }]));
+          setMessages((prev) => prev.concat([{ role: "assistant", content: sanitizeOutput(reply) }]));
         } else {
           setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
           const controller = new AbortController();
@@ -618,11 +622,12 @@ export default function ChatPage() {
           setCanStop(true);
           try {
             await publicChatStream(nextHistory, function (chunk) {
+              var safeChunk = sanitizeOutput(chunk);
               setMessages((prev) => {
                 var p = prev.slice();
                 var last = p[p.length - 1];
                 if (last && last.role === "assistant") {
-                  p[p.length - 1] = { ...last, content: last.content + chunk };
+                  p[p.length - 1] = { ...last, content: last.content + safeChunk };
                 }
                 return p;
               });

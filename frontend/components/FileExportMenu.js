@@ -7,6 +7,7 @@ import {
   multimodalExportDocx,
   multimodalExportTxt,
 } from "../lib/api";
+import { sanitizeForExport } from "../lib/sanitizeOutput";
 import { AudioRecorder } from "./AudioRecorder";
 
 function ToolbarIcon(props) {
@@ -52,7 +53,7 @@ function downloadBlob(blob, name) {
  * (A versão antiga colapsava todo o [ \\t]+ no texto inteiro e destruía linhas/tabelas.)
  */
 export function plainTextForExport(raw) {
-  let s = String(raw || "");
+  let s = sanitizeForExport(String(raw || ""));
 
   s = s.replace(/```[\w-]*\n?[\s\S]*?```/g, "\n");
   s = s.replace(/`([^`]+)`/g, "$1");

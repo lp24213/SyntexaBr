@@ -1,3 +1,5 @@
+import { sanitizeOutput } from "./sanitizeOutput";
+
 function cleanLine(line) {
   return String(line || "").replace(/\t/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -45,7 +47,7 @@ function detectTable(lines, start) {
 }
 
 function parseBlocks(raw) {
-  var text = String(raw || "").replace(/\r\n/g, "\n");
+  var text = sanitizeOutput(String(raw || "")).replace(/\r\n/g, "\n");
   var lines = text.split("\n");
   var blocks = [];
   var i = 0;

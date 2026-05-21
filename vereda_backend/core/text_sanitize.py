@@ -1,3 +1,37 @@
+import re
+import unicodedata
+
+
+def _normalize_visual_artifacts(text: str) -> str:
+    """Remove/normaliza artefatos comuns de LLM que quebram renderização."""
+    out = text or ""
+    # NFC normalização Unicode
+    out = unicodedata.normalize("NFC", out)
+    # Remove zero-width e directional marks
+    out = re.sub(r"[\u200b-\u200f\u2060\ufeff]", "", out)
+    # Narrow no-break space / non-breaking space → espaço normal
+    out = out.replace("\u202f", " ").replace("\xa0", " ")
+    # Dupla barra invertida → simples
+    out = re.sub(r"\\\\(?=[a-zA-Z0-9\\-_])", r"\\", out)
+    # Pipes excessivos (3+) → |
+    out = re.sub(r"\|{3,}", "|", out)
+    # Asteriscos excessivos (3+) → **
+    out = re.sub(r"\*{3,}", "**", out)
+    # Hashes excessivos (4+) → ###
+    out = re.sub(r"#{4,}", "###", out)
+    # & excessivos (2+) → &
+    out = re.sub(r"&{2,}", "&", out)
+    # Colapsa espaços/tabs múltiplos
+    out = re.sub(r"[ \t]+", " ", out)
+    # Quebras de linha excessivas → no máximo 2
+    out = re.sub(r"\n{3,}", "\n\n", out)
+    # Remove linhas que são só símbolos visuais
+    out = re.sub(r"^[\s]*[-=*#_~`|]{5,}[\s]*$", "", out, flags=re.MULTILINE)
+    # Remove espaço antes de pontuação
+    out = re.sub(r"\s+([,;.!?])", r"\1", out)
+    return out
+
+
 def _bad_score(text: str) -> int:
     t = text or ""
     bad = sum(t.count(x) for x in ("Ã", "Â", "â", "�", "Ð", "þ"))
@@ -31,7 +65,9 @@ def sanitize_for_stream(raw: str) -> str:
     Sanitização segura durante streaming: não aplica heurísticas Latin-1→UTF-8
     (evita cortar emoji/símbolos enquanto o buffer cresce).
     """
-    return _normalize_common_pt(_strip_iso_control_except_newlines(str(raw or "")))
+    return _normalize_visual_artifacts(
+        _normalize_common_pt(_strip_iso_control_except_newlines(str(raw or "")))
+    )
 
 
 def fix_text_encoding(raw: str) -> str:
@@ -52,7 +88,9 @@ def fix_text_encoding(raw: str) -> str:
         if score < best_score:
             best = c
             best_score = score
-    out = _normalize_common_pt(_strip_iso_control_except_newlines(best))
+    out = _normalize_visual_artifacts(
+        _normalize_common_pt(_strip_iso_control_except_newlines(best))
+    )
     return polish_portuguese_light(out)
 
 

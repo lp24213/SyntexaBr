@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { sanitizeOutput, escapeHTML } from "../lib/sanitizeOutput";
 
 /**
  * Exporta conversa para múltiplos formatos.
@@ -21,7 +22,7 @@ export function exportConversation(messages, format) {
     var txt = visible.map(function (msg) {
       var time = msg.timestamp ? new Date(msg.timestamp).toLocaleString("pt-BR") : "";
       var header = (msg.role === "user" ? "[Você]" : "[Syntexa]") + (time ? " " + time : "");
-      return header + "\n" + (msg.content || "") + "\n";
+      return header + "\n" + sanitizeOutput(msg.content || "") + "\n";
     }).join("\n---\n\n");
     downloadBlob(txt, "text/plain;charset=utf-8", "syntexa-conversa-" + dateStr + ".txt");
     return;
@@ -34,7 +35,7 @@ export function exportConversation(messages, format) {
       var time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
       var role = msg.role === "user" ? "**Você**" : "**Syntexa**";
       md += role + (time ? " _" + time + "_" : "") + "\n\n";
-      md += (msg.content || "") + "\n\n---\n\n";
+      md += sanitizeOutput(msg.content || "") + "\n\n---\n\n";
     });
     downloadBlob(md, "text/markdown;charset=utf-8", "syntexa-conversa-" + dateStr + ".md");
     return;
@@ -44,7 +45,7 @@ export function exportConversation(messages, format) {
     var csv = "timestamp,role,content\n";
     visible.forEach(function (msg) {
       var time = msg.timestamp ? new Date(msg.timestamp).toISOString() : "";
-      csv += escapeCsv(time) + "," + escapeCsv(msg.role) + "," + escapeCsv(msg.content || "") + "\n";
+      csv += escapeCsv(time) + "," + escapeCsv(msg.role) + "," + escapeCsv(sanitizeOutput(msg.content || "")) + "\n";
     });
     downloadBlob(csv, "text/csv;charset=utf-8", "syntexa-conversa-" + dateStr + ".csv");
     return;
@@ -55,7 +56,7 @@ export function exportConversation(messages, format) {
       return {
         timestamp: msg.timestamp || new Date().toISOString(),
         role: msg.role,
-        content: msg.content || "",
+        content: sanitizeOutput(msg.content || ""),
       };
     });
     downloadBlob(JSON.stringify(jsonData, null, 2), "application/json;charset=utf-8", "syntexa-conversa-" + dateStr + ".json");
@@ -81,23 +82,13 @@ export function exportConversation(messages, format) {
       var roleLabel = msg.role === "user" ? "Você" : "Syntexa";
       html += "<div class=\"msg " + roleClass + "\">";
       html += "<div class=\"meta\">" + roleLabel + (time ? " &middot; " + time : "") + "</div>";
-      html += "<div class=\"content\">" + escapeHtml(msg.content || "") + "</div>";
+      html += "<div class=\"content\">" + escapeHTML(sanitizeOutput(msg.content || "")) + "</div>";
       html += "</div>";
     });
     html += "</body></html>";
     downloadBlob(html, "text/html;charset=utf-8", "syntexa-conversa-" + dateStr + ".html");
     return;
   }
-}
-
-function escapeHtml(text) {
-  if (!text) return "";
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }
 
 function downloadBlob(content, mimeType, fileName) {
