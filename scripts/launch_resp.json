@@ -1,0 +1,139 @@
+{
+    "ReservationId": "r-05c91a5048848b0c3",
+    "OwnerId": "491979258641",
+    "Groups": [],
+    "Instances": [
+        {
+            "Architecture": "x86_64",
+            "BlockDeviceMappings": [],
+            "ClientToken": "06d94bed-99f6-4d90-99b7-eeef5f97122f",
+            "EbsOptimized": false,
+            "EnaSupport": true,
+            "Hypervisor": "xen",
+            "InstanceLifecycle": "spot",
+            "NetworkInterfaces": [
+                {
+                    "Attachment": {
+                        "AttachTime": "2026-05-17T18:11:55+00:00",
+                        "AttachmentId": "eni-attach-0d13e5fe1f4be82e4",
+                        "DeleteOnTermination": true,
+                        "DeviceIndex": 0,
+                        "Status": "attaching",
+                        "NetworkCardIndex": 0
+                    },
+                    "Description": "",
+                    "Groups": [
+                        {
+                            "GroupId": "sg-0a67a51703954df79",
+                            "GroupName": "syntexa-llm-sg"
+                        }
+                    ],
+                    "Ipv6Addresses": [],
+                    "MacAddress": "0e:38:dd:f2:e5:2b",
+                    "NetworkInterfaceId": "eni-0ea0a81d52e85e8d5",
+                    "OwnerId": "491979258641",
+                    "PrivateDnsName": "ip-172-31-44-64.ec2.internal",
+                    "PrivateIpAddress": "172.31.44.64",
+                    "PrivateIpAddresses": [
+                        {
+                            "Primary": true,
+                            "PrivateDnsName": "ip-172-31-44-64.ec2.internal",
+                            "PrivateIpAddress": "172.31.44.64"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Status": "in-use",
+                    "SubnetId": "subnet-0b79adcd346b09e62",
+                    "VpcId": "vpc-07f856c7414c5fa7f",
+                    "InterfaceType": "interface",
+                    "Operator": {
+                        "Managed": false
+                    }
+                }
+            ],
+            "RootDeviceName": "/dev/sda1",
+            "RootDeviceType": "ebs",
+            "SecurityGroups": [
+                {
+                    "GroupId": "sg-0a67a51703954df79",
+                    "GroupName": "syntexa-llm-sg"
+                }
+            ],
+            "SourceDestCheck": true,
+            "SpotInstanceRequestId": "sir-jss7dwwm",
+            "StateReason": {
+                "Code": "pending",
+                "Message": "pending"
+            },
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "syntexa-llm-worker"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "syntexabr"
+                }
+            ],
+            "VirtualizationType": "hvm",
+            "CpuOptions": {
+                "CoreCount": 1,
+                "ThreadsPerCore": 2
+            },
+            "CapacityReservationSpecification": {
+                "CapacityReservationPreference": "open"
+            },
+            "MetadataOptions": {
+                "State": "pending",
+                "HttpTokens": "optional",
+                "HttpPutResponseHopLimit": 1,
+                "HttpEndpoint": "enabled",
+                "HttpProtocolIpv6": "disabled",
+                "InstanceMetadataTags": "disabled"
+            },
+            "EnclaveOptions": {
+                "Enabled": false
+            },
+            "BootMode": "uefi-preferred",
+            "PrivateDnsNameOptions": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            },
+            "MaintenanceOptions": {
+                "AutoRecovery": "default",
+                "RebootMigration": "default"
+            },
+            "CurrentInstanceBootMode": "uefi",
+            "Operator": {
+                "Managed": false
+            },
+            "InstanceId": "i-0a50f8f0e673fd1a6",
+            "ImageId": "ami-00403f401ee6a4b98",
+            "State": {
+                "Code": 0,
+                "Name": "pending"
+            },
+            "PrivateDnsName": "ip-172-31-44-64.ec2.internal",
+            "PublicDnsName": "",
+            "StateTransitionReason": "",
+            "KeyName": "syntexa-key",
+            "AmiLaunchIndex": 0,
+            "ProductCodes": [],
+            "InstanceType": "t3.medium",
+            "LaunchTime": "2026-05-17T18:11:55+00:00",
+            "Placement": {
+                "AvailabilityZoneId": "use1-az6",
+                "GroupName": "",
+                "Tenancy": "default",
+                "AvailabilityZone": "us-east-1d"
+            },
+            "Monitoring": {
+                "State": "disabled"
+            },
+            "SubnetId": "subnet-0b79adcd346b09e62",
+            "VpcId": "vpc-07f856c7414c5fa7f",
+            "PrivateIpAddress": "172.31.44.64"
+        }
+    ]
+}

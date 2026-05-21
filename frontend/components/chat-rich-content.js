@@ -4,8 +4,8 @@ import { parseRichResponse } from "../lib/chat-rich-format";
 
 function flavorMeta(flavor) {
   if (flavor === "workout") return { tag: "Treino", tone: "from-emerald-50 to-emerald-100 border-emerald-200" };
-  if (flavor === "finance") return { tag: "Financeiro", tone: "from-cyan-50 to-cyan-100 border-cyan-200" };
-  if (flavor === "timeline") return { tag: "Cronograma", tone: "from-violet-50 to-violet-100 border-violet-200" };
+  if (flavor === "finance") return { tag: "Financeiro", tone: "from-[#f1f5f9] to-[#f8fafc] border-[#e2e8f0]" };
+  if (flavor === "timeline") return { tag: "Cronograma", tone: "from-[#f1f5f9] to-[#f8fafc] border-[#e2e8f0]" };
   if (flavor === "comparison") return { tag: "Comparação", tone: "from-amber-50 to-amber-100 border-amber-200" };
   return { tag: "Resposta", tone: "from-zinc-50 to-zinc-100 border-zinc-200" };
 }

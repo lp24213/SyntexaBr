@@ -268,7 +268,39 @@ data "aws_ami" "ubuntu_gpu" {
   }
 }
 
+# Spot instance request para economia de ~70%
+resource "aws_spot_instance_request" "gpu_cluster" {
+  count                  = var.use_spot ? 1 : 0
+  ami                    = data.aws_ami.ubuntu_gpu.id
+  instance_type          = var.gpu_instance_type
+  subnet_id              = aws_subnet.private_gpu.id
+  vpc_security_group_ids = [aws_security_group.gpu_cluster.id]
+  iam_instance_profile   = aws_iam_instance_profile.gpu_profile.name
+
+  spot_price             = "5.00"  # Max spot price (on-demand g5.12xlarge ~$5.20/h)
+  wait_for_fulfillment   = true
+  spot_type              = "one-time"
+
+  root_block_device {
+    volume_size = 200
+    volume_type = "gp3"
+  }
+
+  user_data = base64encode(templatefile("${path.module}/gpu-bootstrap.sh", {
+    vereda_version = "3.0.0"
+    model_name     = var.model_name
+  }))
+
+  tags = {
+    Name      = "vereda-gpu-cluster-spot"
+    Project   = "syntexa"
+    ManagedBy = "terraform"
+  }
+}
+
+# On-demand fallback (se spot não estiver disponível)
 resource "aws_instance" "gpu_cluster" {
+  count                  = var.use_spot ? 0 : 1
   ami                    = data.aws_ami.ubuntu_gpu.id
   instance_type          = var.gpu_instance_type
   subnet_id              = aws_subnet.private_gpu.id
@@ -347,14 +379,29 @@ resource "aws_lb_target_group" "gpu_vllm" {
 
 resource "aws_lb_target_group_attachment" "gpu_vllm" {
   target_group_arn = aws_lb_target_group.gpu_vllm.arn
-  target_id        = aws_instance.gpu_cluster.id
+  target_id        = var.use_spot ? aws_spot_instance_request.gpu_cluster[0].spot_instance_id : aws_instance.gpu_cluster[0].id
   port             = 8000
 }
 
 # ── OUTPUTS ──────────────────────────────────────────────
 output "gpu_cluster_private_ip" {
-  value       = aws_instance.gpu_cluster.private_ip
+  value       = var.use_spot ? aws_spot_instance_request.gpu_cluster[0].private_ip : aws_instance.gpu_cluster[0].private_ip
   description = "Private IP of GPU cluster (no public IP)"
+}
+
+output "gpu_cluster_type" {
+  value       = var.use_spot ? "spot" : "on-demand"
+  description = "Tipo de instância GPU (spot ou on-demand)"
+}
+
+output "estimated_hourly_cost" {
+  value       = var.use_spot ? "~$1.50/h (spot g5.12xlarge)" : "~$5.20/h (on-demand)"
+  description = "Custo estimado por hora da GPU"
+}
+
+output "estimated_monthly_cost_24_7" {
+  value       = var.use_spot ? "~$1,080/mês (24/7 spot)" : "~$3,744/mês (24/7 on-demand)"
+  description = "Custo estimado 24/7 — use auto-shutdown para economizar"
 }
 
 output "orchestrator_public_ip" {

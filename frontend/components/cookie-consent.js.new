@@ -1,0 +1,82 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+
+const CONSENT_KEY = "syntexa_cookie_consent_v1";
+
+function notifyConsent(value) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("syntexa:cookie-consent", { detail: { value } })
+  );
+}
+
+export function CookieConsent() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(CONSENT_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        notifyConsent(parsed?.value === "accepted" ? "accepted" : "essential_only");
+        return;
+      }
+      // pequeno delay para não competir com hydration / chat input em mobile
+      const t = setTimeout(() => setVisible(true), 800);
+      return () => clearTimeout(t);
+    } catch {
+      setVisible(true);
+    }
+  }, []);
+
+  function saveConsent(value) {
+    try {
+      window.localStorage.setItem(
+        CONSENT_KEY,
+        JSON.stringify({ value, at: new Date().toISOString() })
+      );
+    } catch {}
+    notifyConsent(value);
+    setVisible(false);
+  }
+
+  if (!visible) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-label="Consentimento de cookies"
+      className="pointer-events-none fixed bottom-4 right-4 z-[55] w-[calc(100vw-2rem)] max-w-sm sm:w-auto"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div className="pointer-events-auto rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white/95 p-4 text-[#0f172a] shadow-[0_10px_40px_rgba(15,23,42,0.12)] backdrop-blur-md">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#475569]" aria-hidden="true" />
+          <p className="text-[12px] leading-relaxed text-[#475569]">
+            Usamos cookies para autenticação, segurança e métricas. Ao continuar você aceita nossa{" "}
+            <a href="/privacidade" className="font-medium text-[#0f172a] underline-offset-2 hover:underline">Privacidade</a>
+            {" "}e{" "}
+            <a href="/cookies" className="font-medium text-[#0f172a] underline-offset-2 hover:underline">Cookies</a>.
+          </p>
+        </div>
+        <div className="mt-3 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => saveConsent("essential_only")}
+            className="rounded-lg px-3 py-1.5 text-[11px] font-medium text-[#64748b] transition-colors hover:bg-[rgba(15,23,42,0.04)] hover:text-[#0f172a]"
+          >
+            Apenas essenciais
+          </button>
+          <button
+            type="button"
+            onClick={() => saveConsent("accepted")}
+            className="rounded-lg bg-[#0f172a] px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-[#1e293b]"
+          >
+            Aceitar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

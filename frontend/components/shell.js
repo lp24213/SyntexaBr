@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { encryptedPath } from "../lib/routes";
 import { getAdminMe } from "../lib/api";
 import { getClientLocale, t } from "../lib/i18n";
-import { QuantumCodeStream } from "./quantum-code-stream";
+var QuantumCodeStream = dynamic(function () { return import("./quantum-code-stream").then(function (m) { return m.QuantumCodeStream; }); }, { ssr: false });
 
 function IconConfig() {
   return React.createElement(
@@ -178,12 +179,25 @@ const ICON_MAP = {
   exit: IconExit,
 };
 
+function IconMenu() {
+  return React.createElement("svg", { className: "h-5 w-5", viewBox: "0 0 24 24", fill: "none", xmlns: "http://www.w3.org/2000/svg" },
+    React.createElement("path", { d: "M4 6h16M4 12h16M4 18h16", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+  );
+}
+
+function IconClose() {
+  return React.createElement("svg", { className: "h-5 w-5", viewBox: "0 0 24 24", fill: "none", xmlns: "http://www.w3.org/2000/svg" },
+    React.createElement("path", { d: "M6 6l12 12M18 6L6 18", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })
+  );
+}
+
 export function AppShell(props) {
-  const { children } = props;
+  const { children, fullWidth } = props;
   const locale = getClientLocale();
   const [authed, setAuthed] = useState(false);
   const [role, setRole] = useState("user");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   function logout() {
     try {
@@ -216,57 +230,26 @@ export function AppShell(props) {
     })();
   }, []);
 
-  var navItems;
-  if (!authed) {
-    navItems = [
-      { path: "/educacao", label: "Educação", icon: IconBook },
-      { path: "/educacao/aluno", label: "Aluno", icon: IconUsers },
-      { path: "/educacao/laboratorios", label: "Labs", icon: IconConfig },
-      { path: "/educacao/ciencia", label: "Ciência", icon: IconGlobe },
-      { path: "/educacao/concursos", label: "Concursos", icon: IconChart },
-      { path: "/educacao/professor", label: "Professor", icon: IconUserTie },
-      { path: "/login", label: t("login", locale), icon: IconLogin },
-      { path: "/plans", label: t("plans", locale), icon: IconChart },
-      { path: "/download", label: "Baixar", icon: IconDownload },
-    ];
-  } else if (isAdmin) {
-    navItems = [
-      { path: "/chat", label: t("chat", locale), icon: IconChat },
-      { path: "/educacao", label: "Educação", icon: IconBook },
-      { path: "/educacao/aluno", label: "Aluno", icon: IconUsers },
-      { path: "/educacao/professor", label: "Professor", icon: IconUserTie },
-      { path: "/educacao/laboratorios", label: "Labs", icon: IconConfig },
-      { path: "/educacao/ciencia", label: "Ciência", icon: IconGlobe },
-      { path: "/educacao/concursos", label: "Concursos", icon: IconChart },
-      { path: "/educacao/governo", label: "Governo", icon: IconGlobe },
-      { path: "/portal", label: "Portal", icon: IconGlobe },
-      { path: "/plans", label: t("plans", locale), icon: IconChart },
-      { path: "/download", label: "Baixar", icon: IconDownload },
-    ];
-  } else if (role === "teacher" || role === "researcher") {
-    navItems = [
-      { path: "/chat", label: t("chat", locale), icon: IconChat },
-      { path: "/educacao", label: "Educação", icon: IconBook },
-      { path: "/educacao/aluno", label: "Aluno", icon: IconUsers },
-      { path: "/educacao/professor", label: "Professor", icon: IconUserTie },
-      { path: "/educacao/laboratorios", label: "Labs", icon: IconConfig },
-      { path: "/educacao/ciencia", label: "Ciência", icon: IconGlobe },
-      { path: "/educacao/concursos", label: "Concursos", icon: IconChart },
-      { path: "/plans", label: t("plans", locale), icon: IconChart },
-      { path: "/download", label: "Baixar", icon: IconDownload },
-    ];
-  } else {
-    navItems = [
-      { path: "/chat", label: t("chat", locale), icon: IconChat },
-      { path: "/educacao", label: "Educação", icon: IconBook },
-      { path: "/educacao/aluno", label: "Aluno", icon: IconUsers },
-      { path: "/educacao/laboratorios", label: "Labs", icon: IconConfig },
-      { path: "/educacao/ciencia", label: "Ciência", icon: IconGlobe },
-      { path: "/educacao/concursos", label: "Concursos", icon: IconChart },
-      { path: "/plans", label: t("plans", locale), icon: IconChart },
-      { path: "/download", label: "Baixar", icon: IconDownload },
-    ];
-  }
+  useEffect(function () {
+    if (typeof document === "undefined") return;
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    }
+    return function () {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+  }, [menuOpen]);
+
+  var navItems = [
+    { path: "/", label: "Início", icon: IconGlobe },
+    { path: "/plans", label: "Planos", icon: IconChart },
+    { path: "/chat", label: "Console", icon: IconChat },
+  ];
 
   return React.createElement(
     "div",
@@ -277,65 +260,100 @@ export function AppShell(props) {
     ),
     React.createElement(
       "div",
-      { className: "relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-10 pt-4 sm:px-8 sm:pb-12 sm:pt-6 lg:px-10" },
+      { className: fullWidth ? "relative z-10 mx-auto flex min-h-screen w-full flex-col pb-10 pt-14 sm:pb-12 sm:pt-16" : "relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-10 pt-14 sm:px-8 sm:pb-12 sm:pt-16 lg:px-10" },
       React.createElement(
         "header",
         {
-          className: "sticky top-0 z-20 -mx-4 mb-8 rounded-[16px] border border-[rgba(20,24,30,0.06)] bg-white/75 px-4 py-3.5 shadow-[0_4px_20px_rgba(15,20,30,0.04)] backdrop-blur-[16px] sm:-mx-8 sm:mb-10 sm:rounded-none sm:px-8 sm:py-4 lg:-mx-10 lg:px-10",
+          className: "syntexa-header fixed top-0 left-0 z-[40] w-full",
         },
         React.createElement(
           "div",
-          { className: "flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3" },
-          React.createElement(
-            "a",
-            { href: "/", className: "flex w-full shrink-0 items-center justify-center sm:w-auto sm:justify-start" },
-            React.createElement("img", {
-              src: "/LOGOTIPO.png",
-              alt: "Syntexa",
-              className: "h-8 w-auto object-contain",
-              draggable: false,
-              decoding: "async",
-            })
+          { className: "mx-auto flex h-14 max-w-[1280px] items-center justify-between px-4 sm:px-6" },
+          React.createElement("div", { className: "flex items-center gap-3 min-w-0 flex-1" },
+            React.createElement("button", {
+              type: "button",
+              onClick: function () { setMenuOpen(!menuOpen); },
+              className: "inline-flex items-center justify-center rounded-lg p-2 text-[#64748b] hover:bg-[rgba(15,23,42,0.04)] lg:hidden",
+              "aria-label": "Menu",
+            }, menuOpen ? React.createElement(IconClose, null) : React.createElement(IconMenu, null)),
+            React.createElement(
+              "a",
+              { href: encryptedPath("/"), className: "flex shrink-0 items-center justify-center" },
+              React.createElement("img", {
+                src: "/LOGOTIPO.png",
+                alt: "Syntexa",
+                className: "h-7 w-auto object-contain",
+                draggable: false,
+                decoding: "async",
+              })
+            )
           ),
           React.createElement(
             "nav",
-            { className: "flex w-full max-w-full flex-wrap items-center justify-center gap-0.5 sm:w-auto sm:flex-nowrap sm:justify-end" },
+            { className: "hidden items-center gap-1 lg:flex absolute left-1/2 -translate-x-1/2" },
             navItems.map(function (item) {
               const Icon = item.icon;
-              const href = item.path;
+              const href = encryptedPath(item.path);
               return React.createElement(
                 "a",
                 {
-                  key: href,
+                  key: href + "-" + item.label,
                   href: href,
                   className:
-                    "inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] transition-colors duration-150 hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e] sm:min-h-0 sm:min-w-0",
+                    "rounded-lg px-3 py-1.5 text-[13px] text-[#64748b] transition-colors duration-200 hover:bg-[rgba(15,23,42,0.04)] hover:text-[#0f172a]",
                 },
-                Icon && React.createElement(Icon, null),
-                React.createElement(
-                  "span",
-                  { className: "hidden sm:inline" },
-                  item.label
-                )
+                item.label
               );
             })
           ),
-          authed &&
-            React.createElement(
-              "button",
-              {
+          React.createElement("div", { className: "flex items-center gap-3 min-w-0 flex-1 justify-end" },
+            authed
+              ? React.createElement(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: logout,
+                    className:
+                      "inline-flex items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] transition-colors duration-150 hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e]",
+                  },
+                  React.createElement(IconExit, null),
+                  React.createElement("span", { className: "hidden sm:inline" }, t("logout", locale))
+                )
+              : React.createElement(
+                  "a",
+                  { href: encryptedPath("login"), className: "inline-flex items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] transition-colors duration-150 hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e]" },
+                  React.createElement(IconLogin, null),
+                  React.createElement("span", { className: "hidden sm:inline" }, "Login")
+                )
+          )
+        )
+      ),
+      React.createElement("div", {
+        className: "fixed inset-0 z-[35] bg-black/50 backdrop-blur-[4px] sm:hidden transition-opacity duration-300 ease-out " + (menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"),
+        onClick: function () { setMenuOpen(false); }
+      }),
+      React.createElement("div", { className: "mobile-drawer fixed top-0 left-0 z-[60] h-[100dvh] w-[82%] max-w-[320px] overflow-y-auto border-r border-[rgba(20,24,30,0.06)] bg-white/95 shadow-[0_8px_32px_rgba(15,20,30,0.08)] backdrop-blur-[16px] p-5 pt-16 sm:hidden transition-transform duration-300 ease-out " + (menuOpen ? "translate-x-0" : "-translate-x-full") },
+        React.createElement("nav", { className: "flex flex-col gap-0.5" },
+          navItems.map(function (item) {
+            const Icon = item.icon;
+            return React.createElement("a", {
+              key: item.path + "-" + item.label,
+              href: encryptedPath(item.path),
+              onClick: function () { setMenuOpen(false); },
+              className: "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#5a5c5e] transition-colors hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e]"
+            }, React.createElement(Icon, null), React.createElement("span", null, item.label));
+          }),
+          authed
+            ? React.createElement("button", {
                 type: "button",
-                onClick: logout,
-                className:
-                  "inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] transition-colors duration-150 hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e] sm:min-h-0 sm:min-w-0",
-              },
-              React.createElement(IconExit, null),
-              React.createElement(
-                "span",
-                { className: "hidden sm:inline" },
-                t("logout", locale)
-              )
-            )
+                onClick: function () { setMenuOpen(false); logout(); },
+                className: "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#5a5c5e] transition-colors hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e] mt-2 border-t border-[rgba(20,24,30,0.06)] pt-2"
+              }, React.createElement(IconExit, null), t("logout", locale))
+            : React.createElement("a", {
+                href: encryptedPath("login"),
+                onClick: function () { setMenuOpen(false); },
+                className: "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#5a5c5e] transition-colors hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e] mt-2 border-t border-[rgba(20,24,30,0.06)] pt-2"
+              }, React.createElement(IconLogin, null), t("login", locale))
         )
       ),
       React.createElement(

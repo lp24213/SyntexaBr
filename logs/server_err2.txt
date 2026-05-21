@@ -1,0 +1,57 @@
+c:\Users\luisp\OneDrive\Área de Trabalho\syntexabr\.venv\Lib\site-packages\pydantic\_internal\_fields.py:132: UserWarning: Field "model_loaded" in RuntimeStatus has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+c:\Users\luisp\OneDrive\Área de Trabalho\syntexabr\.venv\Lib\site-packages\pydantic\_internal\_fields.py:132: UserWarning: Field "model_size_b" in RuntimeStatus has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+INFO:     Started server process [2540]
+INFO:     Waiting for application startup.
+2026-05-15 20:35:56,736 [INFO] [DESKTOP SERVER V45] Iniciando runtime soberano...
+2026-05-15 20:35:56,738 [INFO] [RUNTIME] Startup iniciado
+2026-05-15 20:36:26,304 [INFO] [CUDA] CUDA info
+[2026-05-15 20:36:31,780] [INFO] [vereda_ai.ai.llm_engine] Registrando provedor LLM: syntexa_native
+2026-05-15 20:36:31,780 [INFO] Registrando provedor LLM: syntexa_native
+2026-05-15 20:36:31,784 [ERROR] ============================================================
+2026-05-15 20:36:31,785 [ERROR] [SOVEREIGN GUARD] VIOLAÇÕES DETECTADAS: 15
+2026-05-15 20:36:31,786 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/foundation_model.py
+2026-05-15 20:36:31,786 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/foundation_tokenizer.py
+2026-05-15 20:36:31,787 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/foundation_trainer.py
+2026-05-15 20:36:31,788 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/foundation_inference.py
+2026-05-15 20:36:31,788 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/foundation_runtime.py
+2026-05-15 20:36:31,789 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/dataset_pipeline.py
+2026-05-15 20:36:31,789 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/memory/embeddings.py
+2026-05-15 20:36:31,790 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/memory/retrieval.py
+2026-05-15 20:36:31,791 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/multimodal/stt.py
+2026-05-15 20:36:31,791 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/multimodal/tts.py
+2026-05-15 20:36:31,792 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/multimodal/ocr.py
+2026-05-15 20:36:31,793 [ERROR]   - ARQUIVO FALTANDO: vereda_ai/syntexa_core/multimodal/vision.py
+2026-05-15 20:36:31,793 [ERROR]   - ARQUIVO FALTANDO: llm-quantum/quantum_scheduler.py
+2026-05-15 20:36:31,794 [ERROR]   - ARQUIVO FALTANDO: llm-quantum/hybrid_quantum_runtime.py
+2026-05-15 20:36:31,794 [ERROR]   - ARQUIVO FALTANDO: llm-quantum/quantum_orchestrator.py
+2026-05-15 20:36:31,795 [ERROR] ============================================================
+2026-05-15 20:36:31,797 [INFO] [InferenceEngine] Carregando tokenizer de C:\Users\luisp\OneDrive\Área de Trabalho\syntexabr\checkpoints\foundation\tokenizer
+2026-05-15 20:36:31,802 [INFO] [InferenceEngine] Carregando checkpoint de C:\Users\luisp\OneDrive\Área de Trabalho\syntexabr\checkpoints\foundation\syntexa_foundation_weights.pt
+2026-05-15 20:36:32,134 [INFO] [InferenceEngine] Modelo carregado: 560,256 params
+2026-05-15 20:36:32,135 [INFO] [FoundationRuntime] Modelo soberano carregado com sucesso.
+2026-05-15 20:36:32,137 [INFO] [RUNTIME] Foundation Model carregada
+2026-05-15 20:36:32,142 [INFO] [BOOT] Iniciando boot validation V45...
+2026-05-15 20:36:32,143 [INFO] [BOOT] [PASS] checkpoint_exists: 0.3ms
+2026-05-15 20:36:32,144 [INFO] [BOOT] [PASS] tokenizer_exists: 0.2ms
+2026-05-15 20:36:32,146 [INFO] [BOOT] [PASS] vocab_valid: 1.3ms
+2026-05-15 20:36:32,149 [INFO] [BOOT] [PASS] merges_valid: 0.8ms
+2026-05-15 20:36:32,150 [INFO] [BOOT] [PASS] cuda_initialized: 0.0ms
+2026-05-15 20:36:32,151 [INFO] [BOOT] [PASS] vram_sufficient: 0.0ms
+2026-05-15 20:36:32,152 [INFO] [BOOT] [PASS] model_load: 0.0ms
+2026-05-15 20:36:32,229 [INFO] [BOOT] [PASS] logits_valid: 76.2ms
+2026-05-15 20:36:32,389 [INFO] [BOOT] [PASS] generation_functional: 158.9ms
+2026-05-15 20:36:32,508 [INFO] [BOOT] [PASS] streaming_functional: 118.6ms
+2026-05-15 20:36:33,126 [INFO] [BOOT] [PASS] self_test_pi: 616.5ms
+2026-05-15 20:36:33,130 [INFO] [BOOT] BOOT APROVADO: todas as validações passaram.
+2026-05-15 20:36:33,132 [INFO] [RUNTIME] BOOT VALIDATION APROVADO — RUNTIME READY
+2026-05-15 20:36:33,133 [INFO] [DESKTOP SERVER] RUNTIME READY (Foundation Model V45)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8769 (Press CTRL+C to quit)
+2026-05-15 20:41:12,244 [INFO] [INFERENCE] Chat completion OK
+2026-05-15 20:41:12,261 [INFO] [CHAT] 1.71s | 89 tokens | temp=0.30

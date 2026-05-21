@@ -218,18 +218,18 @@ export default function ProfessorPage() {
     const colors = SECTION_COLORS[toolSection?.color || "violet"];
 
     return React.createElement(AppShell, null,
-      React.createElement("div", { className: "flex h-[calc(100vh-11rem)] flex-col" },
-        React.createElement("div", { className: "mb-3 flex items-center justify-between flex-wrap gap-2" },
-          React.createElement("div", { className: "flex items-center gap-2" },
-            React.createElement("button", { onClick: function () { setActiveTool(null); setMessages([]); }, className: "inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-900" }, React.createElement(BackIcon, null), "Ferramentas"),
-            React.createElement(FuturisticIcon, { name: activeTool.iconName, className: "h-6 w-6 text-violet-600/90" }),
-            React.createElement("span", { className: "text-sm font-medium text-zinc-900" }, activeTool.label),
+      React.createElement("div", { className: "flex flex-1 flex-col overflow-hidden min-h-0" },
+        React.createElement("div", { className: "mb-2 flex flex-col gap-2 sm:mb-3 sm:flex-row sm:items-center sm:justify-between" },
+          React.createElement("div", { className: "flex items-center gap-2 min-w-0" },
+            React.createElement("button", { onClick: function () { setActiveTool(null); setMessages([]); }, className: "inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs text-zinc-500 hover:text-zinc-900" }, React.createElement(BackIcon, null), React.createElement("span", { className: "hidden sm:inline" }, "Ferramentas")),
+            React.createElement(FuturisticIcon, { name: activeTool.iconName, className: "h-5 w-5 shrink-0 text-violet-600/90" }),
+            React.createElement("span", { className: "truncate text-sm font-medium text-zinc-900" }, activeTool.label),
             React.createElement("span", { className: `hidden rounded-full border px-2 py-0.5 text-[10px] sm:inline ${colors.badge}` }, toolSection?.label)
           ),
-          React.createElement("div", { className: "flex items-center gap-1.5 flex-wrap" },
-            LEVELS.map(l => React.createElement("button", { key: l.id, onClick: function () { setLevel(l.id); }, className: `rounded-xl px-2.5 py-1 text-xs transition-all ${level === l.id ? "bg-zinc-100 text-zinc-900 border border-zinc-200" : "text-zinc-500 hover:text-zinc-700"}` }, l.label)),
-            React.createElement("span", { className: "text-zinc-400" }, "|"),
-            LANGUAGES.map(l => React.createElement("button", { key: l.id, onClick: function () { setLanguage(l.id); }, className: `rounded-xl px-2 py-1 text-xs transition-all ${language === l.id ? "bg-zinc-100 text-zinc-900 border border-zinc-200" : "text-zinc-500 hover:text-zinc-700"}` }, l.label))
+          React.createElement("div", { className: "flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none" },
+            LEVELS.map(l => React.createElement("button", { key: l.id, onClick: function () { setLevel(l.id); }, className: `shrink-0 rounded-xl px-2.5 py-1 text-xs transition-all ${level === l.id ? "bg-zinc-100 text-zinc-900 border border-zinc-200" : "text-zinc-500 hover:text-zinc-700"}` }, l.label)),
+            React.createElement("span", { className: "hidden sm:inline text-zinc-400" }, "|"),
+            LANGUAGES.map(l => React.createElement("button", { key: l.id, onClick: function () { setLanguage(l.id); }, className: `shrink-0 rounded-xl px-2 py-1 text-xs transition-all ${language === l.id ? "bg-zinc-100 text-zinc-900 border border-zinc-200" : "text-zinc-500 hover:text-zinc-700"}` }, l.label))
           )
         ),
         React.createElement("div", { className: "flex-1 overflow-y-auto rounded-2xl border border-zinc-200 bg-zinc-50 p-4 space-y-4" },

@@ -1,9 +1,15 @@
+"use client";
+
 import React from "react";
+import { AppShell } from "../../components/shell";
 
 export default function PrivacidadePage() {
   return React.createElement(
-    "main",
-    { className: "mx-auto max-w-4xl px-4 py-10 text-zinc-800" },
+    AppShell,
+    null,
+    React.createElement(
+      "main",
+      { className: "py-10 text-zinc-800" },
     React.createElement("h1", { className: "text-2xl font-bold text-zinc-900" }, "Política de Privacidade"),
     React.createElement(
       "p",
@@ -15,5 +21,6 @@ export default function PrivacidadePage() {
       { className: "mt-3 text-sm leading-relaxed" },
       "Você pode solicitar atualização ou exclusão de dados nos canais oficiais de suporte, observadas obrigações legais de retenção."
     )
+  )
   );
 }

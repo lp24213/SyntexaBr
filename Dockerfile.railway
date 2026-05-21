@@ -11,7 +11,7 @@ COPY requirements.railway.txt .
 RUN pip install --no-cache-dir -r requirements.railway.txt \
  && pip install --no-cache-dir "psycopg2-binary>=2.9.9"
 
-# Código do gateway + vereda_ai (sem dependências pesadas instaladas)
+# Código do gateway + vereda_ai (sem modelo pesado — LLM fica na AWS)
 COPY vereda_backend ./vereda_backend
 COPY vereda_ai ./vereda_ai
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh

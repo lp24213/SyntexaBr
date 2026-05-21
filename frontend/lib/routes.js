@@ -52,10 +52,8 @@ function normalizePath(path) {
   const clean = normalizeKey(path);
   const mapped = ROUTE_MAP[clean] || ROUTE_MAP[clean.replace(/\//g, "-")] || "/" + clean;
   if (Array.isArray(mapped) && mapped.length) {
-    if (mapped.length === 1) return mapped[0];
-    // Alterna entre rota limpa e ofuscada para não fixar um slug único.
-    const idx = Math.floor(Math.random() * mapped.length);
-    return mapped[idx];
+    // Sempre usa a rota pública limpa (índice 0). Sem slugs ofuscados nem ?k= no link.
+    return mapped[0];
   }
   return mapped;
 }
@@ -108,11 +106,13 @@ export function encodeToken(path, vid) {
 }
 
 export function encryptedPath(path) {
+  // V50 — rotas criptografadas com token único por usuário e por página.
+  // Cada URL contém ?k= com payload assinado (path + visitorId + timestamp + nonce)
+  // para evitar enumeração de rotas e permitir invalidação por sessão.
   const p = normalizePath(path);
-  const id = visitorId();
-  // Usa o token inteiro (com nonce) para evitar o prefixo fixo no `k=`.
-  const sig = encodeToken(p, id);
-  return p + (p.includes("?") ? "&" : "?") + "k=" + sig;
+  const vid = visitorId();
+  const token = encodeToken(p, vid);
+  return p + "?k=" + encodeURIComponent(token);
 }
 
 export function encodePath(path) {

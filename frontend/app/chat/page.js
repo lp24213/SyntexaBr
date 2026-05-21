@@ -1,43 +1,74 @@
 "use client";
+
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChatLayout } from "../../components/chat-layout";
-import { DesktopDevPanel } from "../../components/desktop-dev-panel";
 import { Button } from "../../components/ui/button";
+import { ExportMenu } from "../../components/chat-export";
 import {
-  FileExportMenu,
-  plainTextForExport,
-  downloadStructuredExport,
-} from "../../components/FileExportMenu";
-import { ChatRichContent } from "../../components/chat-rich-content";
-import { toExportReadyText } from "../../lib/chat-rich-format";
-import {
-  USER_FACING_TRY_AGAIN,
-  USER_FACING_CONNECTION,
-  chatCompletion,
-  chatCompletionStreamWithFallback,
+  chatCompletionStream,
   chatCompletionWithMedia,
-  publicChat,
   generateImage,
   generateMusic,
   generateSpeech,
   generateVideo,
   getProfile,
-  publicChatStreamWithFallback,
+  publicChatStream,
   publicChatWithMedia,
   getChatSessionMessages,
-  listChatSessions,
-  multimodalAnalyze,
-  multimodalSmartExport,
-  getApiBase,
-  getClientLocale,
 } from "../../lib/api";
+import {
+  isDesktopMode,
+  desktopChatCompletion,
+  desktopChatStream,
+  desktopHealthCheck,
+  desktopBootDiagnostic,
+} from "../../lib/desktop-api";
+import { t, getClientLocale } from "../../lib/i18n";
 
-/** Detecta pedido de mídia em PT-BR (crie/gere/gerar/mande/envie imagem, vídeo, áudio). */
+/**
+ * V46 — Limpa marcações de Markdown que ficam visíveis como caracteres
+ * "sujos" no balão (`**`, `##`, `__`, `~~`, `[texto](url)`, `` ` ``).
+ * Aplica-se só ao conteúdo do assistente; o que o usuário digita é mantido.
+ * Preserva quebras de linha e listas com `- ` (vira `• `).
+ */
+function cleanAssistantText(input) {
+  var s = String(input == null ? "" : input);
+  if (!s) return s;
+  // Code fences ```lang ... ```  → mantém só o miolo
+  s = s.replace(/```[a-zA-Z0-9_-]*\n?([\s\S]*?)```/g, function (_m, body) {
+    return String(body || "").trim();
+  });
+  // Links [texto](url)  → texto (url)
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, "$1 ($2)");
+  // Imagens ![alt](url) → alt
+  s = s.replace(/!\[([^\]]*)\]\([^)\s]+\)/g, "$1");
+  // Headings ###/##/# no começo de linha
+  s = s.replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, "");
+  // Bold/italic emphasis: **x**, __x__, *x*, _x_
+  s = s.replace(/\*\*([^*]+?)\*\*/g, "$1");
+  s = s.replace(/__([^_]+?)__/g, "$1");
+  s = s.replace(/(^|[\s(])\*([^\s*][^*]*?)\*(?=[\s)\.,;:!?]|$)/g, "$1$2");
+  s = s.replace(/(^|[\s(])_([^\s_][^_]*?)_(?=[\s)\.,;:!?]|$)/g, "$1$2");
+  // Strikethrough ~~x~~
+  s = s.replace(/~~([^~]+?)~~/g, "$1");
+  // Inline code `x`
+  s = s.replace(/`([^`]+?)`/g, "$1");
+  // Blockquote leader "> "
+  s = s.replace(/^[ \t]{0,3}>\s?/gm, "");
+  // Lista "-/* " → "• "
+  s = s.replace(/^[ \t]{0,6}[*\-+][ \t]+/gm, "• ");
+  // Lista numerada "1. " continua igual (legível)
+  // Colapsa 3+ quebras de linha em 2
+  s = s.replace(/\n{3,}/g, "\n\n");
+  return s.trim();
+}
+
+/** Detecta pedido de mídia em PT-BR (crie/gere imagem, vídeo, áudio — não só "gere uma imagem"). */
 function detectMediaIntent(text) {
   var w = (text || "").toLowerCase();
   var create =
-    /\b(crie|criar|gere|gera|gerar|desenhe|desenha|faça|faca|fazer|fa[çc]o|elabore|produza|monte|gerem|criem|façam|facam|manda|mande|envia|envie|me\s+manda|me\s+mande|me\s+envia|me\s+envie)\b/.test(
+    /\b(crie|criar|gere|gera|desenhe|desenha|faça|faca|fazer|fa[çc]o|elabore|produza|monte|gerem|criem|façam|facam)\b/.test(
       w
     );
   var img =
@@ -52,433 +83,21 @@ function detectMediaIntent(text) {
     /\b(gere voz|fale em voz|leia em voz|texto em voz|narra(ç|c)(a|ã)o|narração|leia isso|fale isso)\b/.test(
       w
     );
-  var verbImg =
-    /\b(gere|gera|gerar|crie|criar|manda|mande|envia|envie)\s+(?:uma\s+|um\s+)?(imagem|foto|ilustra|desenho)\b/.test(
-      w
-    );
   return {
     wantsImage:
       (create && img) ||
-      verbImg ||
-      /\bquero\s+(?:uma\s+)?(imagem|foto)\b/.test(w) ||
       /\bgere\s+(uma\s+)?(imagem|foto)\b/.test(w) ||
-      /\bgera\s+(uma\s+)?(imagem|foto)\b/.test(w) ||
-      /\bgerar\s+(?:uma\s+)?(imagem|foto)\b/.test(w),
+      /\bgera\s+(uma\s+)?(imagem|foto)\b/.test(w),
     wantsVideo:
       (create && vid) ||
-      /\b(gere|gera|gerar|crie|criar|manda|mande)\s+(?:um\s+)?(vídeo|video|clip)\b/.test(w) ||
       /\bgere\s+(um\s+)?v(í|i)deo\b/.test(w) ||
       /\bgera\s+(um\s+)?v(í|i)deo\b/.test(w),
     wantsAudio:
       (create && aud) ||
-      /\b(gere|gera|gerar|crie|criar)\s+(?:um\s+)?(áudio|audio|som|música|musica)\b/.test(w) ||
       /\bgere\s+(um\s+)?(áudio|audio|som)\b/.test(w) ||
       /\bgera\s+(um\s+)?(áudio|audio|som)\b/.test(w),
     wantsSpeech: speech,
   };
-}
-
-function _badEncodingScore(text) {
-  var t = String(text || "");
-  var badMarks = (t.match(/Ã|Â|â|�|Ð|þ/g) || []).length;
-  var replacement = (t.match(/\uFFFD/g) || []).length;
-  var weird = (t.match(/[^\x09\x0A\x0D\x20-\x7EÀ-ÿ]/g) || []).length;
-  return badMarks * 4 + replacement * 6 + weird;
-}
-
-function _looksNaturalPT(text) {
-  var t = String(text || "");
-  if (!t) return false;
-  if (/[áéíóúâêôãõçÁÉÍÓÚÂÊÔÃÕÇ]/.test(t)) return true;
-  return /\b(que|não|como|para|com|uma|isso|imagem|verdadeira|resposta)\b/i.test(t);
-}
-
-function _latin1ToUtf8Candidate(raw) {
-  try {
-    var bytes = new Uint8Array(
-      Array.from(raw).map(function (ch) {
-        return ch.charCodeAt(0) & 0xff;
-      })
-    );
-    return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-  } catch {
-    return raw;
-  }
-}
-
-function _escapeDecodeCandidate(raw) {
-  try {
-    return decodeURIComponent(escape(raw));
-  } catch {
-    return raw;
-  }
-}
-
-function maybeFixMojibake(text) {
-  var raw = String(text || "");
-  if (!raw) return raw;
-  var candidates = [raw];
-  candidates.push(_latin1ToUtf8Candidate(raw));
-  candidates.push(_escapeDecodeCandidate(raw));
-  candidates.push(_latin1ToUtf8Candidate(_latin1ToUtf8Candidate(raw)));
-  candidates.push(_escapeDecodeCandidate(_latin1ToUtf8Candidate(raw)));
-  var best = raw;
-  var bestScore = _badEncodingScore(raw);
-  for (var i = 0; i < candidates.length; i++) {
-    var c = String(candidates[i] || "");
-    if (!c) continue;
-    var score = _badEncodingScore(c);
-    if (score < bestScore) {
-      best = c;
-      bestScore = score;
-    } else if (score === bestScore && _looksNaturalPT(c) && !_looksNaturalPT(best)) {
-      best = c;
-    }
-  }
-  return best;
-}
-
-function normalizeBrokenPortuguese(text) {
-  var out = String(text || "");
-  if (!out) return out;
-  var replacements = [
-    [/\bN�o\b/g, "Não"],
-    [/\bn�o\b/g, "não"],
-    [/\bposs�vel\b/gi, "possível"],
-    [/\bh�\b/g, "há"],
-    [/\bH�\b/g, "Há"],
-    [/\bgal�xia\b/gi, "galáxia"],
-    [/\bL�ctea\b/g, "Láctea"],
-    [/\bn�mero\b/gi, "número"],
-    [/\bbilh�es\b/gi, "bilhões"],
-    [/\bmilh�es\b/gi, "milhões"],
-    [/\best�\b/gi, "está"],
-    [/\bnÃ£o\b/g, "não"],
-    [/\bNÃ£o\b/g, "Não"],
-  ];
-  for (var i = 0; i < replacements.length; i++) {
-    out = out.replace(replacements[i][0], replacements[i][1]);
-  }
-  return out;
-}
-
-function stripBadControlChars(text) {
-  var s = String(text || "");
-  var out = "";
-  for (var i = 0; i < s.length; i++) {
-    var c = s.charCodeAt(i);
-    if (c === 0xfffd) continue;
-    if (c === 9 || c === 10 || c === 13 || c >= 32) out += s.charAt(i);
-  }
-  return out;
-}
-
-function stripVisualNoiseLines(text) {
-  var lines = String(text || "").split("\n");
-  var out = [];
-  for (var i = 0; i < lines.length; i++) {
-    var ln = String(lines[i] || "");
-    var t = ln.trim();
-    if (!t) {
-      out.push("");
-      continue;
-    }
-    // remove linhas com "lixo visual" puro: |||---***___%%% etc
-    if (/^[|_\-*=~`^#%&$@!+.:;,\\/()\[\]{}<>?¨"'’`´]+$/.test(t)) continue;
-    // remove linhas extremamente simbólicas com poucos caracteres alfanuméricos
-    var alnum = (t.match(/[a-zA-Z0-9À-ÿ]/g) || []).length;
-    var sym = (t.match(/[^a-zA-Z0-9À-ÿ\s]/g) || []).length;
-    if (sym >= 6 && alnum <= 2) continue;
-    out.push(ln);
-  }
-  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
-}
-
-/** Remove ** # ` e artefactos comuns de LLM; deixa texto legível no chat. */
-function stripMarkdownForChatDisplay(text) {
-  var t = String(text || "");
-  if (!t) return t;
-  t = t.replace(/```[\s\S]*?```/g, "\n");
-  t = t.replace(/`([^`]+)`/g, "$1");
-  t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
-  t = t.replace(/\*\*\*([^*]+)\*\*\*/g, "$1");
-  t = t.replace(/\*\*([^*]+)\*\*/g, "$1");
-  t = t.replace(/\*([^*\n]{2,120})\*/g, "$1");
-  t = t.replace(/__([^_]+)__/g, "$1");
-  t = t.replace(new RegExp("^#{1,6}\\s+", "gm"), "");
-  t = t.replace(new RegExp("^\\s*[-*+]\\s+", "gm"), "• ");
-  t = t.replace(/[\u200b\u200c\u200d\ufeff]/g, "");
-  t = t.replace(/[ \t]+/g, " ");
-  t = t.replace(/\n{3,}/g, "\n\n");
-  t = t.replace(/\s+,/g, ",");
-  t = t.replace(/\s+\./g, ".");
-  return t.trim();
-}
-
-function sanitizeChatText(text) {
-  return stripVisualNoiseLines(
-    stripMarkdownForChatDisplay(
-      stripBadControlChars(normalizeBrokenPortuguese(maybeFixMojibake(text)))
-    )
-  );
-}
-
-/** Durante SSE: não aplicar heurísticas agressivas de mojibake em cada chunk (evita texto cortado). */
-function sanitizeChatStreamDelta(prev, chunk) {
-  return stripBadControlChars(String(prev || "") + String(chunk || ""));
-}
-
-function isAssistantPlaceholderContent(s) {
-  return /^(?:Gerando|A gerar)\s/i.test(String(s || ""));
-}
-
-function isImagePlaceholderContent(s) {
-  return /^(?:Gerando|A gerar)\s+imagem/i.test(String(s || ""));
-}
-
-/** Bolha só com aviso de download (export rápido) — não é “conteúdo” para o próximo ficheiro. */
-function isAssistantExportSuccessNoise(s) {
-  var t = String(s || "").trim();
-  if (!t) return true;
-  if (/^(?:Excel|PDF|Word|CSV|TXT|Ficheiro)\s+gerado\b/i.test(t) && /download|navegador/i.test(t)) return true;
-  if (/ficheiro real,\s*não código no chat/i.test(t)) return true;
-  return false;
-}
-
-function absoluteApiFileUrl(path) {
-  if (!path || typeof path !== "string") return "";
-  if (/^https?:\/\//i.test(path)) return path;
-  var base = getApiBase().replace(/\/$/, "");
-  var p = path.startsWith("/") ? path : "/" + path;
-  return base + p;
-}
-
-function downloadLabelForSmartFile(f) {
-  var k = String((f && f.kind) || "").toLowerCase();
-  var map = {
-    xlsx: "Baixar XLSX",
-    pdf: "Baixar PDF",
-    docx: "Baixar DOCX",
-    ods: "Baixar ODS",
-    csv: "Baixar CSV",
-    txt: "Baixar TXT",
-  };
-  return map[k] || "Baixar " + (k || "ficheiro").toUpperCase();
-}
-
-function DownloadIcon() {
-  return React.createElement(
-    "svg",
-    { viewBox: "0 0 24 24", fill: "none", className: "h-3.5 w-3.5 shrink-0", "aria-hidden": true },
-    React.createElement("path", {
-      d: "M12 4v10m0 0l-4-4m4 4l4-4M5 18h14",
-      stroke: "currentColor",
-      strokeWidth: "1.8",
-      strokeLinecap: "round",
-      strokeLinejoin: "round",
-    })
-  );
-}
-
-function CheckCircleIcon() {
-  return React.createElement(
-    "svg",
-    { viewBox: "0 0 24 24", fill: "none", className: "h-3.5 w-3.5 shrink-0 text-emerald-700", "aria-hidden": true },
-    React.createElement("path", {
-      d: "M9 12.5l2 2 4-4m6 1.5a9 9 0 11-18 0 9 9 0 0118 0z",
-      stroke: "currentColor",
-      strokeWidth: "1.8",
-      strokeLinecap: "round",
-      strokeLinejoin: "round",
-    })
-  );
-}
-
-/** Última resposta “real” do assistente (ignora placeholders e bolhas só com ficheiros gerados). */
-function getLastAssistantExportText(messageList) {
-  if (!Array.isArray(messageList)) return "";
-  var i;
-  for (i = messageList.length - 1; i >= 0; i--) {
-    var m = messageList[i];
-    if (!m || m.role !== "assistant" || !m.content) continue;
-    if (isAssistantPlaceholderContent(m.content)) continue;
-    if (isAssistantExportSuccessNoise(m.content)) continue;
-    if (m.smartFiles && m.smartFiles.length) continue;
-    return toExportReadyText(String(m.content));
-  }
-  for (i = messageList.length - 1; i >= 0; i--) {
-    m = messageList[i];
-    if (!m || m.role !== "assistant" || !m.content) continue;
-    if (isAssistantPlaceholderContent(m.content)) continue;
-    if (isAssistantExportSuccessNoise(m.content)) continue;
-    return toExportReadyText(String(m.content));
-  }
-  return "";
-}
-
-/**
- * Pedido para gerar documento/planilha com conteúdo novo descrito na mensagem (não exportar só a última bolha).
- * Evita confundir “gera planilha de alimentação…” com export da resposta anterior.
- */
-function isGenerativeDocumentRequest(text) {
-  var t = String(text || "");
-  var w = t.toLowerCase();
-  if (t.length >= 130) return true;
-  if (
-    /\b(alimenta(ç|c)|nutri(ç|c)|dieta|card(á|a)pio|ectomorfo|mesomorfo|hipertrofia|massa muscular|bulking|macros?|calorias)\b/.test(
-      w
-    )
-  )
-    return true;
-  if (/\b(planilha|excel|xlsx)\b/.test(w) && /\b(de|para|sobre|com)\s+\w{4,}/.test(w)) return true;
-  if (/\b(n(ã|a)o quero|nao quero|sem biografia|n(ã|a)o (é|e) sobre)\b/i.test(t)) return true;
-  return false;
-}
-
-/** Para smart-export: não reutilizar texto antigo do chat quando o pedido já descreve o ficheiro. */
-function shouldOmitPriorAssistantForSmartExport(text) {
-  return isGenerativeDocumentRequest(text);
-}
-
-/** Pedido explícito de exportar a última resposta em PDF (evita depender do LLM gerar LaTeX). */
-function detectPdfExportIntent(text) {
-  var w = String(text || "").toLowerCase();
-  return (
-    /\b(exporta|exporte|baixa|baixar|gera|gere|cria|crie)\s+(um\s+)?(pdf|documento\s+pdf|ficheiro\s+pdf|arquivo\s+pdf)\b/.test(
-      w
-    ) ||
-    /\b(quero|preciso|mande|manda)\s+(um\s+)?pdf\b/.test(w) ||
-    /\bpdf\b.*\b(export|download|baixa|gera)\b/.test(w)
-  );
-}
-
-/** PDF / Excel / Word / CSV — intercetado antes do LLM para gerar ficheiro real, não “código no chat”. */
-function detectStructuredFileExportIntent(text) {
-  if (detectPdfExportIntent(text)) return "pdf";
-  var w = String(text || "").toLowerCase();
-  if (
-    /\b(xlsx|excel|planilha|folha de cálculo|folha de calculo|libreoffice|calc)\b/.test(w) &&
-    /\b(gera|gere|exporta|exporte|baixa|baixar|cria|crie|descarrega|manda|mande)\b/.test(w)
-  )
-    return "xlsx";
-  if (
-    /\b(docx|word|microsoft\s+word|\.docx)\b/.test(w) &&
-    /\b(gera|gere|exporta|baixa|cria|crie|manda|mande)\b/.test(w)
-  )
-    return "docx";
-  if (
-    /\b(csv|ficheiro\s+csv|arquivo\s+csv)\b/.test(w) &&
-    /\b(gera|gere|exporta|baixa|cria|crie)\b/.test(w)
-  )
-    return "csv";
-  return null;
-}
-
-/** Pacote servidor: planilha financeira / contrato — ficheiros reais, não markdown. */
-function detectSmartJobIntent(text) {
-  var w = String(text || "").toLowerCase();
-  var verb = /\b(faz|faça|faca|gera|gere|gerar|cria|crie|monta|manda|mande|exporta|exporte|envia|envie|preciso|quero|me manda)\b/.test(
-    w
-  );
-  if (
-    verb &&
-    (/\bods\b/.test(w) ||
-      /open\s*document\s*spreadsheet/.test(w) ||
-      /libreoffice\s+calc/.test(w) ||
-      /\b(exporta|exporte)\s+(em\s+)?ods\b/.test(w))
-  )
-    return true;
-  var financialHeavy = /\b(orçamento|orcamento|financeir|receita|despesa|fluxo de caixa|custos?|saldo|balanço|balanco)\b/.test(
-    w
-  );
-  var sheet = /\b(planilha|excel|xlsx|csv|tabela|spreadsheet|folha de cálculo|folha de calculo)\b/.test(w);
-  var pdf = /\b(pdf|\.pdf|documento pdf|arquivo pdf|ficheiro pdf)\b/.test(w);
-  var docx = /\b(docx|word|microsoft word|\.docx|documento word)\b/.test(w);
-  var docHint = /\b(contrato|currículo|curriculo|relatório|relatorio|cronograma|currículo vitae|cv\b)\b/.test(
-    w
-  );
-  var listHint = /\b(lista|planilha|excel|xlsx|csv|tabela|cronograma)\b/.test(w);
-  if (verb && sheet && financialHeavy) return true;
-  if (verb && sheet && !financialHeavy) return true;
-  if (verb && pdf && !sheet) return true;
-  if (verb && docx && !sheet && !pdf) return true;
-  if (/\b(odf|ods|open\s*document)\b/.test(w) && verb) return true;
-  if (verb && docHint && /\b(gera|gere|cria|crie|faz|faça|faca|manda|mande|exporta|exporte|envia)\b/.test(w))
-    return true;
-  if (verb && listHint && /\b(gera|gere|cria|crie|faz|exporta|manda)\b/.test(w)) return true;
-  if (
-    /\b(preciso|quero)\b/.test(w) &&
-    /\b(planilha|excel|xlsx|pdf|docx|word|csv|ods|contrato|arquivo|ficheiro|anexo)\b/.test(w)
-  )
-    return true;
-  if (
-    /\b(manda|mande|envia)\b/.test(w) &&
-    /\b(arquivo|ficheiro|anexo)\b/.test(w)
-  )
-    return true;
-  if (
-    /\b(contrato|currículo|curriculo|relatório|relatorio)\b/.test(w) &&
-    /\b(gera|gere|cria|crie|faz|faça|faca|manda|mande|exporta|exporte)\b/.test(w)
-  )
-    return true;
-  return false;
-}
-
-function detectImageCorrectionFollowup(text, messages) {
-  var w = String(text || "").toLowerCase().trim();
-  if (!w) return false;
-  var correctionHints = [
-    "isso não é",
-    "isso nao é",
-    "isso nao e",
-    "quero uma",
-    "quero um",
-    "quero foto real",
-    "quero imagem real",
-    "verdadeira",
-    "mais realista",
-    "ficou errado",
-  ];
-  var hasHint = correctionHints.some(function (h) {
-    return w.indexOf(h) >= 0;
-  });
-  if (!hasHint) return false;
-  if (!Array.isArray(messages) || messages.length === 0) return false;
-  for (var i = messages.length - 1; i >= 0; i--) {
-    var m = messages[i];
-    if (!m || m.role !== "assistant") continue;
-    if (m.media && m.media.type === "image") return true;
-    if (String(m.content || "").toLowerCase().indexOf("imagem gerada") >= 0) return true;
-    return false;
-  }
-  return false;
-}
-
-/** Horário local nas bolhas (pt-BR): dia da semana, data e hora. */
-function timeLabel(date) {
-  try {
-    var d = date instanceof Date ? date : new Date();
-    var locale = getClientLocale();
-    return d.toLocaleString(locale, {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch (e) {
-    return "";
-  }
-}
-
-function formatSessionTimestamp(iso) {
-  if (!iso) return "";
-  try {
-    return timeLabel(new Date(iso));
-  } catch (e) {
-    return "";
-  }
 }
 
 /** Base64 grande em data: URL quebra o <img> no Chrome ("erro de visualização"); Blob URL é estável. */
@@ -503,124 +122,34 @@ function base64ToDisplayUrl(imageBase64, mime) {
 
 function ChatImage(props) {
   var src = props.src;
+  var mounted = React.useState(false);
+  var setMounted = mounted[1];
   var failed = React.useState(false);
   var setFailed = failed[1];
-  var glow = React.useState(true);
-  var setGlow = glow[1];
-  React.useEffect(
-    function () {
-      setGlow(true);
-      var tm = setTimeout(function () {
-        setGlow(false);
-      }, 900);
-      return function () {
-        clearTimeout(tm);
-        if (src && String(src).indexOf("blob:") === 0) {
-          try {
-            URL.revokeObjectURL(src);
-          } catch (e) {}
-        }
-      };
-    },
-    [src]
-  );
+  React.useEffect(function () {
+    setMounted(true);
+  }, []);
+  if (!mounted[0]) {
+    return React.createElement("div", {
+      className: "mt-3 h-[min(420px,40vh)] w-full rounded-xl border border-[rgba(15,23,42,0.06)] bg-[rgba(15,23,42,0.02)]",
+      "aria-hidden": true,
+    });
+  }
   if (failed[0]) {
-    return React.createElement(
-      "p",
-      { className: "mt-3 text-sm text-amber-300/90" },
+    return React.createElement("p", { className: "mt-3 text-sm text-[#b45309]" },
       "Não foi possível exibir a imagem (dados inválidos ou limite do navegador). Gere de novo."
     );
   }
-  return React.createElement(
-    motion.div,
-    {
-      initial: { opacity: 0, scale: 0.98, y: 6 },
-      animate: { opacity: 1, scale: 1, y: 0 },
-      transition: { duration: 0.32, ease: "easeOut" },
-      className:
-        "relative mt-3 " +
-        (glow[0] ? "ring-2 ring-violet-300/70 shadow-[0_0_0_4px_rgba(139,92,246,0.12)]" : ""),
+  return React.createElement("img", {
+    src: src,
+    alt: props.alt || "Imagem gerada",
+    className: "mt-3 max-h-[420px] w-full rounded-xl border border-[rgba(15,23,42,0.08)] object-contain",
+    loading: "lazy",
+    decoding: "async",
+    onError: function () {
+      setFailed(true);
     },
-    React.createElement(
-      "span",
-      {
-        className:
-          "absolute right-2 top-2 z-10 rounded-full border border-violet-200 bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-violet-700 shadow-sm backdrop-blur",
-      },
-      "4K Ready"
-    ),
-    React.createElement("img", {
-      src: src,
-      alt: props.alt || "Imagem gerada",
-      className: "max-h-[420px] w-full rounded-xl border border-zinc-200 object-contain",
-      loading: "eager",
-      decoding: "async",
-      onError: function () {
-        setFailed(true);
-      },
-    })
-  );
-}
-
-function ImageGenerationPlaceholder(props) {
-  var label = props.label || "Gerando imagem em alta qualidade...";
-  var elapsedState = React.useState(0);
-  var elapsed = elapsedState[0];
-  var setElapsed = elapsedState[1];
-
-  React.useEffect(function () {
-    var t0 = Date.now();
-    var id = setInterval(function () {
-      setElapsed(Date.now() - t0);
-    }, 450);
-    return function () {
-      clearInterval(id);
-    };
-  }, []);
-
-  var stages = ["Compondo cena", "Refinando detalhes", "Aprimorando iluminação", "Finalizando render"];
-  var idx = Math.min(stages.length - 1, Math.floor(elapsed / 1600));
-  var pct = Math.min(96, 18 + Math.floor(elapsed / 90));
-  var eta = Math.max(2, 12 - Math.floor(elapsed / 1000));
-
-  return React.createElement(
-    "div",
-    { className: "space-y-2" },
-    React.createElement(
-      "div",
-      { className: "flex items-center gap-2 text-sm text-zinc-700" },
-      React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true }),
-      React.createElement("span", null, label)
-    ),
-    React.createElement(
-      "div",
-      { className: "relative overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 p-3" },
-      React.createElement("div", { className: "h-44 w-full animate-pulse rounded-lg bg-gradient-to-r from-zinc-100 via-zinc-200 to-zinc-100" }),
-      React.createElement(
-        "span",
-        {
-          className:
-            "absolute right-3 top-3 rounded-full border border-violet-200 bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-violet-700",
-        },
-        "Render IA • 4K"
-      ),
-      React.createElement(
-        "div",
-        { className: "absolute bottom-3 left-3 right-3 space-y-1.5 rounded-lg border border-zinc-200 bg-white/85 px-2 py-2 backdrop-blur-sm" },
-        React.createElement("p", { className: "text-[10px] font-medium text-zinc-700" }, stages[idx]),
-        React.createElement("p", { className: "text-[10px] text-zinc-500" }, "ETA aproximado: ", String(eta), "s"),
-        React.createElement(
-          "div",
-          { className: "h-1.5 w-full overflow-hidden rounded-full bg-zinc-200" },
-          React.createElement(motion.div, {
-            className: "h-full rounded-full bg-violet-500",
-            animate: { width: pct + "%" },
-            transition: { duration: 0.35, ease: "easeOut" },
-          })
-        )
-      )
-    )
-  );
+  });
 }
 
 /** Prompt limpo para o provedor (menos "Olá crie..." repetido). */
@@ -640,13 +169,40 @@ function extractPromptForProvider(text, kind) {
   return t.replace(/^(olá|oi|eae|opa)[!,.\s]*/i, "").trim().slice(0, 4000);
 }
 
-function mediaGenPlaceholderLabel(kind) {
-  if (kind === "image") return "Gerando imagem em alta qualidade...";
-  if (kind === "video") return "Gerando vídeo...";
-  if (kind === "speech") return "Gerando voz...";
-  return "Gerando áudio...";
+function IconImage() {
+  return React.createElement(
+    "svg",
+    { viewBox: "0 0 24 24", className: "h-4 w-4", fill: "none", "aria-hidden": true },
+    React.createElement("rect", { x: "3", y: "4", width: "18", height: "16", rx: "3", stroke: "currentColor", strokeWidth: "1.5" }),
+    React.createElement("path", { d: "M7 15l3-3 2 2 4-4 1 1v5H7z", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }),
+    React.createElement("circle", { cx: "9", cy: "9", r: "1.2", fill: "currentColor" })
+  );
 }
-
+function IconVideo() {
+  return React.createElement(
+    "svg",
+    { viewBox: "0 0 24 24", className: "h-4 w-4", fill: "none", "aria-hidden": true },
+    React.createElement("rect", { x: "3", y: "5", width: "14", height: "14", rx: "3", stroke: "currentColor", strokeWidth: "1.5" }),
+    React.createElement("path", { d: "M17 10l4-2v8l-4-2z", stroke: "currentColor", strokeWidth: "1.5", strokeLinejoin: "round" })
+  );
+}
+function IconAudio() {
+  return React.createElement(
+    "svg",
+    { viewBox: "0 0 24 24", className: "h-4 w-4", fill: "none", "aria-hidden": true },
+    React.createElement("path", { d: "M5 14h3l4 4V6L8 10H5z", stroke: "currentColor", strokeWidth: "1.5", strokeLinejoin: "round" }),
+    React.createElement("path", { d: "M16 9a4 4 0 010 6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
+    React.createElement("path", { d: "M18 6a8 8 0 010 12", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+  );
+}
+function IconMic() {
+  return React.createElement(
+    "svg",
+    { viewBox: "0 0 24 24", className: "h-4 w-4", fill: "none", "aria-hidden": true },
+    React.createElement("rect", { x: "9", y: "3", width: "6", height: "11", rx: "3", stroke: "currentColor", strokeWidth: "1.5" }),
+    React.createElement("path", { d: "M6 11a6 6 0 0012 0M12 17v4M9 21h6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+  );
+}
 function IconAttach() {
   return React.createElement(
     "svg",
@@ -663,119 +219,87 @@ function IconSend() {
   );
 }
 
-/** Resumo legível da resposta /v1/multimodal/analyze para a bolha do chat. */
-function formatMultimodalResult(data) {
-  if (!data || typeof data !== "object") return "Análise indisponível.";
-  var lines = [];
-  lines.push("Análise (" + (data.detected_kind || "?") + ", " + (data.size || 0) + " bytes)");
-  if (data.ocr && data.ocr.text) {
-    lines.push("Texto extraído:\n" + String(data.ocr.text).slice(0, 4000));
-  }
-  if (data.text_preview) {
-    lines.push("Pré-visualização:\n" + String(data.text_preview).slice(0, 4000));
-  }
-  if (data.vision && data.vision.stats) {
-    lines.push("Imagem: " + data.vision.stats.width + "×" + data.vision.stats.height + " px");
-  }
-  if (data.vision && data.vision.description) {
-    lines.push("Descrição:\n" + String(data.vision.description).slice(0, 4000));
-  }
-  if (data.transcription && data.transcription.text) {
-    lines.push("Transcrição:\n" + String(data.transcription.text).slice(0, 4000));
-  }
-  if (data.note) lines.push(String(data.note));
-  if (data.detail && !data.ok) lines.push(String(data.detail));
-  return lines.join("\n\n") || "Nada a mostrar.";
-}
-
 export default function ChatPage() {
-  const uiLocale = getClientLocale();
-  const isEnglishUi = String(uiLocale || "").toLowerCase().startsWith("en");
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content: isEnglishUi
-        ? "Hello, this is Syntexa. How can I help you?"
-        : "Olá, aqui é a Syntexa. Em que posso te ajudar?",
-      timestamp: "",
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mediaBusy, setMediaBusy] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [plan, setPlan] = useState("anon");
+  const [listening, setListening] = useState(false);
+  const [recognition, setRecognition] = useState(null);
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [canStop, setCanStop] = useState(false);
-  const [multimodalBusy, setMultimodalBusy] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-  const [authToken, setAuthToken] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [sessionsRefreshKey, setSessionsRefreshKey] = useState(0);
-  const [focusMode, setFocusMode] = useState("");
-  const [ttsBusyIdx, setTtsBusyIdx] = useState(null);
-  const [fileExportBusy, setFileExportBusy] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [desktopMode, setDesktopMode] = useState(false);
+  const [desktopReady, setDesktopReady] = useState(false);
+  const [bootDiagnostic, setBootDiagnostic] = useState(null);
+  const [bootFailures, setBootFailures] = useState([]);
   const abortRef = useRef(null);
-  /** Evita envios concorrentes (duplo clique, Enter+clique). */
-  const sendBusyRef = useRef(false);
-  const lastSendAtRef = useRef(0);
   var messagesEndRef = useRef(null);
+  var textareaRef = useRef(null);
+  var locale = getClientLocale();
+
+  // Detecção de modo desktop + boot validation obrigatória
+  useEffect(function () {
+    if (typeof window === "undefined") return;
+    var isDesktop = isDesktopMode();
+    setDesktopMode(isDesktop);
+    if (isDesktop) {
+      desktopHealthCheck().then(function (r) {
+        setDesktopReady(r.ok && r.runtime_ready);
+      }).catch(function () {
+        setDesktopReady(false);
+      });
+      // BOOT DIAGNOSTIC REAL — fail fast absoluto
+      desktopBootDiagnostic().then(function (diag) {
+        setBootDiagnostic(diag);
+        if (diag && diag.failures && diag.failures.length > 0) {
+          setBootFailures(diag.failures);
+          setDesktopReady(false);
+        }
+      }).catch(function (err) {
+        setBootDiagnostic({ boot_passed: false, error: String(err) });
+        setBootFailures([{ component: "boot_diagnostic_request", error: String(err) }]);
+        setDesktopReady(false);
+      });
+      // Listener IPC para boot failure vindo do main process
+      if (window.desktopAPI && window.desktopAPI.onBootFailure) {
+        var unsub = window.desktopAPI.onBootFailure(function (payload) {
+          if (payload && payload.failures) {
+            setBootFailures(payload.failures);
+            setDesktopReady(false);
+          }
+        });
+        return function () { if (unsub) unsub(); };
+      }
+    }
+  }, []);
 
   useEffect(function () {
     try {
       var el = messagesEndRef.current;
       if (el) el.scrollIntoView({ behavior: "smooth", block: "end" });
     } catch (e) {}
-  }, [messages, loading, mediaBusy]);
+  }, [messages, loading]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) setRecognition(new SpeechRecognition());
+  }, []);
 
   function isAuthErrorMessage(msg) {
     var txt = String(msg || "").toLowerCase();
     return (
       txt.indexOf("não foi possível validar as credenciais") >= 0 ||
-      txt.indexOf("sessão expirada") >= 0 ||
-      txt.indexOf("sessao expirada") >= 0 ||
-      txt.indexOf("acesso não autorizado") >= 0 ||
-      txt.indexOf("acesso nao autorizado") >= 0 ||
-      txt.indexOf("unauthorized") >= 0 ||
       txt.indexOf("not authenticated") >= 0 ||
       txt.indexOf("401") >= 0
     );
   }
 
-  function finalizeStreamingAssistantText() {
-    setMessages(function (prev) {
-      var p = prev.slice();
-      if (!p.length) return prev;
-      var last = p[p.length - 1];
-      if (
-        last &&
-        last.role === "assistant" &&
-        last.content != null &&
-        !(last.smartFiles && last.smartFiles.length)
-      ) {
-        var fixed = sanitizeChatText(String(last.content));
-        if (fixed !== last.content) p[p.length - 1] = Object.assign({}, last, { content: fixed });
-      }
-      return p;
-    });
-  }
-
-  useEffect(function () {
-    setMessages(function (prev) {
-      if (prev.length !== 1) return prev;
-      var m = prev[0];
-      if (m.role !== "assistant" || m.timestamp) return prev;
-      return [{ ...m, timestamp: timeLabel() }];
-    });
-  }, []);
-
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const token = window.localStorage.getItem("syntexa_token");
-      setAuthToken(token);
-      setIsAdmin(window.localStorage.getItem("syntexa_is_admin") === "1");
       if (!token) {
         setPlan("anon");
         return;
@@ -793,427 +317,43 @@ export default function ChatPage() {
     }
   }, []);
 
-  useEffect(function () {
-    try {
-      var params = new URLSearchParams(window.location.search || "");
-      var q = (params.get("q") || "").trim();
-      var mode = (params.get("mode") || "").trim().toLowerCase();
-      if (q && !input.trim()) setInput(q);
-      if (mode) setFocusMode(mode);
-    } catch {}
-  }, []);
-
-  function getFocusSystemPrompt(mode) {
-    if (mode === "bank") {
-      return [
-        "MODO FOCO: banco e finanças no Brasil.",
-        "Responda em formato executável com seções fixas:",
-        "1) Diagnóstico rápido (até 5 bullets).",
-        "2) Plano de ação de 7 dias (Dia 1..7, objetivo por dia).",
-        "3) Controle financeiro pronto (campos para receita, despesa, saldo, Pix, pendências).",
-        "4) Riscos e alertas (inadimplência, juros, atraso fiscal, concentração de receita).",
-        "5) Próximo passo imediato (uma ação para agora).",
-      ].join(" ");
-    }
-    if (mode === "agro") {
-      return [
-        "MODO FOCO: agronegócio no Brasil.",
-        "Responda em formato executável com seções fixas:",
-        "1) Diagnóstico da operação rural (produção, custo, gargalo).",
-        "2) Plano de manejo e execução (curto prazo e safra).",
-        "3) Quadro de custos (insumos, mão de obra, máquinas, logística).",
-        "4) Indicadores-chave (custo/ha, margem, produtividade, ponto de equilíbrio).",
-        "5) Próximo passo imediato no campo.",
-      ].join(" ");
-    }
-    if (mode === "tax") {
-      return [
-        "MODO FOCO: impostos e regularização no Brasil.",
-        "Responda em formato executável com seções fixas:",
-        "1) Situação fiscal atual (o que está pendente).",
-        "2) Checklist de documentos (objetivo e direto).",
-        "3) Passo a passo com ordem de execução (Receita Federal / prefeitura / estado quando aplicável).",
-        "4) Riscos de multa e como reduzir risco.",
-        "5) Próximo passo imediato com prazo sugerido.",
-      ].join(" ");
-    }
-    if (mode === "sales_whatsapp") {
-      return [
-        "MODO FOCO: vendas no WhatsApp.",
-        "Responda em formato executável com seções fixas:",
-        "1) Estratégia rápida de abordagem.",
-        "2) Script pronto (abertura, qualificação, oferta, fechamento).",
-        "3) Respostas prontas para 5 objeções comuns.",
-        "4) Cadência de follow-up (D0, D1, D3, D7).",
-        "5) Próximo envio exato para o cliente agora.",
-      ].join(" ");
-    }
-    return "";
-  }
-
-  function applyFocusToHistory(history) {
-    var systemPrompt = getFocusSystemPrompt(focusMode);
-    if (!systemPrompt) return history;
-    var hasSystem = Array.isArray(history) && history.some(function (m) { return m && m.role === "system"; });
-    if (hasSystem) return history;
-    return [{ role: "system", content: systemPrompt }].concat(history);
-  }
-
-  function getFocusComposerActions(mode) {
-    if (mode === "bank") {
-      return [
-        ["Plano 7 Dias", "Monte um plano financeiro de 7 dias com tarefas diárias, objetivo e indicador de sucesso."],
-        ["Fluxo de Caixa", "Crie um modelo de fluxo de caixa semanal com receitas, despesas, saldo e previsão."],
-        ["Cobrança WhatsApp", "Escreva mensagens de cobrança por WhatsApp em 3 tons: cordial, firme e última tentativa."],
-      ];
-    }
-    if (mode === "agro") {
-      return [
-        ["Plano da Safra", "Monte um plano de safra com cronograma, etapas críticas, custos e riscos."],
-        ["Custos por Hectare", "Monte uma planilha-modelo de custos por hectare com categorias e fórmula de margem."],
-        ["Checklist Campo", "Crie checklist operacional diário para fazenda com prioridade e responsável."],
-      ];
-    }
-    if (mode === "tax") {
-      return [
-        ["Checklist Receita", "Crie checklist prático de regularização fiscal no Brasil com ordem de execução."],
-        ["IRPF Passo a Passo", "Explique passo a passo de IRPF com documentos necessários e erros comuns."],
-        ["Nota Fiscal", "Monte um processo simples para emissão e controle de notas fiscais no dia a dia."],
-      ];
-    }
-    if (mode === "sales_whatsapp") {
-      return [
-        ["Script de Vendas", "Crie script completo de vendas no WhatsApp: abertura, qualificação, oferta e fechamento."],
-        ["Quebra de Objeções", "Liste 10 objeções comuns e resposta pronta para cada uma no WhatsApp."],
-        ["Cadência D0-D7", "Monte cadência de follow-up D0, D1, D3 e D7 com mensagens curtas e CTA."],
-      ];
-    }
-    return [];
-  }
-
-  async function runFocusedQuickPrompt(promptText) {
-    var content = String(promptText || "").trim();
-    if (!content || loading || mediaBusy || fileExportBusy) return;
-    if (sendBusyRef.current) return;
-    sendBusyRef.current = true;
-    try {
-      await processOutgoingUserContent(content);
-    } finally {
-      sendBusyRef.current = false;
-    }
-  }
-
-  /** Mesmo pipeline que Enter: mídia, ficheiros inteligentes, chat — usado também pela voz (STT → aqui). */
-  async function processOutgoingUserContent(content) {
+  async function sendMessage() {
+    var content = input.trim();
+    if (!content || loading) return;
     var token = null;
     try {
       token = window.localStorage.getItem("syntexa_token");
-    } catch (e) {
+    } catch {
       token = null;
     }
-    var cw = content.toLowerCase();
-    var financialSheetCmd =
-      /\b(orçamento|orcamento|financeir|receita|despesa|fluxo\s+de\s+caixa|custos?|saldo|balanço|balanco)\b/.test(
-        cw
-      ) &&
-      /\b(planilha|excel|xlsx|csv|tabela|folha\s+de\s+c[aá]lculo|folha\s+de\s+calculo)\b/.test(cw);
 
-    /* Export estruturado (PDF/Excel/…) da última resposta — antes do pacote smart (planilha financeira modelo vai para smart). */
-    var structuredExportKind = detectStructuredFileExportIntent(content);
-    if (structuredExportKind && !financialSheetCmd && !isGenerativeDocumentRequest(content)) {
-      var lastAsst2 = getLastAssistantExportText(messages);
-      if (!lastAsst2) {
-        setMessages((prev) =>
-          prev.concat([
-            { role: "user", content: content, timestamp: timeLabel() },
-            {
-              role: "assistant",
-              content:
-                "Não há resposta anterior para exportar. Peça primeiro um texto; depois use os botões PDF, Excel, Word ou CSV na barra, ou os botões por mensagem.",
-              timestamp: timeLabel(),
-            },
-          ])
-        );
-        setInput("");
-        return;
-      }
-      var exportLabels = { pdf: "PDF", xlsx: "Excel", docx: "Word", csv: "CSV" };
-      var genLine =
-        "Gerando " + (exportLabels[structuredExportKind] || "ficheiro") + "…";
-      setFileExportBusy(true);
+    var userMessages = messages.filter((m) => m.role === "user").length;
+    var maxForPlan =
+      plan === "anon"
+        ? 120
+        : plan === "free"
+          ? 200
+          : plan === "basic"
+            ? 500
+            : 999999; /* medium/master: uso justo, backend aplica limite se necessário */
+    if (userMessages >= maxForPlan) {
       setMessages((prev) =>
         prev.concat([
-          { role: "user", content: content, timestamp: timeLabel() },
-          { role: "assistant", content: genLine, timestamp: timeLabel() },
-        ])
-      );
-      setInput("");
-      try {
-        await downloadStructuredExport(structuredExportKind, lastAsst2, token || undefined);
-        setMessages((prev) => {
-          var p = prev.slice();
-          p[p.length - 1] = {
+          {
             role: "assistant",
             content:
-              (exportLabels[structuredExportKind] || "Ficheiro") +
-              " gerado — o download deve começar no navegador (ficheiro real, não código no chat).",
-            timestamp: timeLabel(),
-          };
-          return p;
-        });
-      } catch (errEx) {
-        var mpex = errEx instanceof Error ? errEx.message : String(errEx);
-        setMessages((prev) => {
-          var p = prev.slice();
-          p[p.length - 1] = {
-            role: "assistant",
-            content: /sess[aã]o|401|autorizado/i.test(mpex)
-              ? "Inicie sessão para exportar ficheiros, ou tente de novo em instantes."
-              : USER_FACING_TRY_AGAIN,
-            timestamp: timeLabel(),
-          };
-          return p;
-        });
-      } finally {
-        setFileExportBusy(false);
-      }
+              "Limite de mensagens do modo atual foi atingido (uso mensal ou diário, conforme o plano). Faça login com conta gratuita ou paga para limites maiores, ou aguarde a renovação do período.",
+          },
+        ])
+      );
       return;
     }
 
     var mediaIntent = detectMediaIntent(content);
-    var imageCorrectionFollowup = detectImageCorrectionFollowup(content, messages);
     var wantsImage = mediaIntent.wantsImage;
     var wantsVideo = mediaIntent.wantsVideo;
     var wantsAudio = mediaIntent.wantsAudio;
     var wantsSpeech = mediaIntent.wantsSpeech;
-    if (imageCorrectionFollowup) wantsImage = true;
-    var wantsM = wantsImage || wantsVideo || wantsAudio || wantsSpeech;
-    var smartW = detectSmartJobIntent(content);
-
-    /* Pedido misto (ex.: imagem + planilha/PDF): gera mídia primeiro, depois ficheiros — mesmo fluxo que texto. */
-    if (smartW && wantsM) {
-      var kindC = wantsImage
-        ? "image"
-        : wantsVideo
-          ? "video"
-          : wantsSpeech
-            ? "speech"
-            : "audio";
-      var labelC =
-        kindC === "image"
-          ? "imagem"
-          : kindC === "video"
-            ? "video"
-            : kindC === "speech"
-              ? "voz"
-              : "audio";
-      var userMsgC = { role: "user", content: content, timestamp: timeLabel() };
-      var genLabelC = mediaGenPlaceholderLabel(kindC);
-      setMessages(function (prev) {
-        return prev.concat([
-          userMsgC,
-          { role: "assistant", content: genLabelC, timestamp: timeLabel() },
-        ]);
-      });
-      setInput("");
-      setAttachments([]);
-      setMediaBusy(true);
-      try {
-        var resultC;
-        var provImageC = extractPromptForProvider(content, "image");
-        var provVideoC = extractPromptForProvider(content, "video");
-        var provOtherC = extractPromptForProvider(content, "text");
-        if (kindC === "image") resultC = await generateImage(provImageC || content, token);
-        if (kindC === "video") resultC = await generateVideo(provVideoC || content, token);
-        if (kindC === "audio") resultC = await generateMusic(provOtherC || content, token);
-        if (kindC === "speech") resultC = await generateSpeech(provOtherC || content, token);
-
-        if (kindC === "image" && resultC && resultC.image_base64) {
-          var mimeC = resultC.mime || "image/png";
-          var imageUrlC = base64ToDisplayUrl(resultC.image_base64, mimeC);
-          setMessages(function (prev) {
-            var p = prev.slice();
-            p[p.length - 1] = {
-              role: "assistant",
-              content: "Imagem gerada.",
-              timestamp: timeLabel(),
-              media: { type: "image", url: imageUrlC },
-            };
-            return p;
-          });
-        } else if (kindC === "image" && resultC && (resultC.url || resultC.image_url)) {
-          var imgUC = resultC.url || resultC.image_url;
-          setMessages(function (prev) {
-            var p = prev.slice();
-            p[p.length - 1] = {
-              role: "assistant",
-              content: "Imagem gerada.",
-              timestamp: timeLabel(),
-              media: { type: "image", url: imgUC },
-            };
-            return p;
-          });
-        } else {
-          var mediaUrlC =
-            (resultC &&
-              (resultC.url ||
-                resultC.video_url ||
-                resultC.audio_url ||
-                resultC.file_url ||
-                resultC.output_url)) ||
-            "";
-          if (mediaUrlC) {
-            setMessages(function (prev) {
-              var p = prev.slice();
-              p[p.length - 1] = {
-                role: "assistant",
-                content:
-                  kindC === "video"
-                    ? "Vídeo gerado."
-                    : kindC === "speech"
-                      ? "Fala gerada."
-                      : "Áudio gerado.",
-                timestamp: timeLabel(),
-                media: {
-                  type: kindC === "video" ? "video" : "audio",
-                  url: mediaUrlC,
-                },
-              };
-              return p;
-            });
-          } else {
-            setMessages(function (prev) {
-              var p = prev.slice();
-              p[p.length - 1] = {
-                role: "assistant",
-                content: USER_FACING_TRY_AGAIN,
-                timestamp: timeLabel(),
-              };
-              return p;
-            });
-          }
-        }
-      } catch (errC) {
-        var msgC = errC instanceof Error ? errC.message : String(errC);
-        var netDownC =
-          msgC === "Failed to fetch" ||
-          msgC.indexOf("NetworkError") !== -1 ||
-          msgC.indexOf("Load failed") !== -1;
-        setMessages(function (prev) {
-          var p = prev.slice();
-          p[p.length - 1] = {
-            role: "assistant",
-            content: netDownC ? USER_FACING_CONNECTION : USER_FACING_TRY_AGAIN,
-            timestamp: timeLabel(),
-          };
-          return p;
-        });
-      } finally {
-        setMediaBusy(false);
-      }
-
-      setMessages(function (prev) {
-        return prev.concat([
-          {
-            role: "assistant",
-            content: "Gerando ficheiros reais (Excel, PDF, …)…",
-            timestamp: timeLabel(),
-          },
-        ]);
-      });
-      setLoading(true);
-      try {
-        var assistHybrid = shouldOmitPriorAssistantForSmartExport(content)
-          ? ""
-          : getLastAssistantExportText(messages) ||
-            "[Mídia gerada neste pedido.] " + content.slice(0, 4000);
-        var rC = await multimodalSmartExport(content, token, true, assistHybrid);
-        if (!rC || !rC.ok) throw new Error((rC && rC.detail) || "Falha");
-        var sfC = Array.isArray(rC.files) ? rC.files : [];
-        var ttsUC = rC.tts && rC.tts.audio_url;
-        setMessages(function (prev) {
-          var p = prev.slice();
-          if (p.length)
-            p[p.length - 1] = {
-              role: "assistant",
-              content: String(rC.summary || "").trim(),
-              timestamp: timeLabel(),
-              smartFiles: sfC,
-              ttsAudioUrl: ttsUC || undefined,
-            };
-          return p;
-        });
-      } catch (eC) {
-        var meC = eC instanceof Error ? eC.message : String(eC);
-        setMessages(function (prev) {
-          var p = prev.slice();
-          if (p.length)
-            p[p.length - 1] = {
-              role: "assistant",
-              content: /400|não suportad|inválid/i.test(meC)
-                ? "Não reconheci o pedido para gerar ficheiros automaticamente. Tente reformular (planilha, PDF, contrato)."
-                : USER_FACING_TRY_AGAIN,
-              timestamp: timeLabel(),
-            };
-          return p;
-        });
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    if (smartW) {
-      var assistForFiles = shouldOmitPriorAssistantForSmartExport(content)
-        ? ""
-        : getLastAssistantExportText(messages);
-      setMessages(function (prev) {
-        return prev.concat([
-          { role: "user", content: content, timestamp: timeLabel() },
-          {
-            role: "assistant",
-            content: "Gerando ficheiros reais (Excel, PDF, …)…",
-            timestamp: timeLabel(),
-          },
-        ]);
-      });
-      setInput("");
-      setLoading(true);
-      try {
-        var r = await multimodalSmartExport(content, token, true, assistForFiles);
-        if (!r || !r.ok) throw new Error((r && r.detail) || "Falha");
-        var sf = Array.isArray(r.files) ? r.files : [];
-        var ttsU = r.tts && r.tts.audio_url;
-        setMessages(function (prev) {
-          var p = prev.slice();
-          if (p.length) p[p.length - 1] = {
-            role: "assistant",
-            content: String(r.summary || "").trim(),
-            timestamp: timeLabel(),
-            smartFiles: sf,
-            ttsAudioUrl: ttsU || undefined,
-          };
-          return p;
-        });
-      } catch (e) {
-        var me = e instanceof Error ? e.message : String(e);
-        setMessages(function (prev) {
-          var p = prev.slice();
-          if (p.length)
-            p[p.length - 1] = {
-              role: "assistant",
-              content: /400|não suportad|inválid/i.test(me)
-                ? "Não reconheci o pedido para gerar ficheiros automaticamente. Tente: «faz uma planilha financeira e manda» ou «gera um contrato»."
-                : USER_FACING_TRY_AGAIN,
-              timestamp: timeLabel(),
-            };
-          return p;
-        });
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
 
     // Fluxo especial: texto pedindo mídia chama diretamente o gerador real.
     if (wantsImage || wantsVideo || wantsAudio || wantsSpeech) {
@@ -1232,21 +372,19 @@ export default function ChatPage() {
             : kind === "speech"
               ? "voz"
               : "audio";
-      var userMsg = { role: "user", content: content, timestamp: timeLabel() };
-      var genLabel = mediaGenPlaceholderLabel(kind);
+      var userMsg = { role: "user", content: content };
       setMessages((prev) =>
         prev.concat([
           userMsg,
           {
             role: "assistant",
-            content: genLabel,
-            timestamp: timeLabel(),
+            content: "Gerando " + label + " no provedor real...",
           },
         ])
       );
       setInput("");
       setAttachments([]);
-      setMediaBusy(true);
+      setLoading(true);
       try {
         var result;
         var provImage = extractPromptForProvider(content, "image");
@@ -1268,7 +406,6 @@ export default function ChatPage() {
             p[p.length - 1] = {
               role: "assistant",
               content: "Imagem gerada.",
-              timestamp: timeLabel(),
               media: { type: "image", url: imageUrl },
             };
             return p;
@@ -1283,7 +420,6 @@ export default function ChatPage() {
             p[p.length - 1] = {
               role: "assistant",
               content: "Imagem gerada.",
-              timestamp: timeLabel(),
               media: { type: "image", url: imgU },
             };
             return p;
@@ -1300,93 +436,140 @@ export default function ChatPage() {
               result.output_url)) ||
           "";
         if (mediaUrl) {
-          setMessages((prev) => {
-            var p = prev.slice();
-            p[p.length - 1] = {
-              role: "assistant",
-              content:
-                kind === "video"
-                  ? "Vídeo gerado."
-                  : kind === "speech"
-                    ? "Fala gerada."
-                    : "Áudio gerado.",
-              timestamp: timeLabel(),
-              media: {
-                type: kind === "video" ? "video" : "audio",
-                url: mediaUrl,
+          setMessages((prev) =>
+            prev.concat([
+              {
+                role: "assistant",
+                content:
+                  kind === "video"
+                    ? "Vídeo gerado."
+                    : kind === "speech"
+                      ? "Fala gerada."
+                      : "Áudio gerado.",
+                media: {
+                  type: kind === "video" ? "video" : "audio",
+                  url: mediaUrl,
+                },
               },
-            };
-            return p;
-          });
+            ])
+          );
           return;
         }
 
-        setMessages((prev) => {
-          var p = prev.slice();
-          p[p.length - 1] = {
-            role: "assistant",
-            content: USER_FACING_TRY_AGAIN,
-            timestamp: timeLabel(),
-          };
-          return p;
-        });
+        setMessages((prev) =>
+          prev.concat([
+            {
+              role: "assistant",
+              content:
+                "[MÍDIA V45] Provedor retornou resposta sem URL de arquivo: " +
+                JSON.stringify(result || {}),
+            },
+          ])
+        );
       } catch (err) {
         var msg = err instanceof Error ? err.message : String(err);
-        var netDown =
-          msg === "Failed to fetch" ||
-          msg.indexOf("NetworkError") !== -1 ||
-          msg.indexOf("Load failed") !== -1;
+        // FAIL FAST ABSOLUTO
         setMessages((prev) => {
           var p = prev.slice();
+          var out = msg && String(msg).trim().length > 0
+            ? "[MÍDIA FALHA — V45] " + String(msg).trim()
+            : "[MÍDIA FALHA — V45] Erro desconhecido no gerador.";
           p[p.length - 1] = {
             role: "assistant",
-            content: netDown ? USER_FACING_CONNECTION : USER_FACING_TRY_AGAIN,
-            timestamp: timeLabel(),
+            content: out,
           };
           return p;
         });
       } finally {
-        setMediaBusy(false);
+        setLoading(false);
       }
       return;
     }
 
-    // Fluxo padrão: chat textual (público ou autenticado).
-    var nextHistoryRaw = messages.concat([{ role: "user", content: content, timestamp: timeLabel() }]);
-    var nextHistory = applyFocusToHistory(nextHistoryRaw);
-    setMessages(nextHistoryRaw);
+    // Fluxo padrão: chat textual (público, autenticado, ou DESKTOP OFFLINE).
+    var nextHistory = messages.concat([{ role: "user", content: content }]);
+    setMessages(nextHistory);
     setInput("");
     setAttachments([]);
     setLoading(true);
     try {
       var reply;
       var hasMedia = attachments && attachments.length > 0;
-      if (token) {
+
+      // ── MODO DESKTOP SOBERANO (offline) ─────────────────────
+      if (desktopMode && desktopReady && !hasMedia) {
+        setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
+        const controller = new AbortController();
+        abortRef.current = controller;
+        setCanStop(true);
+        try {
+          await desktopChatStream(nextHistory, function (chunk) {
+            setMessages((prev) => {
+              var p = prev.slice();
+              var last = p[p.length - 1];
+              if (last && last.role === "assistant") {
+                p[p.length - 1] = { ...last, content: last.content + chunk };
+              }
+              return p;
+            });
+          }, { signal: controller.signal, max_tokens: 2048 });
+        } catch (desktopErr) {
+          var dmsg = desktopErr instanceof Error ? desktopErr.message : String(desktopErr);
+          setMessages((prev) => {
+            var p = prev.slice();
+            var last = p[p.length - 1];
+            if (last && last.role === "assistant") {
+              p[p.length - 1] = { ...last, content: "[Runtime Local] " + dmsg };
+            }
+            return p;
+          });
+        } finally {
+          setCanStop(false);
+          abortRef.current = null;
+        }
+      }
+      // ── MODO DESKTOP SEM RUNTIME — DIAGNÓSTICO TÉCNICO REAL ─────────────────────────────
+      else if (desktopMode && !desktopReady) {
+        var diagParts = ["[Syntexa Desktop V45] BOOT BLOQUEADO — Foundation Model não operacional."];
+        if (bootFailures.length > 0) {
+          diagParts.push("Falhas detectadas:");
+          bootFailures.forEach(function (f) {
+            diagParts.push("• " + (f.component || "unknown") + ": " + (f.error || "sem detalhe"));
+          });
+        } else if (bootDiagnostic && bootDiagnostic.error) {
+          diagParts.push("Erro: " + bootDiagnostic.error);
+        } else {
+          diagParts.push("Checkpoint 70B inexistente ou não treinado.");
+          diagParts.push("Verifique: checkpoints/foundation/ deve conter manifest.json + syntexa_foundation_weights.pt + tokenizer/");
+        }
+        diagParts.push("\nLogs: logs/runtime.log | logs/inference.log | logs/boot_validation.log");
+        setMessages((prev) => prev.concat([{
+          role: "assistant",
+          content: diagParts.join("\n")
+        }]));
+      }
+      // ── MODO ONLINE (API remota) ─────────────────────────────
+      else if (token) {
         try {
           if (hasMedia) {
-            reply = await chatCompletionWithMedia(token, nextHistory, attachments, currentSessionId);
-            setMessages((prev) => prev.concat([{ role: "assistant", content: sanitizeChatText(reply), timestamp: timeLabel() }]));
+            reply = await chatCompletionWithMedia(token, nextHistory, attachments);
+            setMessages((prev) => prev.concat([{ role: "assistant", content: reply }]));
           } else {
-            setMessages((prev) => prev.concat([{ role: "assistant", content: "", timestamp: timeLabel() }]));
+            setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
             const controller = new AbortController();
             abortRef.current = controller;
             setCanStop(true);
             try {
-              await chatCompletionStreamWithFallback(token, nextHistory, function (chunk) {
+              await chatCompletionStream(token, nextHistory, function (chunk) {
                 setMessages((prev) => {
                   var p = prev.slice();
                   var last = p[p.length - 1];
                   if (last && last.role === "assistant") {
-                    p[p.length - 1] = {
-                      ...last,
-                      content: sanitizeChatStreamDelta(last.content, chunk),
-                      timestamp: last.timestamp || timeLabel(),
-                    };
+                    p[p.length - 1] = { ...last, content: last.content + chunk };
                   }
                   return p;
                 });
-              }, controller.signal, currentSessionId);
-              finalizeStreamingAssistantText();
+              }, controller.signal);
             } finally {
               setCanStop(false);
               abortRef.current = null;
@@ -1398,76 +581,52 @@ export default function ChatPage() {
           try {
             window.localStorage.removeItem("syntexa_token");
           } catch {}
-          setAuthToken(null);
           setPlan("anon");
           if (hasMedia) {
             reply = await publicChatWithMedia(nextHistory, attachments);
-            setMessages((prev) => prev.concat([{ role: "assistant", content: sanitizeChatText(reply), timestamp: timeLabel() }]));
+            setMessages((prev) => prev.concat([{ role: "assistant", content: reply }]));
           } else {
-            setMessages((prev) => prev.concat([{ role: "assistant", content: "", timestamp: timeLabel() }]));
+            setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
             const controller = new AbortController();
             abortRef.current = controller;
             setCanStop(true);
             try {
-              await publicChatStreamWithFallback(nextHistory, function (chunk) {
+              await publicChatStream(nextHistory, function (chunk) {
                 setMessages((prev) => {
                   var p = prev.slice();
                   var last = p[p.length - 1];
                   if (last && last.role === "assistant") {
-                    p[p.length - 1] = {
-                      ...last,
-                      content: sanitizeChatStreamDelta(last.content, chunk),
-                      timestamp: last.timestamp || timeLabel(),
-                    };
+                    p[p.length - 1] = { ...last, content: last.content + chunk };
                   }
                   return p;
                 });
               }, controller.signal);
-              finalizeStreamingAssistantText();
             } finally {
               setCanStop(false);
               abortRef.current = null;
             }
           }
         }
-        try {
-          var freshToken = null;
-          try {
-            freshToken = window.localStorage.getItem("syntexa_token");
-          } catch (_) {
-            freshToken = null;
-          }
-          var freshSessionsAny = await listChatSessions(freshToken);
-          if (Array.isArray(freshSessionsAny) && freshSessionsAny.length > 0 && !currentSessionId) {
-            setCurrentSessionId(freshSessionsAny[0].id);
-          }
-        } catch {}
-        setSessionsRefreshKey(function (n) { return n + 1; });
       } else {
         if (hasMedia) {
           reply = await publicChatWithMedia(nextHistory, attachments);
-          setMessages((prev) => prev.concat([{ role: "assistant", content: sanitizeChatText(reply), timestamp: timeLabel() }]));
+          setMessages((prev) => prev.concat([{ role: "assistant", content: reply }]));
         } else {
-          setMessages((prev) => prev.concat([{ role: "assistant", content: "", timestamp: timeLabel() }]));
+          setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
           const controller = new AbortController();
           abortRef.current = controller;
           setCanStop(true);
           try {
-            await publicChatStreamWithFallback(nextHistory, function (chunk) {
+            await publicChatStream(nextHistory, function (chunk) {
               setMessages((prev) => {
                 var p = prev.slice();
                 var last = p[p.length - 1];
                 if (last && last.role === "assistant") {
-                  p[p.length - 1] = {
-                    ...last,
-                    content: sanitizeChatStreamDelta(last.content, chunk),
-                    timestamp: last.timestamp || timeLabel(),
-                  };
+                  p[p.length - 1] = { ...last, content: last.content + chunk };
                 }
                 return p;
               });
             }, controller.signal);
-            finalizeStreamingAssistantText();
           } finally {
             setCanStop(false);
             abortRef.current = null;
@@ -1475,293 +634,51 @@ export default function ChatPage() {
         }
       }
     } catch (err) {
-      try {
-        if (typeof console !== "undefined" && console.error) console.error("[chat]", err);
-      } catch (_) {}
-      var msg = err instanceof Error ? err.message : String(err);
-      var netDown =
-        msg === "Failed to fetch" ||
-        msg.indexOf("NetworkError") !== -1 ||
-        msg.indexOf("Load failed") !== -1;
-      var recovered = false;
-      try {
-        var rt = null;
-        try {
-          rt = window.localStorage.getItem("syntexa_token");
-        } catch (_) {
-          rt = null;
-        }
-        if (rt) {
-          var fullRec = await chatCompletion(rt, nextHistory, currentSessionId);
-          recovered = true;
-          setMessages(function (prev) {
-            var p = prev.slice();
-            if (p.length && p[p.length - 1].role === "assistant") {
-              p[p.length - 1] = {
-                ...p[p.length - 1],
-                content: sanitizeChatText(fullRec),
-                timestamp: timeLabel(),
-              };
-              return p;
-            }
-            return prev.concat([{ role: "assistant", content: sanitizeChatText(fullRec), timestamp: timeLabel() }]);
-          });
-          try {
-            var refreshed = await listChatSessions(rt);
-            if (Array.isArray(refreshed) && refreshed.length > 0 && !currentSessionId) {
-              setCurrentSessionId(refreshed[0].id);
-            }
-          } catch {}
-          setSessionsRefreshKey(function (n) { return n + 1; });
-        } else {
-          var fullPub = await publicChat(nextHistory);
-          recovered = true;
-          setMessages(function (prev) {
-            var p = prev.slice();
-            if (p.length && p[p.length - 1].role === "assistant") {
-              p[p.length - 1] = {
-                ...p[p.length - 1],
-                content: sanitizeChatText(fullPub),
-                timestamp: timeLabel(),
-              };
-              return p;
-            }
-            return prev.concat([{ role: "assistant", content: sanitizeChatText(fullPub), timestamp: timeLabel() }]);
-          });
-        }
-      } catch (re) {
-        try {
-          if (typeof console !== "undefined" && console.error) console.error("[chat recover]", re);
-        } catch (_) {}
+      var rawMsg = err instanceof Error ? err.message : String(err);
+      var detail = err instanceof Error && err.cause ? String(err.cause) : "";
+      var stack = err instanceof Error && err.stack ? err.stack : "";
+      // Detecta indisponibilidade do motor de IA (503 / runtime offline) e mostra mensagem clara.
+      var lower = String(rawMsg + " " + detail).toLowerCase();
+      var isRuntimeOutage =
+        /503|runtime|inference|gateway|ai worker|provider configurado|nao foi possivel concluir|não foi possível concluir/i.test(lower);
+      var isLimitError = /403|forbidden|limite|limit/i.test(lower);
+      var displayMsg;
+      if (isLimitError) {
+        displayMsg = "Você atingiu o limite de mensagens do seu plano neste mês. Faça upgrade para continuar usando a IA sem interrupções.";
+      } else if (desktopMode && !desktopReady) {
+        displayMsg = "Runtime local Syntexa não está pronto. Verifique o boot diagnostic do backend local.";
+      } else if (isRuntimeOutage) {
+        displayMsg = "O motor de IA está temporariamente indisponível. Estamos restabelecendo o serviço — tente novamente em instantes.";
+      } else {
+        displayMsg = rawMsg || "Não foi possível concluir agora. Tente novamente.";
       }
-      if (!recovered) {
-        setMessages(function (prev) {
-          var p2 = prev.slice();
-          if (p2.length && p2[p2.length - 1].role === "assistant") {
-            p2[p2.length - 1] = {
-              ...p2[p2.length - 1],
-              content: netDown ? USER_FACING_CONNECTION : USER_FACING_TRY_AGAIN,
-              timestamp: timeLabel(),
-            };
-            return p2;
-          }
-          return prev.concat([
-            {
-              role: "assistant",
-              content: netDown ? USER_FACING_CONNECTION : USER_FACING_TRY_AGAIN,
-              timestamp: timeLabel(),
-            },
-          ]);
-        });
+      // Em desenvolvimento, exibe detalhes técnicos abaixo da mensagem amigável.
+      var isDev = typeof window !== "undefined" && /^(localhost|127\.|192\.168\.)/i.test(window.location.hostname);
+      if (isDev && (detail || stack)) {
+        displayMsg += "\n\n— debug —\n" + (detail ? detail + "\n" : "") + (stack ? stack.split("\n").slice(0, 3).join("\n") : "");
       }
+      setMessages((prev) => prev.concat([
+        { role: "assistant", content: displayMsg }
+      ]));
     } finally {
       setLoading(false);
     }
   }
 
-  async function sendMessage() {
-    if (sendBusyRef.current) return;
-    var content = input.trim();
-    if (!content || loading || mediaBusy || fileExportBusy) return;
-    var _now = typeof Date !== "undefined" ? Date.now() : 0;
-    if (_now && _now - lastSendAtRef.current < 400) return;
-    lastSendAtRef.current = _now;
-
-    var userMessages = messages.filter((m) => m.role === "user").length;
-    var maxForPlan =
-      plan === "anon"
-        ? 120
-        : plan === "free"
-          ? 200
-          : plan === "basic"
-            ? 500
-            : 999999;
-    if (userMessages >= maxForPlan) {
-      setMessages((prev) =>
-        prev.concat([
-          {
-            role: "assistant",
-            content:
-              "Limite de mensagens do modo atual foi atingido (uso mensal ou diário, conforme o plano). Faça login com conta gratuita ou paga para limites maiores, ou aguarde a renovação do período.",
-            timestamp: timeLabel(),
-          },
-        ])
-      );
-      return;
-    }
-
-    sendBusyRef.current = true;
-    try {
-      await processOutgoingUserContent(content);
-    } finally {
-      sendBusyRef.current = false;
-    }
-  }
-
-  /** Voz: mesmo pipeline que Enter (mídia + ficheiros + chat), sem /voice/conversation no servidor. */
-  async function submitVoiceTranscript(raw) {
-    var content = String(raw || "").trim();
-    if (!content || loading || mediaBusy || fileExportBusy) return;
-    if (sendBusyRef.current) return;
-    var userMessages = messages.filter((m) => m.role === "user").length;
-    var maxForPlan =
-      plan === "anon"
-        ? 120
-        : plan === "free"
-          ? 200
-          : plan === "basic"
-            ? 500
-            : 999999;
-    if (userMessages >= maxForPlan) {
-      setMessages((prev) =>
-        prev.concat([
-          {
-            role: "assistant",
-            content:
-              "Limite de mensagens do modo atual foi atingido (uso mensal ou diário, conforme o plano). Faça login com conta gratuita ou paga para limites maiores, ou aguarde a renovação do período.",
-            timestamp: timeLabel(),
-          },
-        ])
-      );
-      return;
-    }
-    sendBusyRef.current = true;
-    try {
-      await processOutgoingUserContent(content);
-    } finally {
-      sendBusyRef.current = false;
-    }
-  }
-
-  /**
-   * Resposta de POST /v1/multimodal/voice/conversation (STT + intenções no servidor + TTS).
-   * Mantido completo: imagem, vídeo, áudio, smart files, texto. Usar com AudioRecorder pipelineMode="server".
-   * Padrão no UI: pipelineMode="chat" (STT → submitVoiceTranscript = mesmo fluxo que digitar).
-   */
-  function applyMultimodalVoiceServerResult(data) {
-    var tr = (data && data.transcript) || "";
-    var reply = (data && data.reply) || "";
-    var tts = data && data.tts;
-    var ttsU = tts && tts.audio_url;
-    var files = (data && data.files) || [];
-    var smartFs = files.length ? files : undefined;
-    var imgB64 = data && data.image_base64;
-    var imgMime = (data && data.mime) || "image/png";
-    var imgRemote = data && data.image_url;
-    var vidU =
-      (data && data.video_url) ||
-      (data && data.media && data.media.type === "video" && data.media.url);
-    var musU =
-      (data && data.audio_url) ||
-      (data && data.media && data.media.type === "audio" && data.media.url);
-
-    if (imgB64) {
-      var imageUrl = base64ToDisplayUrl(imgB64, imgMime);
-      setMessages(function (prev) {
-        return prev.concat([
-          { role: "user", content: tr || "(áudio)", timestamp: timeLabel() },
-          {
-            role: "assistant",
-            content: "Imagem gerada.",
-            timestamp: timeLabel(),
-            media: { type: "image", url: imageUrl },
-            ttsAudioUrl: ttsU || undefined,
-          },
-        ]);
-      });
-      return;
-    }
-    if (imgRemote) {
-      setMessages(function (prev) {
-        return prev.concat([
-          { role: "user", content: tr || "(áudio)", timestamp: timeLabel() },
-          {
-            role: "assistant",
-            content: "Imagem gerada.",
-            timestamp: timeLabel(),
-            media: { type: "image", url: String(imgRemote) },
-            ttsAudioUrl: ttsU || undefined,
-          },
-        ]);
-      });
-      return;
-    }
-    if (vidU) {
-      setMessages(function (prev) {
-        return prev.concat([
-          { role: "user", content: tr || "(áudio)", timestamp: timeLabel() },
-          {
-            role: "assistant",
-            content: sanitizeChatText(reply) || "Vídeo gerado.",
-            timestamp: timeLabel(),
-            media: { type: "video", url: String(vidU) },
-            ttsAudioUrl: ttsU || undefined,
-          },
-        ]);
-      });
-      return;
-    }
-    if (musU) {
-      setMessages(function (prev) {
-        return prev.concat([
-          { role: "user", content: tr || "(áudio)", timestamp: timeLabel() },
-          {
-            role: "assistant",
-            content: sanitizeChatText(reply) || "Áudio gerado.",
-            timestamp: timeLabel(),
-            media: { type: "audio", url: String(musU) },
-            ttsAudioUrl: ttsU || undefined,
-          },
-        ]);
-      });
-      return;
-    }
-    if (smartFs) {
-      setMessages(function (prev) {
-        return prev.concat([
-          { role: "user", content: tr || "(áudio)", timestamp: timeLabel() },
-          {
-            role: "assistant",
-            content: sanitizeChatText(reply),
-            timestamp: timeLabel(),
-            smartFiles: smartFs,
-            ttsAudioUrl: ttsU || undefined,
-          },
-        ]);
-      });
-      return;
-    }
-    setMessages(function (prev) {
-      return prev.concat([
-        { role: "user", content: tr || "(áudio)", timestamp: timeLabel() },
-        {
-          role: "assistant",
-          content: sanitizeChatText(reply),
-          timestamp: timeLabel(),
-          ttsAudioUrl: ttsU || undefined,
-        },
-      ]);
-    });
-  }
-
   function handleKeyDown(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (loading || mediaBusy || fileExportBusy) return;
-      sendMessage();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  }
+
+  function autoGrowTextarea() {
+    var el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    var newHeight = Math.min(Math.max(el.scrollHeight, 44), 112);
+    el.style.height = newHeight + "px";
   }
 
   function handleNewConversation() {
-    setMessages([
-      {
-        role: "assistant",
-        content: isEnglishUi
-          ? "Hello, this is Syntexa. How can I help you?"
-          : "Olá, aqui é a Syntexa. Em que posso te ajudar?",
-        timestamp: "",
-      },
-    ]);
+    setMessages((prev) => prev.slice(0, 2));
     setAttachments([]);
     setCurrentSessionId(null);
   }
@@ -1772,112 +689,9 @@ export default function ChatPage() {
     setAttachments(files);
   }
 
-  function openFilePicker() {
-    var inputEl = document.getElementById("syntexa-file-input");
-    if (inputEl) inputEl.click();
-  }
-
-  function applyQuickAction(kind) {
-    setShowQuickActions(false);
-    if (kind === "upload") {
-      openFilePicker();
-      return;
-    }
-    if (kind === "image") {
-      setInput("Gere uma imagem com estilo premium sobre: ");
-      return;
-    }
-    if (kind === "web") {
-      setInput("Pesquise na web e me traga as fontes sobre: ");
-      return;
-    }
-    if (kind === "deep") {
-      setInput("Investigue a fundo este tema e me entregue um plano completo: ");
-      return;
-    }
-    if (kind === "canvas") {
-      window.location.href = "/planos";
-      return;
-    }
-    if (kind === "github") {
-      if (isAdmin) {
-        window.location.href = "/admin/mobile-release";
-      } else {
-        setInput("Me ajude com versionamento GitHub e pipeline de release para este projeto: ");
-      }
-      return;
-    }
-    if (kind === "questionnaire") {
-      if (isAdmin) {
-        window.location.href = "/admin/institucional";
-      } else {
-        setInput("Monte um questionário estruturado para coleta de requisitos com clientes: ");
-      }
-    }
-  }
-
-  function handleDragOverChat(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOver(true);
-  }
-
-  function handleDragLeaveChat(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOver(false);
-  }
-
-  function handleDropChat(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOver(false);
-    var fl = Array.from(e.dataTransfer.files || []);
-    if (fl.length > 0) setAttachments(fl);
-  }
-
-  async function handleAnalyzeAttachments() {
-    if (!attachments.length || multimodalBusy || loading || mediaBusy) return;
-    var tok = null;
-    try {
-      tok = window.localStorage.getItem("syntexa_token");
-    } catch (e) {
-      tok = null;
-    }
-    setMultimodalBusy(true);
-    try {
-      for (var i = 0; i < attachments.length; i++) {
-        var file = attachments[i];
-        var data = await multimodalAnalyze(file, { deep: false, token: tok });
-        var summary = formatMultimodalResult(data);
-        setMessages(function (prev) {
-          return prev.concat([
-            {
-              role: "assistant",
-            content: sanitizeChatText(summary),
-              timestamp: timeLabel(),
-            },
-          ]);
-        });
-      }
-    } catch (err) {
-      setMessages(function (prev) {
-        return prev.concat([
-          {
-            role: "assistant",
-            content: USER_FACING_TRY_AGAIN,
-            timestamp: timeLabel(),
-          },
-        ]);
-      });
-    } finally {
-      setMultimodalBusy(false);
-    }
-  }
-
   async function handleGenerateMedia(kind) {
     var prompt = input.trim();
-    if (!prompt || loading || mediaBusy) return;
+    if (!prompt || loading) return;
     var tok = null;
     try {
       tok = window.localStorage.getItem("syntexa_token");
@@ -1892,15 +706,9 @@ export default function ChatPage() {
           : kind === "speech"
             ? "voz"
             : "audio";
-    var genLine = mediaGenPlaceholderLabel(kind);
-    setMessages((prev) =>
-      prev.concat([
-        { role: "user", content: "Gerar " + label + ": " + prompt, timestamp: timeLabel() },
-        { role: "assistant", content: genLine, timestamp: timeLabel() },
-      ])
-    );
+    setMessages((prev) => prev.concat([{ role: "user", content: "Gerar " + label + ": " + prompt }]));
     setInput("");
-    setMediaBusy(true);
+    setLoading(true);
     try {
       var result;
       var pImg = extractPromptForProvider(prompt, "image") || prompt;
@@ -1914,31 +722,29 @@ export default function ChatPage() {
       if (kind === "image" && result && result.image_base64) {
         var mime2 = result.mime || "image/png";
         var imageUrl2 = base64ToDisplayUrl(result.image_base64, mime2);
-        setMessages((prev) => {
-          var p = prev.slice();
-          p[p.length - 1] = {
-            role: "assistant",
-            content: "Imagem gerada.",
-            timestamp: timeLabel(),
-            media: { type: "image", url: imageUrl2 },
-          };
-          return p;
-        });
+        setMessages((prev) =>
+          prev.concat([
+            {
+              role: "assistant",
+              content: "Imagem gerada.",
+              media: { type: "image", url: imageUrl2 },
+            },
+          ])
+        );
         return;
       }
 
       if (kind === "image" && result && (result.url || result.image_url)) {
         var imgU2 = result.url || result.image_url;
-        setMessages((prev) => {
-          var p = prev.slice();
-          p[p.length - 1] = {
-            role: "assistant",
-            content: "Imagem gerada.",
-            timestamp: timeLabel(),
-            media: { type: "image", url: imgU2 },
-          };
-          return p;
-        });
+        setMessages((prev) =>
+          prev.concat([
+            {
+              role: "assistant",
+              content: "Imagem gerada.",
+              media: { type: "image", url: imgU2 },
+            },
+          ])
+        );
         return;
       }
 
@@ -1946,141 +752,71 @@ export default function ChatPage() {
         (result && (result.url || result.video_url || result.audio_url || result.file_url || result.output_url)) ||
         "";
       if (mediaUrl) {
-        setMessages((prev) => {
-          var p = prev.slice();
-          p[p.length - 1] = {
-            role: "assistant",
-            content:
-              kind === "video"
-                ? "Vídeo gerado."
-                : kind === "speech"
-                  ? "Fala gerada."
-                  : "Áudio gerado.",
-            timestamp: timeLabel(),
-            media: { type: kind === "video" ? "video" : "audio", url: mediaUrl },
-          };
-          return p;
-        });
+        setMessages((prev) =>
+          prev.concat([
+            {
+              role: "assistant",
+              content:
+                kind === "video"
+                  ? "Vídeo gerado."
+                  : kind === "speech"
+                    ? "Fala gerada."
+                    : "Áudio gerado.",
+              media: { type: kind === "video" ? "video" : "audio", url: mediaUrl },
+            },
+          ])
+        );
         return;
       }
 
-      setMessages((prev) => {
-        var p = prev.slice();
-        p[p.length - 1] = {
-          role: "assistant",
-          content: "Não consegui gerar o arquivo de mídia agora. Tente novamente em alguns instantes.",
-          timestamp: timeLabel(),
-        };
-        return p;
-      });
+      setMessages((prev) =>
+        prev.concat([
+          {
+            role: "assistant",
+            content: "[MÍDIA V45] Provedor retornou resposta vazia ou sem URL. Nenhum fallback disponível."
+          },
+        ])
+      );
     } catch (err) {
       var raw = err instanceof Error ? err.message : String(err);
-      var netDown =
-        raw === "Failed to fetch" ||
-        raw.indexOf("NetworkError") !== -1 ||
-        raw.indexOf("Load failed") !== -1;
-      setMessages((prev) => {
-        var p = prev.slice();
-        p[p.length - 1] = {
-          role: "assistant",
-          content: netDown ? USER_FACING_CONNECTION : USER_FACING_TRY_AGAIN,
-          timestamp: timeLabel(),
-        };
-        return p;
-      });
+      // FAIL FAST ABSOLUTO: nunca usar "tente novamente"
+      var userMsg = raw && String(raw).trim().length > 0
+        ? "[MÍDIA FALHA — V45] " + String(raw).trim()
+        : "[MÍDIA FALHA — V45] Erro desconhecido no gerador de mídia.";
+      setMessages((prev) =>
+        prev.concat([
+          {
+            role: "assistant",
+            content: userMsg,
+          },
+        ])
+      );
     } finally {
-      setMediaBusy(false);
+      setLoading(false);
     }
   }
 
-  function exportAssistantFileForMessage(kind, text) {
-    var tok = null;
-    try {
-      tok = window.localStorage.getItem("syntexa_token");
-    } catch (e) {
-      tok = null;
+  function toggleVoice() {
+    if (!recognition) return;
+    if (listening) {
+      recognition.stop();
+      setListening(false);
+      return;
     }
-    setFileExportBusy(true);
-    (async function () {
-      try {
-        await downloadStructuredExport(kind, text, tok || undefined);
-      } catch (e) {
-        setMessages(function (prev) {
-          return prev.concat([
-            {
-              role: "assistant",
-              content: USER_FACING_TRY_AGAIN,
-              timestamp: timeLabel(),
-            },
-          ]);
-        });
-      } finally {
-        setFileExportBusy(false);
-      }
-    })();
-  }
-
-  function listenAssistantForMessage(globalIdx, text) {
-    var tok = null;
-    try {
-      tok = window.localStorage.getItem("syntexa_token");
-    } catch (e) {
-      tok = null;
-    }
-    setTtsBusyIdx(globalIdx);
-    (async function () {
-      try {
-        var r = await generateSpeech(plainTextForExport(text).slice(0, 8000), tok);
-        var url = r && r.audio_url;
-        if (url) {
-          setMessages(function (prev) {
-            var p = prev.slice();
-            if (p[globalIdx])
-              p[globalIdx] = Object.assign({}, p[globalIdx], { ttsAudioUrl: url });
-            return p;
-          });
-        }
-      } catch (e) {
-        setMessages(function (prev) {
-          return prev.concat([
-            {
-              role: "assistant",
-              content: USER_FACING_TRY_AGAIN,
-              timestamp: timeLabel(),
-            },
-          ]);
-        });
-      } finally {
-        setTtsBusyIdx(null);
-      }
-    })();
-  }
-
-  function downloadAttachmentFile(file) {
-    try {
-      var u = URL.createObjectURL(file);
-      var a = document.createElement("a");
-      a.href = u;
-      a.download = file.name || "anexo";
-      a.click();
-      setTimeout(function () {
-        try {
-          URL.revokeObjectURL(u);
-        } catch (e2) {}
-      }, 2500);
-    } catch (e) {}
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "pt-BR";
+    recognition.onresult = function (e) {
+      var t = (e.results[0] && e.results[0][0]) ? e.results[0][0].transcript : "";
+      if (t) setInput(function (prev) { return (prev ? prev + " " : "") + t; });
+    };
+    recognition.onend = function () { setListening(false); };
+    recognition.start();
+    setListening(true);
   }
 
   var visible = messages.filter((m) => m.role !== "system");
-  var lastVisible = visible.length ? visible[visible.length - 1] : null;
-  var waitingFirstStreamToken =
-    loading &&
-    !fileExportBusy &&
-    !mediaBusy &&
-    lastVisible &&
-    lastVisible.role === "assistant" &&
-    !String(lastVisible.content || "").trim();
-  var showTyping = Boolean(waitingFirstStreamToken);
+  var showTyping = loading && visible.length > 0;
 
   function handleStop() {
     try {
@@ -2094,8 +830,7 @@ export default function ChatPage() {
   return React.createElement(
     ChatLayout,
     {
-      onNewConversation: handleNewConversation,
-      sessionsRefreshKey: sessionsRefreshKey,
+        onNewConversation: handleNewConversation,
       onSelectSession: async function (sessionId) {
         try {
           let token = null;
@@ -2110,8 +845,7 @@ export default function ChatPage() {
           const mapped = msgs.map(function (m) {
             return {
               role: m.role,
-              content: sanitizeChatText(m.content),
-              timestamp: formatSessionTimestamp(m.created_at),
+              content: m.content,
             };
           });
           setCurrentSessionId(sessionId);
@@ -2122,228 +856,42 @@ export default function ChatPage() {
         }
       },
     },
-    React.createElement("div", { className: "flex min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden" },
-      React.createElement(DesktopDevPanel, null),
-      focusMode
-        ? React.createElement(
-            "div",
-            { className: "mx-auto mt-1 mb-2 w-full max-w-3xl rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs text-cyan-900" },
-            "Modo focado ativo: ",
-            focusMode === "bank" ? "Banco & Finanças" :
-            focusMode === "agro" ? "Agro" :
-            focusMode === "tax" ? "Impostos / Receita" :
-            focusMode === "sales_whatsapp" ? "Vendas WhatsApp" : "Especializado",
-            ". As respostas priorizam execução prática nesse domínio."
-          )
-        : null,
-      React.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-4 sm:px-8 sm:py-5" },
+    React.createElement("div", { className: "relative flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-hidden" },
+      // Badge modo desktop (canvas quântico vem do ChatLayout, atrás de tudo, pointer-events-none)
+      desktopMode && React.createElement(
+        "div",
+        {
+          className: "absolute top-2 right-2 z-20 flex items-center gap-1.5 rounded-full border border-[rgba(15,23,42,0.06)] bg-white/90 px-2.5 py-1 text-[10px] font-medium text-[#64748b] backdrop-blur-md",
+        },
+        React.createElement("span", {
+          className: "h-1.5 w-1.5 rounded-full " + (desktopReady ? "bg-[#059669]" : "bg-amber-500")
+        }),
+        desktopReady
+          ? "Runtime Soberano — Offline"
+          : "Desktop — Runtime não carregado"
+      ),
+      React.createElement("div", { className: "flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-3 pb-32 pt-3 sm:px-8 sm:pt-5 min-w-0" },
         React.createElement("div", { className: "mx-auto flex w-full max-w-3xl flex-col gap-4" },
           visible.map((m, idx) => {
-            var hideEmptyStreamingSlot =
-              loading &&
-              !fileExportBusy &&
-              !mediaBusy &&
-              m.role === "assistant" &&
-              !String(m.content || "").trim() &&
-              idx === visible.length - 1;
-            if (hideEmptyStreamingSlot) return null;
-            var safeContent = sanitizeChatText(m.content || "");
-            var globalIdx = messages.indexOf(m);
-            var cn = m.role === "user" ? "syntexa-bubble-user ml-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed break-words" : "syntexa-bubble-assistant mr-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed break-words";
-            return React.createElement(motion.div, { key: idx, initial: false, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, delay: idx * 0.03 },
-              className: cn + " rounded-2xl mb-3 px-3 py-2 sm:px-5 sm:py-4 max-w-[98vw] sm:max-w-[70%] font-[system-ui,-apple-system,'SF Pro Display','Segoe UI',sans-serif] text-[15px] leading-relaxed" },
-              React.createElement("div", { className: "flex items-center justify-between mb-1.5" },
-                React.createElement("span", { className: "text-[12px] font-semibold text-zinc-400" }, m.role === "user" ? "Você" : "Syntexa"),
-                m.timestamp && React.createElement("span", { className: "text-[11px] text-zinc-400 ml-2" }, m.timestamp)
+            var cn = m.role === "user" ? "syntexa-bubble-user ml-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed break-words" : "syntexa-bubble-assistant mr-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed text-[var(--text-primary)] break-words";
+            var msgTime = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            return React.createElement(motion.div, { key: idx, initial: false, animate: { opacity: 1, y: 0 }, transition: { duration: 0.25 }, className: cn },
+              React.createElement("div", { className: "mb-1.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8]" },
+                React.createElement("span", null, m.role === "user" ? t("you", locale) : t("syntexa", locale)),
+                React.createElement("span", { className: "text-[10px] font-normal normal-case tracking-normal text-[#cbd5e1]" }, msgTime)
               ),
-              (m.role === "assistant" && isAssistantPlaceholderContent(m.content))
-                ? isImagePlaceholderContent(m.content)
-                  ? React.createElement(ImageGenerationPlaceholder, { label: safeContent })
-                  : React.createElement(
-                      "div",
-                      { className: "flex items-center gap-2 whitespace-pre-wrap" },
-                      React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true }),
-                      React.createElement("span", null, safeContent)
-                    )
-                : m.role === "assistant"
-                  ? React.createElement(ChatRichContent, { text: safeContent })
-                  : React.createElement("p", { className: "whitespace-pre-wrap" }, safeContent),
-              m.role === "assistant" &&
-                m.smartFiles &&
-                m.smartFiles.length > 0 &&
-                React.createElement(
-                  "div",
-                  { className: "mt-2 space-y-2" },
-                  React.createElement(
-                    "p",
-                    { className: "text-xs font-medium text-emerald-800 inline-flex items-center gap-1.5" },
-                    React.createElement(CheckCircleIcon, null),
-                    "Arquivo criado com sucesso"
-                  ),
-                  React.createElement(
+              (m.role === "assistant" && /^Gerando\s/i.test(String(m.content || "")))
+                ? React.createElement(
                     "div",
-                    { className: "flex flex-wrap gap-1.5" },
-                  m.smartFiles.map(function (f, fi) {
-                    return React.createElement(
-                      "button",
-                      {
-                        type: "button",
-                        key: "sf-" + fi,
-                        className:
-                          "rounded-lg border border-emerald-600/80 bg-emerald-50 px-2 py-1 text-[10px] font-medium text-emerald-950 hover:bg-emerald-100",
-                        onClick: function () {
-                          (async function () {
-                            try {
-                              var tok = null;
-                              try {
-                                tok = window.localStorage.getItem("syntexa_token");
-                              } catch (e0) {
-                                tok = null;
-                              }
-                              if (f.data_base64) {
-                                var raw = atob(String(f.data_base64 || ""));
-                                var arr = new Uint8Array(raw.length);
-                                for (var bi = 0; bi < raw.length; bi++) arr[bi] = raw.charCodeAt(bi);
-                                var blob = new Blob([arr], {
-                                  type: (f.mime || "application/octet-stream").split(";")[0].trim(),
-                                });
-                                var u = URL.createObjectURL(blob);
-                                var a = document.createElement("a");
-                                a.href = u;
-                                a.download = f.filename || "syntexa-download";
-                                a.click();
-                                setTimeout(function () {
-                                  try {
-                                    URL.revokeObjectURL(u);
-                                  } catch (e2) {}
-                                }, 2500);
-                                return;
-                              }
-                              if (f.download_url) {
-                                var hdr = {};
-                                if (tok) hdr.Authorization = "Bearer " + tok;
-                                var r = await fetch(absoluteApiFileUrl(f.download_url), { headers: hdr });
-                                if (!r.ok) throw new Error("download");
-                                var b = await r.blob();
-                                var u2 = URL.createObjectURL(b);
-                                var a2 = document.createElement("a");
-                                a2.href = u2;
-                                a2.download = f.filename || "syntexa-download";
-                                a2.click();
-                                setTimeout(function () {
-                                  try {
-                                    URL.revokeObjectURL(u2);
-                                  } catch (e3) {}
-                                }, 2500);
-                              }
-                            } catch (err) {}
-                          })();
-                        },
-                      },
-                      React.createElement(
-                        "span",
-                        { className: "inline-flex items-center gap-1.5" },
-                        React.createElement(DownloadIcon, null),
-                        downloadLabelForSmartFile(f)
-                      )
-                    );
-                  })
-                )
-              ),
-              m.role === "assistant" &&
-                !isAssistantPlaceholderContent(m.content) &&
-                String(safeContent || "").trim() &&
-                globalIdx >= 0 &&
-                !(m.smartFiles && m.smartFiles.length) &&
-                React.createElement(
-                  "div",
-                  { className: "mt-2 flex flex-wrap gap-1.5" },
-                  React.createElement(
-                    "button",
-                    {
-                      type: "button",
-                      disabled: fileExportBusy,
-                      className:
-                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
-                      onClick: function () {
-                        exportAssistantFileForMessage("pdf", toExportReadyText(m.content || ""));
-                      },
-                    },
-                    "PDF"
-                  ),
-                  React.createElement(
-                    "button",
-                    {
-                      type: "button",
-                      disabled: fileExportBusy,
-                      className:
-                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
-                      onClick: function () {
-                        exportAssistantFileForMessage("xlsx", toExportReadyText(m.content || ""));
-                      },
-                    },
-                    "Excel"
-                  ),
-                  React.createElement(
-                    "button",
-                    {
-                      type: "button",
-                      disabled: fileExportBusy,
-                      className:
-                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
-                      onClick: function () {
-                        exportAssistantFileForMessage("docx", toExportReadyText(m.content || ""));
-                      },
-                    },
-                    "Word"
-                  ),
-                  React.createElement(
-                    "button",
-                    {
-                      type: "button",
-                      disabled: fileExportBusy,
-                      className:
-                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
-                      onClick: function () {
-                        exportAssistantFileForMessage("csv", toExportReadyText(m.content || ""));
-                      },
-                    },
-                    "CSV"
-                  ),
-                  React.createElement(
-                    "button",
-                    {
-                      type: "button",
-                      disabled: fileExportBusy,
-                      className:
-                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
-                      onClick: function () {
-                        exportAssistantFileForMessage("txt", toExportReadyText(m.content || ""));
-                      },
-                    },
-                    "TXT"
-                  ),
-                  React.createElement(
-                    "button",
-                    {
-                      type: "button",
-                      disabled: ttsBusyIdx === globalIdx,
-                      className:
-                        "rounded-lg border border-zinc-300 bg-white px-2 py-1 text-[10px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-40",
-                      onClick: function () {
-                        listenAssistantForMessage(globalIdx, m.content || "");
-                      },
-                    },
-                    ttsBusyIdx === globalIdx ? "Voz…" : "Ouvir"
+                    { className: "flex items-center gap-2 whitespace-pre-wrap" },
+                    React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true }),
+                    React.createElement("span", null, m.content)
                   )
-                ),
-              m.role === "assistant" &&
-                m.ttsAudioUrl &&
-                React.createElement("audio", {
-                  src: m.ttsAudioUrl,
-                  controls: true,
-                  className: "mt-2 w-full max-w-full",
-                }),
+                : React.createElement(
+                    "p",
+                    { className: "whitespace-pre-wrap" },
+                    m.role === "assistant" ? cleanAssistantText(m.content) : m.content
+                  ),
               m.media && m.media.type === "image" &&
                 React.createElement(ChatImage, {
                   src: m.media.url,
@@ -2358,7 +906,7 @@ export default function ChatPage() {
                     target: "_blank",
                     rel: "noreferrer",
                     className:
-                      "mt-2 inline-flex items-center text-xs font-medium text-emerald-700 hover:text-emerald-900 underline decoration-emerald-400/70",
+                      "mt-2 inline-flex items-center text-xs font-medium text-[#64748b] hover:text-[#475569] underline decoration-[#64748b]/40",
                   },
                   "Baixar imagem"
                 ),
@@ -2367,12 +915,12 @@ export default function ChatPage() {
                   ? React.createElement("img", {
                       src: m.media.url,
                       alt: "Video gerado",
-                      className: "mt-3 max-h-[420px] w-full rounded-xl border border-zinc-200 object-contain",
+                      className: "mt-3 max-h-[420px] w-full rounded-xl border border-[#e2e8f0] object-contain",
                     })
                   : React.createElement("video", {
                       src: m.media.url,
                       controls: true,
-                      className: "mt-3 max-h-[420px] w-full rounded-xl border border-zinc-200",
+                      className: "mt-3 max-h-[420px] w-full rounded-xl border border-[#e2e8f0]",
                     })),
               m.media && m.media.type === "video" &&
                 !String(m.media.url || "").startsWith("data:image/") &&
@@ -2384,7 +932,7 @@ export default function ChatPage() {
                     target: "_blank",
                     rel: "noreferrer",
                     className:
-                      "mt-2 inline-flex items-center text-xs font-medium text-emerald-700 hover:text-emerald-900 underline decoration-emerald-400/70",
+                      "mt-2 inline-flex items-center text-xs font-medium text-[#64748b] hover:text-[#475569] underline decoration-[#64748b]/40",
                   },
                   "Baixar vídeo"
                 ),
@@ -2403,21 +951,113 @@ export default function ChatPage() {
                     target: "_blank",
                     rel: "noreferrer",
                     className:
-                      "mt-2 inline-flex items-center text-xs font-medium text-emerald-700 hover:text-emerald-900 underline decoration-emerald-400/70",
+                      "mt-2 inline-flex items-center text-xs font-medium text-[#64748b] hover:text-[#475569] underline decoration-[#64748b]/40",
                   },
                   "Baixar áudio"
-                ));
+                ),
+              m.role === "assistant" && m.content && !/^Gerando\s|^Erro:/i.test(String(m.content || "")) &&
+                React.createElement("div", { className: "mt-2 flex items-center gap-3" },
+                  React.createElement("button", {
+                    type: "button",
+                    onClick: async function () {
+                      try { await navigator.clipboard.writeText(m.content); } catch (e) {}
+                    },
+                    className: "inline-flex items-center gap-1 text-[10px] font-medium text-[#64748b] hover:text-[#475569] transition-colors",
+                    title: "Copiar resposta",
+                  },
+                    React.createElement("svg", { className: "h-3 w-3", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" },
+                      React.createElement("rect", { x: "9", y: "9", width: "13", height: "13", rx: "2", ry: "2" }),
+                      React.createElement("path", { d: "M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" })
+                    ),
+                    t("copy", locale)
+                  ),
+                  React.createElement("button", {
+                    type: "button",
+                    onClick: function () {
+                      try {
+                        var utter = new window.SpeechSynthesisUtterance(m.content);
+                        utter.lang = "pt-BR";
+                        utter.rate = 1.1;
+                        window.speechSynthesis.cancel();
+                        window.speechSynthesis.speak(utter);
+                      } catch (e) {}
+                    },
+                    className: "inline-flex items-center gap-1 text-[10px] font-medium text-[#64748b] hover:text-[#475569] transition-colors",
+                    title: "Ouvir resposta",
+                  },
+                    React.createElement("svg", { className: "h-3 w-3", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" },
+                      React.createElement("path", { d: "M11 5L6 9H2v6h4l5 4V5z" }),
+                      React.createElement("path", { d: "M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" })
+                    ),
+                    t("listen", locale)
+                  )
+                )
+              );
           }),
-          showTyping && React.createElement(motion.div, { key: "typing-once", initial: false, animate: { opacity: 1, y: 0 }, transition: { duration: 0.25 }, className: "syntexa-bubble-assistant mr-auto max-w-[85%] sm:max-w-[80%] rounded-[18px] px-4 py-3 sm:px-5 sm:py-4" },
-            React.createElement("div", { className: "mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-600" }, "Syntexa"),
-            React.createElement("div", { className: "flex items-center gap-2 text-sm text-zinc-700" },
+          showTyping && React.createElement(motion.div, { initial: false, animate: { opacity: 1, y: 0 }, transition: { duration: 0.25 }, className: "syntexa-bubble-assistant mr-auto max-w-[85%] sm:max-w-[80%] rounded-[18px] px-4 py-3 sm:px-5 sm:py-4 bg-[#f8fafc]" },
+            React.createElement("div", { className: "mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#475569]" }, t("syntexa", locale)),
+            React.createElement("div", { className: "flex items-center gap-2 text-sm text-[#475569]" },
               React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true }),
-              React.createElement("span", null, "Processando resposta..."))),
+              React.createElement("span", null, t("processingResponse", locale)))),
           visible.length === 0 &&
             React.createElement(
-              "div",
-              { className: "mt-10 text-center text-sm text-zinc-400" },
-              "Pergunte qualquer coisa sobre estudos, trabalho ou negócio e deixe a Syntexa destravar o próximo passo com você."
+              motion.div,
+              {
+                initial: { opacity: 0, y: 12 },
+                animate: { opacity: 1, y: 0 },
+                transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+                className: "mx-auto flex w-full max-w-2xl flex-col items-center px-4 pt-12 sm:pt-20 text-center",
+              },
+              React.createElement(
+                motion.div,
+                {
+                  initial: { scale: 0.92, opacity: 0 },
+                  animate: { scale: 1, opacity: 1 },
+                  transition: { duration: 0.6, delay: 0.05, ease: [0.22, 1, 0.36, 1] },
+                  className: "mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#eef2ff] to-[#f5f3ff] shadow-[0_8px_24px_rgba(99,102,241,0.10)]",
+                  "aria-hidden": "true",
+                },
+                React.createElement(
+                  "svg",
+                  { viewBox: "0 0 24 24", className: "h-5 w-5 text-[#6366f1]", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round" },
+                  React.createElement("path", { d: "M12 3l1.6 4.2 4.4 1.4-3.4 3 .8 4.4-3.4-2.2-3.4 2.2.8-4.4-3.4-3 4.4-1.4z" })
+                )
+              ),
+              React.createElement("h2", { className: "text-[22px] sm:text-[26px] font-semibold tracking-tight text-[#0f172a]" }, t("askAnything", locale)),
+              React.createElement("p", { className: "mt-2 text-sm text-[#64748b]" }, "Escolha um ponto de partida ou escreva sua pergunta abaixo."),
+              React.createElement(
+                "div",
+                { className: "mt-7 grid w-full grid-cols-1 gap-2 sm:grid-cols-2" },
+                [
+                  { t: "Resuma um texto longo em tópicos claros", i: "M4 6h16M4 12h16M4 18h10" },
+                  { t: "Explique um conceito difícil de forma simples", i: "M12 3v18M3 12h18" },
+                  { t: "Me ajude a planejar minha semana de estudos", i: "M3 4h18v4H3zM3 12h18v4H3zM3 20h12" },
+                  { t: "Escreva um e-mail profissional para mim", i: "M3 7l9 6 9-6M3 7v10h18V7" },
+                ].map(function (it, idx) {
+                  return React.createElement(
+                    motion.button,
+                    {
+                      key: idx,
+                      type: "button",
+                      initial: { opacity: 0, y: 8 },
+                      animate: { opacity: 1, y: 0 },
+                      transition: { duration: 0.35, delay: 0.15 + idx * 0.06, ease: [0.22, 1, 0.36, 1] },
+                      whileHover: { y: -2 },
+                      whileTap: { scale: 0.98 },
+                      onClick: function () { setInput(it.t); try { textareaRef.current && textareaRef.current.focus(); } catch (_) {} },
+                      className: "group flex items-center gap-3 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white/70 px-4 py-3 text-left text-[13px] text-[#334155] transition-colors hover:border-[rgba(15,23,42,0.12)] hover:bg-white",
+                    },
+                    React.createElement(
+                      "span",
+                      { className: "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f1f5f9] text-[#64748b] transition-colors group-hover:bg-[#eef2ff] group-hover:text-[#6366f1]", "aria-hidden": "true" },
+                      React.createElement("svg", { viewBox: "0 0 24 24", className: "h-3.5 w-3.5", fill: "none", stroke: "currentColor", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
+                        React.createElement("path", { d: it.i })
+                      )
+                    ),
+                    React.createElement("span", { className: "flex-1" }, it.t)
+                  );
+                })
+              )
             ),
           React.createElement("div", { ref: messagesEndRef, "aria-hidden": true }))
         ),
@@ -2425,228 +1065,145 @@ export default function ChatPage() {
         "div",
         {
           className:
-            "shrink-0 z-30 overflow-visible border-t border-zinc-200 bg-[#f7f7fa] px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-8 sm:py-4" +
-            (dragOver ? " ring-2 ring-emerald-500/50 ring-inset" : ""),
-          onDragOver: handleDragOverChat,
-          onDragLeave: handleDragLeaveChat,
-          onDrop: handleDropChat,
+            "chat-input-wrapper relative shrink-0 sticky bottom-0 z-[70] border-t border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(15,23,42,0.06)] sm:px-8 sm:py-4",
         },
         React.createElement(
           "div",
           { className: "mx-auto flex w-full max-w-3xl flex-col gap-3" },
-          React.createElement(
-            "div",
-            { className: "min-w-0 w-full overflow-visible text-[11px] text-zinc-500" },
-            React.createElement(FileExportMenu, {
-              token: authToken,
-              className: "",
-              getExportText: function () {
-                return getLastAssistantExportText(messages);
-              },
-              voicePipelineMode:
-                typeof process !== "undefined" &&
-                process.env &&
-                String(process.env.NEXT_PUBLIC_VOICE_PIPELINE || "")
-                  .toLowerCase() === "server"
-                  ? "server"
-                  : "chat",
-              onVoiceSubmitChat: function (transcript) {
-                return submitVoiceTranscript(transcript);
-              },
-              onVoicePipelineResult: applyMultimodalVoiceServerResult,
-              onVoiceError: function (err) {
-                setMessages(function (prev) {
-                  return prev.concat([
-                    {
-                      role: "assistant",
-                      content: String(err || USER_FACING_TRY_AGAIN),
-                      timestamp: timeLabel(),
-                    },
-                  ]);
-                });
-              },
-            }),
-            attachments.length > 0 &&
-              React.createElement(
-                "button",
-                {
-                  type: "button",
-                  disabled: multimodalBusy || loading || mediaBusy,
-                  onClick: function () {
-                    void handleAnalyzeAttachments();
-                  },
-                  className:
-                    "rounded-lg border border-violet-400/60 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-950 hover:bg-violet-100 disabled:opacity-40",
-                },
-                multimodalBusy ? "A analisar…" : "Analisar ficheiros"
-              )
-          ),
           attachments.length > 0 &&
             React.createElement(
               "div",
-              { className: "flex flex-wrap items-center gap-2 text-xs text-zinc-700" },
+              { className: "flex flex-wrap items-center gap-2 text-xs text-[#475569]" },
               attachments.map((file) =>
                 React.createElement(
                   "span",
                   {
                     key: file.name + file.size,
                     className:
-                      "inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5",
+                      "inline-flex items-center gap-1.5 rounded-full border border-[#e2e8f0] bg-[#f8fafc] px-3 py-1.5",
                   },
-                  React.createElement("span", { className: "h-2 w-2 shrink-0 rounded-full bg-emerald-400" }),
-                  React.createElement("span", { className: "max-w-[200px] truncate" }, file.name),
-                  React.createElement(
-                    "button",
-                    {
-                      type: "button",
-                      className:
-                        "shrink-0 text-[11px] font-medium text-emerald-700 underline decoration-emerald-400/70 hover:text-emerald-900",
-                      onClick: function () {
-                        downloadAttachmentFile(file);
-                      },
-                    },
-                    "Baixar"
-                  )
+                  React.createElement("span", { className: "h-2 w-2 rounded-full bg-[#94a3b8]" }),
+                  React.createElement("span", null, file.name)
                 )
               )
             ),
           React.createElement(
             "div",
             { className: "flex flex-col gap-2" },
-            focusMode &&
-              React.createElement(
-                "div",
-                { className: "flex flex-wrap gap-2" },
-                getFocusComposerActions(focusMode).map(function (item) {
-                  return React.createElement(
-                    "div",
-                    {
-                      key: item[0],
-                      className: "inline-flex items-center gap-1",
-                    },
-                    React.createElement(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: function () {
-                          setInput(item[1]);
-                        },
-                        className:
-                          "rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-[11px] font-medium text-cyan-900 hover:bg-cyan-100",
-                      },
-                      item[0]
-                    ),
-                    React.createElement(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: function () {
-                          void runFocusedQuickPrompt(item[1]);
-                        },
-                        disabled: loading || mediaBusy || fileExportBusy,
-                        title: "Executar direto",
-                        className:
-                          "rounded-full border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-900 hover:bg-emerald-100 disabled:opacity-40",
-                      },
-                      "Vai"
-                    )
-                  );
-                })
-              ),
             React.createElement(
               "div",
-              { className: "relative flex gap-2 items-end" },
-              React.createElement("input", {
-                id: "syntexa-file-input",
-                type: "file",
-                multiple: true,
-                accept:
-                  "image/*,video/*,audio/*,application/pdf,.pdf,.txt,.md,.json,.csv,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx",
-                className: "hidden",
-                onChange: handleFilesChange,
-              }),
-              showQuickActions &&
-                React.createElement(
-                  "div",
-                  {
-                    className:
-                      "absolute bottom-12 left-0 z-40 w-64 rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl",
-                  },
-                  [
-                    ["upload", "Carregar fotos e ficheiros"],
-                    ["image", "Criar imagem"],
-                    ["web", "Pesquisar na web"],
-                    ["deep", "Investigar a fundo"],
-                    ["canvas", "Canvas"],
-                  ]
-                    .concat(
-                      isAdmin
-                        ? [
-                            ["github", "GitHub / release"],
-                            ["questionnaire", "Questionários"],
-                          ]
-                        : []
-                    )
-                    .map(function (item) {
-                    return React.createElement(
-                      "button",
-                      {
-                        key: item[0],
-                        type: "button",
-                        onClick: function () {
-                          applyQuickAction(item[0]);
-                        },
-                        className:
-                          "flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-100",
-                      },
-                      item[1]
-                    );
-                  })
-                ),
+              { className: "flex gap-2 overflow-x-auto pb-1 scrollbar-none" },
               React.createElement(
                 "button",
                 {
                   type: "button",
-                  "aria-label": "Abrir ações rápidas",
-                  onClick: function () {
-                    setShowQuickActions(function (v) {
-                      return !v;
-                    });
-                  },
+                  onClick: function () { handleGenerateMedia("image"); },
+                  disabled: loading || !input.trim(),
                   className:
-                    "shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50 text-lg leading-none",
+                    "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5",
                 },
-                "+"
+                React.createElement(IconImage, null),
+                t("image", locale)
               ),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  onClick: function () { handleGenerateMedia("audio"); },
+                  disabled: loading || !input.trim(),
+                  className:
+                    "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5",
+                },
+                React.createElement(IconAudio, null),
+                t("audio", locale)
+              ),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  onClick: function () { handleGenerateMedia("video"); },
+                  disabled: loading || !input.trim(),
+                  className:
+                    "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5",
+                },
+                React.createElement(IconVideo, null),
+                t("video", locale)
+              ),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  onClick: function () { handleGenerateMedia("speech"); },
+                  disabled: loading || !input.trim(),
+                  className:
+                    "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5",
+                },
+                React.createElement(IconMic, null),
+                t("speech", locale)
+              ),
+              visible.length > 0 && React.createElement(ExportMenu, { messages: messages })
+            ),
+            React.createElement(
+              "div",
+              { className: "flex gap-2 items-end" },
+              React.createElement("input", {
+                id: "syntexa-file-input",
+                type: "file",
+                multiple: true,
+                accept: "image/*,video/*,audio/*",
+                className: "hidden",
+                onChange: handleFilesChange,
+              }),
               React.createElement(
                 "button",
                 {
                   type: "button",
                   "aria-label": "Anexar arquivo",
                   onClick: function () {
-                    openFilePicker();
+                    var inputEl = document.getElementById("syntexa-file-input");
+                    if (inputEl) inputEl.click();
                   },
                   className:
-                    "syntexa-attach-btn shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50",
+                    "shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569]",
                 },
                 React.createElement(IconAttach, null)
               ),
               React.createElement("textarea", {
+                ref: textareaRef,
                 value: input,
-                onChange: (e) => setInput(e.target.value),
+                onChange: function (e) { setInput(e.target.value); autoGrowTextarea(); },
                 onKeyDown: handleKeyDown,
-                rows: 2,
-                placeholder: "Digite sua mensagem...",
+                rows: 1,
+                placeholder: t("chatPlaceholder", locale),
                 className:
-                  "syntexa-input min-h-[44px] max-h-28 flex-1 resize-none rounded-2xl px-4 py-3 text-sm shadow-sm",
+                  "chat-input syntexa-input min-h-[44px] max-h-28 flex-1 resize-none rounded-xl px-4 py-2.5 text-sm overflow-y-auto min-w-0 relative z-[1]",
+                autoFocus: false,
               }),
+              recognition && React.createElement(
+                "button",
+                {
+                  type: "button",
+                  "aria-label": "Falar",
+                  onClick: toggleVoice,
+                  className:
+                    "shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border " +
+                    (listening ? "border-red-400 bg-red-50 text-[#475569]" : "border-[#e2e8f0] bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569]"),
+                },
+                listening
+                  ? React.createElement(
+                      "svg",
+                      { viewBox: "0 0 24 24", className: "h-4 w-4", fill: "currentColor", "aria-hidden": true },
+                      React.createElement("rect", { x: "7", y: "7", width: "10", height: "10", rx: "1.5" })
+                    )
+                  : React.createElement(IconMic, null)
+              ),
               React.createElement(
                 Button,
-              { onClick: sendMessage, className: "shrink-0 self-end inline-flex items-center gap-2", disabled: loading || mediaBusy || multimodalBusy },
+                { onClick: sendMessage, className: "shrink-0 self-end inline-flex items-center gap-2", disabled: loading },
                 loading
                   ? React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true })
                   : React.createElement(IconSend, null),
-                loading ? "Enviando" : "Enviar"
+                React.createElement("span", { className: "hidden sm:inline" }, loading ? t("sending", locale) : t("send", locale))
               ),
               canStop &&
                 React.createElement(
@@ -2655,9 +1212,9 @@ export default function ChatPage() {
                     type: "button",
                     variant: "outline",
                     onClick: handleStop,
-                    className: "shrink-0 self-end ml-2 border-red-400 text-red-300 hover:bg-red-500/10",
+                    className: "shrink-0 self-end ml-2 border-red-400 text-[#475569] hover:bg-red-50",
                   },
-                  "Parar"
+                  t("stop", locale)
                 )
             )
           )

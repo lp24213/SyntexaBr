@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 import { AppShell } from "../../components/shell";
 import { createStripeCheckout, getProfile } from "../../lib/api";
-import { BusinessPlanPage } from "../../components/business-plan-page";
+import { PlanCard } from "../../components/business-plan-page";
 
 var plans = [
   {
@@ -111,7 +111,27 @@ export default function PlanosPage() {
   return React.createElement(
     AppShell,
     null,
-    React.createElement(BusinessPlanPage, { plans: plans, onSubscribe: handleSubscribe })
+    React.createElement(
+      "div",
+      { className: "mx-auto w-full max-w-[1200px] px-4 py-12 sm:px-6" },
+      React.createElement(
+        "div",
+        { className: "mb-8 text-center" },
+        React.createElement("h1", { className: "text-3xl font-semibold tracking-tight text-zinc-900" }, "Planos Syntexa"),
+        React.createElement(
+          "p",
+          { className: "mt-3 text-[15px] text-zinc-600" },
+          "Escolha o plano que faz sentido para você. Estudante com e-mail .edu paga metade em qualquer plano pago."
+        )
+      ),
+      React.createElement(
+        "div",
+        { className: "grid gap-5 sm:grid-cols-2 lg:grid-cols-4" },
+        plans.map(function (plan) {
+          return React.createElement(PlanCard, { key: plan.key, plan: plan, onSubscribe: handleSubscribe });
+        })
+      )
+    )
   );
 }
 

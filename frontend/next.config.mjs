@@ -3,9 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   output: "export",
   trailingSlash: true,
-  turbopack: {
-    root: process.cwd(),
-  },
+  distDir: "out",
+  images: { unoptimized: true },
   async redirects() {
     return [{ source: "/favicon.ico", destination: "/icon.svg", permanent: false }];
   },

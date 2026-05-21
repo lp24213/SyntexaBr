@@ -50,7 +50,7 @@ const SECTIONS = [
     iconName: "doc",
     title: "Plano de Negócios + Roadmap",
     desc: "Plano executivo com execução de lançamento, GTM, monetização e captação em ritmo operacional.",
-    href: "/planos",
+    href: "/admin/plano-de-negocios",
     color: "border-emerald-500/40 hover:border-emerald-400/70",
     badge: "Board",
     badgeColor: "bg-emerald-500/20 text-emerald-300",

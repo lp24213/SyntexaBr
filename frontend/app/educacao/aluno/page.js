@@ -410,24 +410,24 @@ export default function AlunoPage() {
   const currentMode = MODES.find(function (m) { return m.id === mode; });
 
   return React.createElement(AppShell, null,
-    React.createElement("div", { className: "flex h-[calc(100vh-11rem)] flex-col" },
-      // Header
-      React.createElement("div", { className: "mb-3 flex items-center justify-between flex-wrap gap-2" },
-        React.createElement("div", { className: "flex items-center gap-2 flex-wrap" },
-          React.createElement("button", { onClick: function () { setDiscipline(null); setMessages([]); }, className: "inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-900" }, React.createElement(BackIcon, null), "Disciplinas"),
-          chosen && React.createElement(FuturisticIcon, { name: chosen.iconName, className: "h-6 w-6 text-[#1a1c1e]/85" }),
-          React.createElement("span", { className: "text-sm font-medium text-zinc-900" }, chosen?.label),
+    React.createElement("div", { className: "flex flex-1 flex-col overflow-hidden min-h-0" },
+      // Header — mobile: compacto com scroll horizontal nas tabs
+      React.createElement("div", { className: "mb-2 flex flex-col gap-2 sm:mb-3 sm:flex-row sm:items-center sm:justify-between" },
+        React.createElement("div", { className: "flex items-center gap-2 min-w-0" },
+          React.createElement("button", { onClick: function () { setDiscipline(null); setMessages([]); }, className: "inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs text-zinc-500 hover:text-zinc-900" }, React.createElement(BackIcon, null), React.createElement("span", { className: "hidden sm:inline" }, "Disciplinas")),
+          chosen && React.createElement(FuturisticIcon, { name: chosen.iconName, className: "h-5 w-5 shrink-0 text-[#1a1c1e]/85" }),
+          React.createElement("span", { className: "truncate text-sm font-medium text-zinc-900" }, chosen?.label),
           React.createElement("span", { className: `hidden rounded-full border px-2 py-0.5 text-[10px] sm:inline ${currentLevel?.color || ""}` }, currentLevel?.label),
           React.createElement("span", { className: "hidden rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] text-zinc-500 sm:inline" }, currentLang?.full)
         ),
-        React.createElement("div", { className: "flex items-center gap-1 flex-wrap" },
-          React.createElement("span", { className: "hidden sm:inline-flex items-center gap-1 text-[10px] text-zinc-400 mr-1 font-mono" }, React.createElement(FuturisticIcon, { name: "lock", className: "h-3 w-3 text-zinc-400" }), sessionId.slice(0, 8)),
+        React.createElement("div", { className: "flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none" },
+          React.createElement("span", { className: "hidden sm:inline-flex shrink-0 items-center gap-1 text-[10px] text-zinc-400 mr-1 font-mono" }, React.createElement(FuturisticIcon, { name: "lock", className: "h-3 w-3 text-zinc-400" }), sessionId.slice(0, 8)),
           MODES.map(function (m) {
-            return React.createElement("button", { key: m.id, onClick: function () { setMode(m.id); }, className: `inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs transition-all ${mode === m.id ? "bg-sky-600/70 text-zinc-900" : "text-zinc-500 hover:text-zinc-700"}` }, React.createElement(FuturisticIcon, { name: m.iconName, className: "h-3.5 w-3.5" }), m.label);
+            return React.createElement("button", { key: m.id, onClick: function () { setMode(m.id); }, className: `shrink-0 inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs transition-all ${mode === m.id ? "bg-sky-600/70 text-zinc-900" : "text-zinc-500 hover:text-zinc-700"}` }, React.createElement(FuturisticIcon, { name: m.iconName, className: "h-3.5 w-3.5" }), React.createElement("span", { className: "hidden sm:inline" }, m.label));
           }),
-          React.createElement("button", { onClick: exportChat, title: "Exportar conversa como Markdown", className: "rounded-xl border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-600 inline-flex items-center justify-center" }, React.createElement(FuturisticIcon, { name: "download", className: "h-3.5 w-3.5" })),
-          React.createElement("button", { onClick: clearChat, className: "rounded-xl border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-600 inline-flex items-center justify-center" }, React.createElement(FuturisticIcon, { name: "trash", className: "h-3.5 w-3.5" })),
-          React.createElement("button", { onClick: function () { setShowSettings(!showSettings); }, className: "rounded-xl border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-500 hover:text-zinc-900 inline-flex items-center justify-center" }, React.createElement(FuturisticIcon, { name: "gear", className: "h-3.5 w-3.5" }))
+          React.createElement("button", { onClick: exportChat, title: "Exportar conversa como Markdown", className: "shrink-0 rounded-xl border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-600 inline-flex items-center justify-center" }, React.createElement(FuturisticIcon, { name: "download", className: "h-3.5 w-3.5" })),
+          React.createElement("button", { onClick: clearChat, className: "shrink-0 rounded-xl border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-600 inline-flex items-center justify-center" }, React.createElement(FuturisticIcon, { name: "trash", className: "h-3.5 w-3.5" })),
+          React.createElement("button", { onClick: function () { setShowSettings(!showSettings); }, className: "shrink-0 rounded-xl border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-500 hover:text-zinc-900 inline-flex items-center justify-center" }, React.createElement(FuturisticIcon, { name: "gear", className: "h-3.5 w-3.5" }))
         )
       ),
 

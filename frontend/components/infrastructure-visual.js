@@ -26,7 +26,7 @@ export function InfrastructureVisual() {
         className="absolute inset-0 opacity-40"
         style={{
           background:
-            "radial-gradient(ellipse 50% 50% at 50% 50%, rgba(99,102,241,0.15), transparent 70%)",
+            "radial-gradient(ellipse 50% 50% at 50% 50%, rgba(90,122,150,0.08), transparent 70%)",
         }}
       />
 
@@ -34,10 +34,10 @@ export function InfrastructureVisual() {
         ref={svgRef}
         viewBox="0 0 800 600"
         className="relative z-10 w-full h-full max-w-[900px]"
-        style={{ filter: "drop-shadow(0 0 20px rgba(99,102,241,0.1))" }}
+        style={{ filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.06))" }}
       >
         {/* Connection lines */}
-        <g stroke="rgba(99,102,241,0.15)" strokeWidth="1" fill="none">
+        <g stroke="rgba(90,122,150,0.15)" strokeWidth="1" fill="none">
           <line x1="400" y1="100" x2="200" y2="250" />
           <line x1="400" y1="100" x2="600" y2="250" />
           <line x1="400" y1="100" x2="400" y2="450" />
@@ -52,7 +52,7 @@ export function InfrastructureVisual() {
         </g>
 
         {/* Data flow lines (animated) */}
-        <g stroke="rgba(99,102,241,0.3)" strokeWidth="1.5" fill="none" strokeDasharray="8 8">
+        <g stroke="rgba(90,122,150,0.3)" strokeWidth="1.5" fill="none" strokeDasharray="8 8">
           <line x1="400" y1="100" x2="200" y2="250">
             <animate attributeName="stroke-dashoffset" from="200" to="0" dur="3s" repeatCount="indefinite" />
           </line>
@@ -69,12 +69,12 @@ export function InfrastructureVisual() {
 
         {/* Central Core */}
         <g>
-          <circle cx="400" cy="100" r="28" fill="rgba(99,102,241,0.1)" stroke="rgba(99,102,241,0.4)" strokeWidth="1.5" />
-          <circle cx="400" cy="100" r="18" fill="rgba(99,102,241,0.2)" stroke="rgba(99,102,241,0.5)" strokeWidth="1">
+          <circle cx="400" cy="100" r="28" fill="rgba(90,122,150,0.06)" stroke="rgba(90,122,150,0.3)" strokeWidth="1.5" />
+          <circle cx="400" cy="100" r="18" fill="rgba(90,122,150,0.1)" stroke="rgba(90,122,150,0.4)" strokeWidth="1">
             <animate attributeName="r" values="18;22;18" dur="3s" repeatCount="indefinite" />
             <animate attributeName="opacity" values="0.8;0.4;0.8" dur="3s" repeatCount="indefinite" />
           </circle>
-          <text x="400" y="104" textAnchor="middle" fill="#e8e8ec" fontSize="10" fontWeight="500">CORE</text>
+          <text x="400" y="104" textAnchor="middle" fill="#64748b" fontSize="10" fontWeight="500">CORE</text>
         </g>
 
         {/* Layer Nodes */}
@@ -93,19 +93,19 @@ export function InfrastructureVisual() {
               cy={node.cy}
               r="20"
               fill="rgba(255,255,255,0.02)"
-              stroke="rgba(255,255,255,0.1)"
+              stroke="rgba(0,0,0,0.08)"
               strokeWidth="1"
               className="infra-node"
               style={{ animation: `node-pulse 3s ease-in-out ${i * 0.15}s infinite` }}
             />
-            <circle cx={node.cx} cy={node.cy} r="6" fill="rgba(99,102,241,0.6)">
+            <circle cx={node.cx} cy={node.cy} r="6" fill="rgba(100,116,139,0.45)">
               <animate attributeName="opacity" values="0.5;1;0.5" dur={`${2 + i * 0.3}s`} repeatCount="indefinite" />
             </circle>
             <text
               x={node.cx}
               y={node.cy + 4}
               textAnchor="middle"
-              fill="#9a9aa0"
+              fill="#64748b"
               fontSize="7"
               fontFamily="monospace"
               letterSpacing="0.1em"
@@ -117,7 +117,7 @@ export function InfrastructureVisual() {
 
         {/* Orbiting particles */}
         {[0, 1, 2, 3].map((i) => (
-          <circle key={`p-${i}`} r="2" fill="rgba(99,102,241,0.4)">
+          <circle key={`p-${i}`} r="2" fill="rgba(90,122,150,0.4)">
             <animateMotion
               dur={`${8 + i * 2}s`}
               repeatCount="indefinite"
@@ -130,7 +130,7 @@ export function InfrastructureVisual() {
       </svg>
 
       {/* Ambient overlay */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a0b] to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#fafafa] to-transparent" />
     </div>
   );
 }

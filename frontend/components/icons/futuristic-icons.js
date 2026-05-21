@@ -1,6 +1,6 @@
 /**
- * Icones SVG futuristas (tracos angulares, estilo tech / HUD).
- * Uso: FuturisticIcon({ name: "atom", className: "h-4 w-4 text-cyan-400/80" })
+ * Syntexa SVG Icon System — minimal, thin-line, enterprise-grade.
+ * Uso: FuturisticIcon({ name: "atom", className: "h-4 w-4 text-[#8e9094]" })
  */
 import React from "react";
 
@@ -22,7 +22,7 @@ function S(props, children) {
   );
 }
 
-const DEF = { className: "h-4 w-4 shrink-0 text-cyan-400/85" };
+const DEF = { className: "h-4 w-4 shrink-0 text-[#8e9094]" };
 
 export function FuturisticIcon(opts) {
   var name = (opts && opts.name) || "spark";

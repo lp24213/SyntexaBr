@@ -96,7 +96,20 @@ class Settings(BaseSettings):
     desktop_ubuntu_url: str = Field(default="", validation_alias="DESKTOP_UBUNTU_URL")
     desktop_android_url: str = Field(default="", validation_alias="DESKTOP_ANDROID_URL")
     desktop_android_aab_url: str = Field(default="", validation_alias="DESKTOP_ANDROID_AAB_URL")
+    # ── Motor LLM Principal ──────────────────────────────────────
+    # DEFAULT_LLM="syntexa_native" = motor proprietário (sem APIs externas)
     default_llm: str = Field(default="syntexa_native", validation_alias="DEFAULT_LLM")
+
+    # Modo soberano: quando True, NUNCA usa providers externos (OpenAI, Claude, etc.)
+    own_model_sovereign_mode: bool = Field(
+        default=True, validation_alias="OWN_MODEL_SOVEREIGN_MODE"
+    )
+    # Para usar providers externos, defina explicitamente:
+    # OWN_MODEL_SOVEREIGN_MODE=false e EXTERNAL_PROVIDERS_ENABLED=true
+    external_providers_enabled: bool = Field(
+        default=False, validation_alias="EXTERNAL_PROVIDERS_ENABLED"
+    )
+
     ollama_endpoint: str | None = Field(default=None, validation_alias="OLLAMA_ENDPOINT")
     ollama_model: str | None = Field(default=None, validation_alias="OLLAMA_MODEL")
     ollama_api_key: str | None = Field(default=None, validation_alias="OLLAMA_API_KEY")

@@ -1,0 +1,56 @@
+# Ignorar arquivos grandes e desnecessarios para deploy Railway
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Checkpoints e modelos — não vão no Railway (ficam na AWS)
+checkpoints/
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# Desktop build
+Desktop/
+desktop/
+desktop/dist/
+desktop/node_modules/
+frontend/node_modules/
+vereda_backend/static/desktop/
+
+# Dados
+syntexa_corpus.jsonl
+syntexa_corpus_*.jsonl
+
+# Ambientes virtuais
+env/
+venv/
+.venv/
+
+# Outros
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.tar.gz
+*.zip
+*.exe
+*.dmg
+*.AppImage
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/

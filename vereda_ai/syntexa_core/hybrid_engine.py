@@ -17,6 +17,11 @@ from vereda_ai.syntexa_core.model_registry import get_registry
 from vereda_ai.syntexa_core.runtime_model import maybe_runtime_reply, maybe_runtime_reply_stream
 from vereda_ai.syntexa_core.neural_engine import is_neural_available
 from vereda_ai.syntexa_core.sovereign_orchestrator import orchestrated_generate, orchestrated_generate_stream
+from vereda_ai.syntexa_core.foundation_runtime import (
+    is_foundation_available,
+    foundation_generate,
+    foundation_generate_stream,
+)
 
 # Intents fixos (expandir em model_registry / datasets)
 # Alinhado a `vereda_backend.core.deep_run` (evita importar o backend daqui).
@@ -271,84 +276,63 @@ def _syntexa_pipeline_footer() -> str:
 
 
 def _reply_for_intent(intent: str, user_text: str) -> str:
-    """Fallback quando não há trechos de web/base injectados — mensagem útil, sem ‘manual’ interno."""
-    u = user_text.strip()
-    ul = u.lower()
-
-    def _is_current_data_query(txt: str) -> bool:
-        return bool(
-            re.search(
-                r"\b(hoje|agora|atual|últim[oa]s?|ultim[oa]s?|not[ií]cia|cota[cç][aã]o|preço|tempo real|pib|ibovespa|d[oó]lar|euro|bitcoin|placar|resultado|elei[cç][aã]o)\b",
-                txt,
-                re.I,
-            )
-        )
-
-    def _conceptual_fallback(txt: str) -> str:
-        if re.search(r"\b(enigma|universo|cosmos|teoria)\b", txt, re.I):
-            return (
-                "**Maior enigma do universo (hoje):** a unificação entre gravidade e mecânica quântica — "
-                "ainda não temos uma teoria completa que explique tudo do micro ao cosmológico.\n\n"
-                "**Teorias/linhas centrais:**\n"
-                "1) **Matéria escura:** explica efeitos gravitacionais que a matéria visível não cobre.\n"
-                "2) **Energia escura:** explica a aceleração da expansão do universo.\n"
-                "3) **Gravidade quântica:** tenta reconciliar Relatividade Geral e mecânica quântica "
-                "(ex.: cordas, loop quantum gravity).\n"
-                "4) **Inflação cósmica:** propõe expansão extremamente rápida no início do universo.\n"
-                "5) **Paradoxo da informação em buracos negros:** como preservar informação em processos quânticos.\n\n"
-                "Se quiser, eu aprofundo agora em linguagem simples ou técnica (nível vestibular, graduação ou pesquisa)."
-            )
-        return (
-            "Posso responder conceitualmente mesmo sem contexto web neste turno. "
-            "Se quiser dados atuais com fontes (números/notícias), eu tento novamente com agregação web."
-        )
-
+    """
+    Respostas baseadas na identidade Syntexa para intents básicos.
+    Quando a Foundation Model não está disponível mas o usuário faz
+    perguntas de identidade, saudação ou ajuda, a Syntexa responde
+    a partir da sua definição interna — sem depender de APIs externas.
+    """
     if intent == "saudacao":
         return (
-            "Olá — sou a **Syntexa**. Pergunta o que precisar; com dados da web no contexto eu sintetizo a resposta."
+            "Olá! Sou a **Syntexa**, assistente de inteligência artificial brasileira "
+            "desenvolvida para ajudar em diversas áreas: programação, engenharia, "
+            "ciência, jurídico, agronegócio e muito mais.\n\n"
+            "Como posso ajudar você hoje?"
         )
     if intent == "ajuda":
         return (
-            "Posso ajudar com estudo, trabalho, código, contas e perguntas factuais. "
-            "Escreve a pergunta completa; o sistema busca fontes públicas quando necessário."
-        )
-    if intent == "codigo":
-        return (
-            "Para código: cola o trecho ou descreve o erro (mensagem, linha, o que esperavas). "
-            "Quanto mais contexto, melhor a resposta."
-        )
-    if intent == "matematica":
-        return (
-            "Para números exatos, usa também `!calc` seguido da expressão (ex.: `!calc 2**10`) se o chat suportar."
+            "Sou a **Syntexa**, uma IA multimodal brasileira. Posso ajudar com:\n\n"
+            "- **Código**: gerar, revisar e otimizar em qualquer linguagem\n"
+            "- **Engenharia**: cálculos técnicos, viabilidade, projetos\n"
+            "- **Ciência**: análise de dados, pesquisa, matemática\n"
+            "- **Jurídico**: análise técnica de legislação brasileira\n"
+            "- **Agronegócio**: produtividade, análise de solo, planejamento\n"
+            "- **Texto**: redação, revisão, estratégia, relatórios\n\n"
+            "Basta perguntar — estou pronta para ajudar."
         )
     if intent == "vazio":
-        return "Envia uma mensagem para continuar."
-    # geral — sem trechos agregados (timeout ou falha de busca)
-    summ = _extractive_summary(u, max_sentences=2)
-    if len(u) > 400 and summ:
-        return (
-            "**Resumo do que enviou:** " + summ + "\n\n"
-            "**Nota:** neste turno não recebi trechos da web no contexto — pode ter falhado a agregação. "
-            "Envie de novo a pergunta; se persistir, verifique rede/backend ou configure um endpoint LLM (`LOCAL_LLM_ENDPOINT`)."
-        )
-    if not _is_current_data_query(ul):
-        return _conceptual_fallback(u)
+        return "Por favor, envie uma mensagem para que eu possa ajudar."
+    # Para outros intents (código, matemática, geral) que precisam de contexto real
     return (
-        "**Não consegui montar uma resposta factual agora:** o contexto da web não chegou ao núcleo (busca indisponível ou tempo esgotado). "
-        "**Tente enviar a pergunta outra vez.** Perguntas factuais (PIB, dados atuais, notícias) dependem dessa busca."
+        "Sou a **Syntexa**, IA brasileira soberana. Estou processando sua solicitação "
+        "com base nos meus recursos internos.\n\n"
+        "Para respostas mais completas sobre temas factuais e atualizados, "
+        "tente reformular sua pergunta com mais contexto — isso me permite "
+        "buscar fontes relevantes e sintetizar uma resposta mais precisa."
     )
 
 
 def generate_reply(messages: list[dict[str, Any]], **_kwargs: Any) -> str:
     """
     Ordem (acrescenta sem apagar):
-    1) Se o sistema trouxe KB e/ou trechos da web — sintetizar e **somar** nota sobre RAG/training.
-    2) Se motor neural disponível — geração real com transformers (20B+ params, 4-bit).
-    3) Caso contrário — resposta por intents / sumarização interna (`_reply_for_intent`).
+    1) Foundation Model Syntexa (decoder-only Transformer próprio) se disponível.
+    2) Runtime existente (checkpoints torch legados).
+    3) Se o sistema trouxe KB e/ou trechos da web — sintetizar.
+    4) Neural Engine de terceiros (20B+ params, 4-bit).
+    5) Caso contrário — resposta por intents / sumarização interna.
     """
+    # 1) Foundation Model Soberana (nova arquitetura)
+    if is_foundation_available():
+        try:
+            return foundation_generate(messages, max_new_tokens=512, temperature=0.7, top_p=0.9)
+        except Exception as e:
+            logger.warning("[hybrid_engine] Foundation Model falhou: %s", e)
+
+    # 2) Runtime legado (checkpoints antigos)
     runtime_reply = maybe_runtime_reply(messages)
     if runtime_reply:
         return runtime_reply
+
     active = get_registry().get_active()
     strict_no_fallback = bool(getattr(settings, "own_model_strict_no_fallback", False))
     is_prod = str(getattr(settings, "environment", "") or "").lower() in {"prod", "production"}
@@ -369,21 +353,25 @@ def generate_reply(messages: list[dict[str, Any]], **_kwargs: Any) -> str:
         if composed:
             return composed + _syntexa_pipeline_footer()
 
-    # Motor neural real (20B+ params, 4-bit) via orquestrador production-grade
-    if is_neural_available():
-        try:
-            return orchestrated_generate(messages, max_new_tokens=512, temperature=0.7, top_p=0.9)
-        except Exception as e:
-            logger.warning("[hybrid_engine] Orchestrator falhou: %s", e)
-
+    # Fallback: resposta baseada na identidade Syntexa para intents básicos
     return _reply_for_intent(intent, user_text)
 
 
 def generate_reply_stream(messages: list[dict[str, Any]], **_kwargs: Any) -> Iterator[str]:
+    # 1) Foundation Model Soberana (streaming real token-by-token)
+    if is_foundation_available():
+        try:
+            yield from foundation_generate_stream(messages, max_new_tokens=512, temperature=0.7, top_p=0.9)
+            return
+        except Exception as e:
+            logger.warning("[hybrid_engine] Foundation Model stream falhou: %s", e)
+
+    # 2) Runtime legado
     rt = maybe_runtime_reply_stream(messages)
     if rt is not None:
         yield from rt
         return
+
     active = get_registry().get_active()
     strict_no_fallback = bool(getattr(settings, "own_model_strict_no_fallback", False))
     is_prod = str(getattr(settings, "environment", "") or "").lower() in {"prod", "production"}
@@ -392,30 +380,37 @@ def generate_reply_stream(messages: list[dict[str, Any]], **_kwargs: Any) -> Ite
             f"IA própria ativa ('{active.name}') sem runtime pronto; fallback bloqueado em modo estrito."
         )
 
-    # Streaming via orquestrador production-grade
-    if is_neural_available():
-        try:
-            yield from orchestrated_generate_stream(messages, max_new_tokens=512, temperature=0.7, top_p=0.9)
+    # 3) Síntese a partir de web/KB injetados no system prompt (mesmo caminho do generate_reply)
+    system = _gather_system_text(messages)
+    user_text = _last_user_text(messages)
+    intent = _detect_intent(user_text)
+
+    if system:
+        web, refs = _extract_web_and_refs(system)
+        kb = _extract_kb_block(system)
+        deep = bool(_DEEP_USER_TRIGGERS.search(user_text))
+        composed = _compose_from_sources(user_text, web, kb, refs, deep=deep)
+        if composed:
+            full = composed + _syntexa_pipeline_footer()
+            chunk_size = 48
+            for i in range(0, len(full), chunk_size):
+                yield full[i : i + chunk_size]
             return
-        except Exception as e:
-            logger.warning("[hybrid_engine] Orchestrator stream falhou: %s", e)
 
-    text = generate_reply(messages, **_kwargs)
-    if text:
-        yield text
+    # 4) Fallback: resposta baseada na identidade Syntexa
+    fallback = _reply_for_intent(intent, user_text)
+    chunk_size = 48
+    for i in range(0, len(fallback), chunk_size):
+        yield fallback[i : i + chunk_size]
 
 
-def native_embed(texts: list[str], dim: int = 64) -> list[list[float]]:
+def native_embed(texts: list[str], dim: int = 384) -> list[list[float]]:
     """
-    Embeddings para RAG/memória: Ollama, FastEmbed (ONNX) ou HTTP OpenAI-compatible
-    (ver `EMBEDDING_BACKEND`); só cai no hash determinístico como último recurso.
-    `dim` aplica-se apenas ao fallback hash (legado).
+    Embeddings para RAG/memória — 100% local via SyntexaEmbeddings.
+    Sem fallback para APIs externas (Ollama, OpenAI, etc.).
     """
-    from vereda_ai.knowledge.open_embedding_backend import embed_texts_best_effort, hash_embed_texts
-
+    from vereda_ai.syntexa_core.memory.embeddings import SyntexaEmbeddings
     if not texts:
         return []
-    vecs = embed_texts_best_effort(texts)
-    if vecs and len(vecs) == len(texts):
-        return vecs
-    return hash_embed_texts(texts, dim=dim)
+    emb = SyntexaEmbeddings(dim=dim)
+    return emb.embed(texts)

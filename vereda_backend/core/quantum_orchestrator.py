@@ -234,7 +234,7 @@ class HybridInferenceScheduler:
         for req in sorted_reqs:
             complexity = req.get("complexity", 0.5)
             model_name, decision = self.engine.decide_model_route(
-                np.zeros(128),  # placeholder embedding
+                np.zeros(128),  # TODO: substituir por embedding real do runtime local
                 models,
                 complexity,
             )

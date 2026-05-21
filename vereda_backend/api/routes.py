@@ -5,6 +5,7 @@ from vereda_backend.api.v1.endpoints import (
     auth,
     desktop_downloads,
     education,
+    export_api,
     feedback,
     health,
     institutional,
@@ -58,11 +59,15 @@ def register(app: FastAPI) -> None:
     api_v1_router.include_router(education.router, tags=["education"])
     api_v1_router.include_router(institutional.router, tags=["institutional"])
     api_v1_router.include_router(integrations.router, tags=["integrations"])
+    api_v1_router.include_router(export_api.router, tags=["export"])
 
     # ── Rotas pesadas (IA) — só em modo NÃO-gateway ──
     is_gateway = bool(getattr(settings, "gateway_mode", False))
     if not is_gateway:
         _load_heavy_modules()
+
+        from vereda_backend.api import syntexa_model_api
+        api_v1_router.include_router(syntexa_model_api.router, tags=["syntexa-model"])
 
         from vereda_backend.api.v1.endpoints import (
             admin as _admin_router,

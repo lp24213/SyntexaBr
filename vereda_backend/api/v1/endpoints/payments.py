@@ -99,8 +99,10 @@ async def create_checkout_session(
     amount_cents, plan_name = _get_plan_amount(body.plan)
     plan_key = (body.plan or "").lower().strip()
 
-    success_url = f"{_frontend_base_url()}/s/cGxhbnM?success=1"  # /plans criptografado
-    cancel_url = f"{_frontend_base_url()}/s/cGxhbnM?canceled=1"
+    # V46 — URLs limpas (encryptedPath foi desabilitado no frontend; /s/cGxhbnM
+    # virava 404 e impedia o retorno após o pagamento).
+    success_url = f"{_frontend_base_url()}/plans?success=1"
+    cancel_url = f"{_frontend_base_url()}/plans?canceled=1"
 
     create_params = {
         "mode": "payment",

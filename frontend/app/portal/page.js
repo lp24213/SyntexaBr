@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AppShell } from "../../components/shell";
 import { FuturisticIcon } from "../../components/icons/futuristic-icons";
+import { encryptedPath } from "../../lib/routes";
 
 var DOMAINS = [
   {
@@ -17,7 +18,7 @@ var DOMAINS = [
     badgeColor: "bg-sky-500/15 text-sky-300 border-sky-500/25",
     description: "Chat de IA open, sem login. Conversas anônimas com memória de sessão.",
     links: [
-      { label: "Iniciar chat", href: "/chat", primary: true },
+      { label: "Iniciar chat", href: encryptedPath("/chat"), primary: true },
     ],
     items: [
       "Chat livre com IA (sem login)",
@@ -37,10 +38,10 @@ var DOMAINS = [
     badgeColor: "bg-violet-500/15 text-violet-300 border-violet-500/25",
     description: "Tutor de IA gratuito, laboratórios científicos interativos, preparação para concursos. Nenhum dado identificável é coletado.",
     links: [
-      { label: "Área Aluno", href: "/educacao/aluno", primary: true },
-      { label: "Laboratórios", href: "/educacao/laboratorios" },
-      { label: "Ciência & Tech", href: "/educacao/ciencia" },
-      { label: "Concursos", href: "/educacao/concursos" },
+      { label: "Área Aluno", href: encryptedPath("/educacao/aluno"), primary: true },
+      { label: "Laboratórios", href: encryptedPath("/educacao/laboratorios") },
+      { label: "Ciência & Tech", href: encryptedPath("/educacao/ciencia") },
+      { label: "Concursos", href: encryptedPath("/educacao/concursos") },
     ],
     items: [
       "15 disciplinas do fundamental ao pós-doc",
@@ -60,8 +61,8 @@ var DOMAINS = [
     badgeColor: "bg-emerald-500/15 text-emerald-300 border-emerald-500/25",
     description: "Ferramentas avançadas para professores, pesquisadores e cientistas. Acesso com login — role teacher ou researcher.",
     links: [
-      { label: "Área do Professor", href: "/educacao/professor", primary: true },
-      { label: "Cadastrar", href: "/cadastro" },
+      { label: "Área do Professor", href: encryptedPath("/educacao/professor"), primary: true },
+      { label: "Cadastrar", href: encryptedPath("/cadastro") },
     ],
     items: [
       "Correção automática e geração de provas",
@@ -81,7 +82,7 @@ var DOMAINS = [
     badgeColor: "bg-amber-500/15 text-amber-300 border-amber-500/25",
     description: "Módulo governamental distribuído localmente pelo administrador. Não disponível no site público — instalado em redes internas de instituições de ensino.",
     links: [
-      { label: "Baixar sistema", href: "/download", primary: true },
+      { label: "Baixar sistema", href: encryptedPath("/download"), primary: true },
     ],
     items: [
       "Dashboard nacional por região e escola",

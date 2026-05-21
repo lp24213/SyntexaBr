@@ -9,7 +9,7 @@ from vereda_ai.core.logging import get_logger
 from vereda_ai.syntexa_core.model_manifest import ModelManifest
 from vereda_ai.syntexa_core.model_registry import get_registry
 from vereda_ai.syntexa_core.tokenizer import SyntexaTokenizer
-from vereda_ai.syntexa_core.neural_engine import is_neural_available
+from vereda_ai.syntexa_core.foundation_runtime import is_foundation_available
 
 logger = get_logger(__name__)
 _RUNTIME = None
@@ -136,9 +136,9 @@ def runtime_ready_for_active_model() -> tuple[bool, str]:
         return False, "registry sem modelo ativo"
     if str(active.stage or "").lower() == "native_hybrid":
         return True, "modelo ativo é native_hybrid"
-    # NeuralEngine (20B+ transformers) conta como runtime válido
-    if is_neural_available():
-        return True, "NeuralEngine disponível (transformers 20B+ 4-bit)"
+    # Foundation Model própria (decoder-only Transformer) conta como runtime válido
+    if is_foundation_available():
+        return True, "Foundation Model Syntexa disponível"
     manifest = _load_manifest(active.name)
     if not manifest:
         return False, f"manifest não encontrado para '{active.name}'"
@@ -167,12 +167,12 @@ def runtime_readiness_report() -> dict[str, object]:
         checks.append({"name": "stage", "ok": True, "detail": "stage native_hybrid (sem checkpoint torch obrigatório)"})
         report["ready"] = True
         return report
-    # NeuralEngine disponível?
-    if is_neural_available():
-        checks.append({"name": "neural_engine", "ok": True, "detail": "NeuralEngine disponível (transformers 20B+ 4-bit)"})
+    # Foundation Model própria disponível?
+    if is_foundation_available():
+        checks.append({"name": "foundation_model", "ok": True, "detail": "Foundation Model Syntexa disponível"})
         report["ready"] = True
         return report
-    checks.append({"name": "neural_engine", "ok": False, "detail": "NeuralEngine indisponível (torch/transformers não instalados)"})
+    checks.append({"name": "foundation_model", "ok": False, "detail": "Foundation Model não disponível (treine o modelo primeiro)"})
     manifest = _load_manifest(active.name)
     if not manifest:
         checks.append({"name": "manifest", "ok": False, "detail": f"manifest não encontrado para '{active.name}'"})

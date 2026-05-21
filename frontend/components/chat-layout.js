@@ -177,58 +177,68 @@ export function ChatLayout(props) {
       React.createElement("div", { className: "absolute inset-0 bg-[linear-gradient(180deg,#fafbfc_0%,#f5f6f8_50%,#f3f4f5_100%)]" }),
       React.createElement(QuantumCodeStream, null)
     ),
+    /* V46 — header unificado, idêntico ao da home (Syntexa · Início · Planos · Console · Login).
+       Substituiu a barra antiga com mac dots para acabar com a sensação de "dois menus". */
     React.createElement(
-      "div",
-      { className: "fixed top-0 left-0 w-full z-30 flex items-center justify-between h-10 px-4 border-b border-[rgba(20,24,30,0.06)] bg-white/80 shadow-[0_2px_12px_rgba(15,20,30,0.04)] backdrop-blur-[16px] select-none" },
-      React.createElement("div", { className: "flex items-center gap-2" },
-        React.createElement("span", { className: "inline-block w-3 h-3 rounded-full bg-[#ff5f56] border border-zinc-300 mr-1" }),
-        React.createElement("span", { className: "inline-block w-3 h-3 rounded-full bg-[#ffbd2e] border border-zinc-300 mr-1" }),
-        React.createElement("span", { className: "inline-block w-3 h-3 rounded-full bg-[#27c93f] border border-zinc-300" })
-      ),
+      "header",
+      { className: "syntexa-header fixed top-0 left-0 z-[40] w-full" },
       React.createElement(
         "div",
-        { className: "flex flex-1 items-center justify-center" },
-        React.createElement(Brand, { className: "h-12 w-[280px] object-contain" })
-      ),
-      React.createElement("div", { className: "flex items-center gap-2" },
-        authed
-          ? React.createElement(
-              React.Fragment,
-              null,
-              React.createElement("span", { className: "hidden sm:inline text-xs font-medium text-[#5a5c5e]" }, t("authenticatedAccount", locale)),
-              React.createElement("button", {
+        { className: "mx-auto flex h-14 max-w-[1280px] items-center justify-between px-4 sm:px-6" },
+        React.createElement("div", { className: "flex items-center gap-3 min-w-0 flex-1" },
+          React.createElement(
+            "a",
+            { href: "/", className: "flex shrink-0 items-center justify-center" },
+            React.createElement("img", {
+              src: "/LOGOTIPO.png",
+              alt: "Syntexa",
+              className: "h-7 w-auto object-contain",
+              draggable: false,
+              decoding: "async",
+            })
+          )
+        ),
+        React.createElement(
+          "nav",
+          { className: "hidden items-center gap-1 lg:flex absolute left-1/2 -translate-x-1/2" },
+          [
+            { path: "/", label: "Início" },
+            { path: "/plans", label: "Planos" },
+            { path: "/chat", label: "Console" },
+          ].map(function (item) {
+            return React.createElement(
+              "a",
+              {
+                key: item.path,
+                href: encryptedPath(item.path),
+                className: "rounded-lg px-3 py-1.5 text-[13px] text-[#64748b] transition-colors duration-200 hover:bg-[rgba(15,23,42,0.04)] hover:text-[#0f172a]",
+              },
+              item.label
+            );
+          })
+        ),
+        React.createElement("div", { className: "flex items-center gap-3 min-w-0 flex-1 justify-end" },
+          authed
+            ? React.createElement("button", {
                 type: "button",
                 onClick: logout,
-                className: "rounded-xl border border-[rgba(20,24,30,0.08)] bg-[#f3f4f5] px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm font-medium text-[#1a1c1e] hover:bg-[#e8e9eb]",
+                className: "inline-flex items-center justify-center rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] transition-colors duration-150 hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e]",
               }, t("logout", locale))
-            )
-          : React.createElement(
-              React.Fragment,
-              null,
-              React.createElement("span", { className: "hidden sm:inline text-xs font-medium text-[#5a5c5e]" }, t("publicMode", locale)),
-              React.createElement("button", {
-                type: "button",
-                onClick: function () { window.location.href = "/login"; },
-                className: "rounded-xl border border-[rgba(20,24,30,0.08)] bg-[#f3f4f5] px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm font-medium text-[#1a1c1e] hover:bg-[#e8e9eb]",
-              }, t("login", locale))
-            )
+            : React.createElement("a", {
+                href: encryptedPath("login"),
+                className: "inline-flex items-center justify-center rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] transition-colors duration-150 hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e]",
+              }, "Login")
+        )
       )
     ),
     React.createElement(
       "aside",
       {
         className: "syntexa-sidebar hidden h-full max-h-full min-w-[220px] w-[260px] max-w-[320px] shrink-0 overflow-y-auto px-5 py-6 sm:flex sm:flex-col border-r border-[rgba(20,24,30,0.06)] bg-white/70 backdrop-blur-[16px]",
-        style: { paddingTop: 48 },
+        style: { paddingTop: 56 },
       },
-      React.createElement(
-        "div",
-        { className: "mb-6 flex items-center border-b border-zinc-200 pb-6" },
-        React.createElement(
-          "a",
-          { href: "/chat", className: "flex h-28 min-h-[112px] w-[320px] items-center justify-center" },
-          React.createElement(Brand, { className: "h-24 w-full max-w-[300px] object-contain" })
-        )
-      ),
+      /* V46 — banner Syntexa interno do sidebar removido (era o "2º header"
+         duplicado relatado pelo usuário). O logo já existe no top header. */
       React.createElement(
         "div",
         { className: "mb-4 flex items-center justify-between" },
@@ -272,81 +282,10 @@ export function ChatLayout(props) {
               );
             })
       ),
-      React.createElement(
-        "div",
-        { className: "mt-4 border-t border-zinc-200 pt-3" },
-        React.createElement("p", { className: "mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600" }, t("general", locale)),
-        generalNavItems.map(function (item) {
-          var href = item.path;
-          var pathNorm = (pathname || "").replace(/\/$/, "") || "/";
-          var hrefNorm = href.replace(/\/$/, "") || href;
-          var active = pathNorm === item.path || pathNorm === href || pathNorm === hrefNorm;
-          return React.createElement(
-            "a",
-            {
-              key: href,
-              href: href,
-              className: "flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors " + (active ? "bg-zinc-100 text-zinc-900" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"),
-            },
-            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-[#8e9094]" }),
-            React.createElement("span", null, t(item.labelKey, locale))
-          );
-        })
-      ),
-      React.createElement(
-        "div",
-        { className: "mt-3 border-t border-zinc-200 pt-3" },
-        React.createElement("p", { className: "mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600" }, t("specializations", locale)),
-        practicalNavItems.map(function (item) {
-          var href = item.href || item.path;
-          return React.createElement(
-            "a",
-            {
-              key: href,
-              href: href,
-              className: "flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900",
-            },
-            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-[#8e9094]" }),
-            React.createElement("span", null, t(item.labelKey, locale))
-          );
-        })
-      ),
-      React.createElement(
-        "div",
-        { className: "mt-3 border-t border-zinc-200 pt-3" },
-        React.createElement("p", { className: "mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600" }, t("tools", locale)),
-        eduNavItems.concat((role === "teacher" || role === "researcher") ? teacherEduItems : []).map(function (item) {
-          var href = item.href || item.path;
-          return React.createElement(
-            "a",
-            {
-              key: href,
-              href: href,
-              className: "flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900",
-            },
-            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-[#8e9094]" }),
-            React.createElement("span", null, t(item.labelKey, locale))
-          );
-        })
-      ),
-      React.createElement(
-        "div",
-        { className: "mt-3 border-t border-zinc-200 pt-3" },
-        React.createElement("p", { className: "mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600" }, t("account", locale)),
-        accountNavItems.concat(isAdmin ? accountAdminExtraItems : []).map(function (item) {
-          var href = item.path;
-          return React.createElement(
-            "a",
-            {
-              key: href,
-              href: href,
-              className: "flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900",
-            },
-            React.createElement(FuturisticIcon, { name: item.icon, className: "h-3.5 w-3.5 shrink-0 text-[#8e9094]" }),
-            React.createElement("span", null, t(item.labelKey, locale))
-          );
-        })
-      ),
+      /* V46 — seções general / specializations / tools / account removidas
+         do sidebar do Console. Toda navegação fica concentrada no header
+         (Início · Planos · Console · Login). Mantém-se apenas a lista de
+         conversas acima e o botão de logout abaixo. */
       authed &&
         React.createElement(
           "div",
@@ -370,7 +309,7 @@ export function ChatLayout(props) {
         "main",
         {
           className: "chat-main flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden",
-          style: { paddingTop: 48, background: "transparent", color: "#1a1c1e", position: "relative", isolation: "isolate" },
+          style: { paddingTop: 56, background: "transparent", color: "#1a1c1e", position: "relative", isolation: "isolate" },
         },
         React.createElement("div", {
           className: "pointer-events-none absolute inset-0 z-0",

@@ -344,15 +344,10 @@ export default {
       return fetch(targetUrl.toString(), request);
     }
 
-    // 7. Download assets → Railway
-    if (
-      (request.method === "GET" || request.method === "HEAD") &&
-      isDownloadAssetPath(pathname)
-    ) {
-      const name = pathname.slice("/download/".length);
-      const base = (env.BACKEND_BASE_URL || "").replace(/\/$/, "");
-      return Response.redirect(`${base}/v1/desktop/assets/${encodeURIComponent(name)}`, 302);
-    }
+    // 7. Download assets → servidos diretamente pelo Cloudflare Pages
+    //    (ZIPs/tarballs ficam em `frontend/public/download/`). A API antiga
+    //    em `api.syntexabr.com.br/v1/desktop/*` ficou indisponível, então
+    //    o gateway não redireciona mais — cai direto para o block 9 (Pages).
 
     // 8. Public chat — PROIBIDO stub/resposta hardcoded (V38).
     // Sempre proxy para backend real; se indisponível, retorna erro técnico.

@@ -1,5 +1,5 @@
 import "./globals.css";
-import React from "react";
+import React, { Suspense } from "react";
 import Script from "next/script";
 import { AppWrapper } from "../components/app-wrapper";
 
@@ -104,8 +104,8 @@ export default function RootLayout(props) {
     ),
     React.createElement(
       "body",
-      { className: "antialiased bg-[#fafbfc] text-[#1a1c1e]" },
-      React.createElement(AppWrapper, null, children)
+      { className: "antialiased bg-white text-[#0f172a]" },
+      React.createElement(Suspense, { fallback: null }, React.createElement(AppWrapper, null, children))
     )
   );
 }

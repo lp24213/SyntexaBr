@@ -2,7 +2,6 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-
 // ─── Windows SVG Icon (real, not emoji) ──────────────────────────────────────
 function WindowsIcon() {
   return React.createElement("svg", {
@@ -87,7 +86,12 @@ function DownloadCard({ href, icon, label, sub, delay }) {
 }
 
 // ─── Download Section ────────────────────────────────────────────────────────
+// V46 — binários hospedados em GitHub Releases (Pages limita 25 MB/arquivo;
+// o ZIP Windows tem ~100 MB e o tar.gz Linux ~94 MB).
+const GH_RELEASE = "https://github.com/lp24213/SyntexaBr/releases/download/desktop-v45";
 export function DownloadSection({ locale, t }) {
+  const winUrl = GH_RELEASE + "/SyntexaAI-45.0.0-win-x64.zip";
+  const linuxUrl = GH_RELEASE + "/SyntexaAI-45.0.0-linux-x64.tar.gz";
   return React.createElement(
     "section",
     { id: "downloads", className: "relative mt-8 scroll-mt-24 overflow-hidden rounded-[20px] border border-[rgba(20,24,30,0.06)] bg-white p-7 md:p-10" },
@@ -111,14 +115,14 @@ export function DownloadSection({ locale, t }) {
 
     React.createElement("div", { className: "grid gap-4 sm:grid-cols-2" },
       React.createElement(DownloadCard, {
-        href: "/download/SyntexaAI-Setup-1.0.0.exe",
+        href: winUrl,
         icon: React.createElement(WindowsIcon, null),
         label: t("homeWinBuild", locale),
         sub: t("homeWinSub", locale) || "Windows 10/11 · 64-bit",
         delay: 0.1,
       }),
       React.createElement(DownloadCard, {
-        href: "/download/SyntexaAI-linux-x64.tar.gz",
+        href: linuxUrl,
         icon: React.createElement(LinuxIcon, null),
         label: t("homeLinuxBuild", locale),
         sub: t("homeLinuxSub", locale) || "Linux · x64 · tar.gz",

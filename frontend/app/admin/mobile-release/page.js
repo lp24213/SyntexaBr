@@ -1,8 +1,34 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { AppShell } from "../../../components/shell";
 import { FuturisticIcon } from "../../../components/icons/futuristic-icons";
+import { getAdminMe } from "../../../lib/api";
+import { encryptedPath } from "../../../lib/routes";
+
+// V46 — guarda is_admin igual aos outros /admin/* (antes a página era pública,
+// permitindo ler instruções internas sem login).
+function AdminGuard({ children }) {
+  const [state, setState] = useState("checking");
+  useEffect(function () {
+    let cancel = false;
+    (async function () {
+      try {
+        const token = typeof window !== "undefined" ? window.localStorage.getItem("syntexa_token") : null;
+        if (!token) { if (!cancel) setState("denied"); return; }
+        const me = await getAdminMe(token);
+        if (!cancel) setState(me && me.is_admin ? "ok" : "denied");
+      } catch { if (!cancel) setState("denied"); }
+    })();
+    return function () { cancel = true; };
+  }, []);
+  if (state === "checking") return React.createElement("div", { className: "p-10 text-sm text-zinc-500" }, "Verificando acesso…");
+  if (state === "denied") {
+    if (typeof window !== "undefined") { window.location.href = encryptedPath("login"); }
+    return null;
+  }
+  return children;
+}
 
 const ITEMS_ANDROID = [
   "Gerar APK assinado (produção) e publicar em URL HTTPS da Syntexa.",
@@ -27,6 +53,9 @@ const ITEMS_SECURITY = [
 
 export default function MobileReleasePage() {
   return React.createElement(
+    AdminGuard,
+    null,
+    React.createElement(
     AppShell,
     null,
     React.createElement(
@@ -104,6 +133,7 @@ export default function MobileReleasePage() {
           React.createElement("a", { href: "/admin/security-hub", className: "rounded-xl border border-zinc-200 bg-white px-4 py-2 text-xs text-zinc-700 hover:bg-zinc-50" }, "Abrir hub de segurança")
         )
       )
+    )
     )
   );
 }

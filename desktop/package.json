@@ -1,61 +1,35 @@
 {
   "name": "syntexa-desktop",
-  "version": "1.0.0",
-  "description": "Syntexa AI - app desktop",
+  "version": "45.0.0",
+  "description": "Syntexa AI V45 — Runtime Soberano Desktop (Foundation Model 70B + Boot Validation + Multimodal + QPanda3)",
   "homepage": "https://syntexabr.com.br",
   "main": "main.js",
   "author": "SyntexaBR",
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win --linux && node copy-artifacts.js",
-    "build:win": "electron-builder --win && node copy-artifacts.js",
-    "build:linux": "electron-builder --linux && node copy-artifacts.js",
-    "build:mac": "electron-builder --mac && node copy-artifacts.js",
-    "build:installer": "electron-builder --win nsis && node copy-artifacts.js",
-    "build:portable": "electron-builder --win portable && node copy-artifacts.js",
-    "pack": "electron-builder --win dir",
-    "copy-artifacts": "node copy-artifacts.js"
+    "build": "node copy-artifacts.js && electron-builder --config electron-builder-config.js",
+    "build:win": "node copy-artifacts.js && electron-builder --win --config electron-builder-config.js",
+    "build:win:installer": "node copy-artifacts.js && electron-builder --win nsis --config electron-builder-config.js",
+    "build:win:portable": "node copy-artifacts.js && electron-builder --win portable --config electron-builder-config.js",
+    "build:win:msi": "node copy-artifacts.js && electron-builder --win msi --config electron-builder-config.js",
+    "build:linux": "node copy-artifacts.js && electron-builder --linux --config electron-builder-config.js",
+    "build:linux:appimage": "node copy-artifacts.js && electron-builder --linux AppImage --config electron-builder-config.js",
+    "build:linux:deb": "node copy-artifacts.js && electron-builder --linux deb --config electron-builder-config.js",
+    "build:linux:tar": "node copy-artifacts.js && electron-builder --linux tar.gz --config electron-builder-config.js",
+    "build:full": "powershell -ExecutionPolicy Bypass -File scripts/build-desktop.ps1",
+    "build:full:linux": "bash scripts/build-desktop.sh",
+    "pack": "electron-builder --win dir --config electron-builder-config.js",
+    "copy-artifacts": "node copy-artifacts.js",
+    "postinstall": "electron-builder install-app-deps",
+    "lint": "eslint main.js preload.js backend/",
+    "verify": "node scripts/verify-build.js"
   },
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1"
   },
   "build": {
-    "appId": "br.com.syntexabr.desktop",
-    "productName": "Syntexa AI",
-    "directories": { "output": "dist" },
-    "files": ["main.js", "preload.js"],
-    "forceCodeSigning": false,
-    "mac": {
-      "target": ["dmg"],
-      "category": "public.app-category.productivity",
-      "artifactName": "SyntexaAI-macos-universal-${version}.${ext}"
-    },
-    "linux": {
-      "target": [{ "target": "tar.gz", "arch": ["x64"] }],
-      "category": "Utility",
-      "synopsis": "Cliente desktop Syntexa AI",
-      "maintainer": "SyntexaBR <contato@syntexabr.com.br>",
-      "artifactName": "SyntexaAI-linux-${version}.${ext}"
-    },
-    "win": {
-      "target": [{ "target": "portable", "arch": ["x64"] }],
-      "artifactName": "SyntexaAI-Setup-${version}.${ext}",
-      "signAndEditExecutable": false,
-      "verifyUpdateCodeSignature": false
-    },
-    "portable": {
-      "artifactName": "SyntexaAI-Setup-${version}.${ext}"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Syntexa AI",
-      "installerLanguages": ["pt-BR"],
-      "language": "1046"
-    }
+    "extends": "./electron-builder-config.js"
   }
 }

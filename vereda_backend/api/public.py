@@ -184,11 +184,7 @@ async def _public_chat_impl(
                     usage=ChatUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
                 )
         except Exception as exc:
-            logger.error("[Syntexa V38] Gateway AI Worker falhou: %s", exc)
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="[Syntexa V38] Runtime de inferência local indisponível. Nenhum fallback externo configurado.",
-            )
+            logger.warning("[Syntexa V38] Gateway AI Worker falhou: %s — fallthrough para engine local", exc)
 
     session_title = _public_session_title(ip)
     session = (
@@ -432,11 +428,7 @@ async def _public_chat_stream_impl(
                     },
                 )
         except Exception as exc:
-            logger.error("[Syntexa V38] Gateway AI Worker stream falhou: %s", exc)
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="[Syntexa V38] Runtime de inferência local indisponível. Nenhum fallback externo configurado.",
-            )
+            logger.warning("[Syntexa V38] Gateway AI Worker stream falhou: %s — fallthrough para engine local", exc)
 
     session_title = _public_session_title(ip)
     session = (

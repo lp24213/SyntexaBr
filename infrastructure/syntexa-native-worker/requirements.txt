@@ -1,0 +1,7 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.0
+torch==2.5.1+cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
+numpy>=1.26.0
+sentencepiece>=0.2.0

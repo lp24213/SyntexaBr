@@ -52,9 +52,9 @@ const AREAS = [
     href: "/educacao/aluno",
     badge: "Acesso Público",
     badgeColor: "bg-sky-50 text-sky-800 border border-sky-200",
-    iconColor: "text-cyan-600",
+    iconColor: "text-[#5A7A96]",
     accent: "from-white to-sky-50/80",
-    borderColor: "border-zinc-200 hover:border-cyan-300/80",
+    borderColor: "border-zinc-200 hover:border-[#cbd5e1]/80",
     title: "Área Aluno",
     description: "Tutor de IA do ensino fundamental ao pós-doutorado. Gratuito, sem login, sem limite.",
     cta: "Acessar agora",
@@ -73,7 +73,7 @@ const AREAS = [
     href: "/educacao/professor",
     badge: "Login Obrigatório",
     badgeColor: "bg-violet-50 text-violet-900 border border-violet-200",
-    iconColor: "text-cyan-600",
+    iconColor: "text-[#5A7A96]",
     accent: "from-white to-violet-50/70",
     borderColor: "border-zinc-200 hover:border-violet-300",
     title: "Área Professor / Pesquisador",
@@ -94,7 +94,7 @@ const AREAS = [
     href: "/download",
     badge: "Instalação Local",
     badgeColor: "bg-amber-50 text-amber-900 border border-amber-200",
-    iconColor: "text-cyan-600",
+    iconColor: "text-[#5A7A96]",
     accent: "from-white to-amber-50/70",
     borderColor: "border-zinc-200 hover:border-amber-300",
     title: "Sistema Offline (Download Local)",
@@ -123,8 +123,8 @@ export default function EducacaoPage() {
     React.createElement(
       "div",
       { className: "mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-4 py-1.5 text-xs text-zinc-500" },
-      React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-cyan-500 animate-pulse" }),
-      "SyntexaBR Educação & Pesquisa"
+      React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-[#5A7A96] animate-pulse" }),
+      "Área educacional"
     ),
     React.createElement("h1", { className: "mb-4 text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl" }, "Educação & Pesquisa"),
     React.createElement(
@@ -193,7 +193,7 @@ export default function EducacaoPage() {
       "button",
       {
         onClick: function () { window.location.href = "/educacao/laboratorios"; },
-        className: "w-full rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm transition-all hover:border-cyan-200 hover:bg-cyan-50/40",
+        className: "w-full rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm transition-all hover:border-[#cbd5e1] hover:bg-[#f1f5f9]/40",
       },
       React.createElement(
         "div",
@@ -203,12 +203,12 @@ export default function EducacaoPage() {
           null,
           React.createElement(
             "div",
-            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-900" },
-            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-cyan-500" }),
+            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-[#cbd5e1] bg-[#f1f5f9] px-2.5 py-1 text-xs font-medium text-[#334155]" },
+            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-[#5A7A96]" }),
             "Acesso Público"
           ),
           React.createElement("h3", { className: "text-lg font-semibold text-zinc-900 flex items-center gap-2" },
-            React.createElement(FuturisticIcon, { name: "flask", className: "h-6 w-6 text-cyan-600" }),
+            React.createElement(FuturisticIcon, { name: "flask", className: "h-6 w-6 text-[#5A7A96]" }),
             "Laboratórios Científicos Interativos"),
           React.createElement(
             "p",
@@ -234,7 +234,7 @@ export default function EducacaoPage() {
       "button",
       {
         onClick: function () { window.location.href = "/educacao/ciencia"; },
-        className: "w-full rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm transition-all hover:border-cyan-200 hover:bg-cyan-50/40",
+        className: "w-full rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm transition-all hover:border-[#cbd5e1] hover:bg-[#f1f5f9]/40",
       },
       React.createElement(
         "div",
@@ -244,12 +244,12 @@ export default function EducacaoPage() {
           null,
           React.createElement(
             "div",
-            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-900" },
-            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-cyan-500" }),
+            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-[#cbd5e1] bg-[#f1f5f9] px-2.5 py-1 text-xs font-medium text-[#334155]" },
+            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-[#5A7A96]" }),
             "Acesso Público · Anônimo"
           ),
           React.createElement("h3", { className: "text-lg font-semibold text-zinc-900 flex items-center gap-2" },
-            React.createElement(FuturisticIcon, { name: "telescope", className: "h-6 w-6 text-cyan-600" }),
+            React.createElement(FuturisticIcon, { name: "telescope", className: "h-6 w-6 text-[#5A7A96]" }),
             "Ciência & Tecnologia de Ponta"),
           React.createElement(
             "p",
@@ -275,7 +275,7 @@ export default function EducacaoPage() {
       "button",
       {
         onClick: function () { window.location.href = "/educacao/concursos"; },
-        className: "w-full rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm transition-all hover:border-cyan-200 hover:bg-cyan-50/40",
+        className: "w-full rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm transition-all hover:border-[#cbd5e1] hover:bg-[#f1f5f9]/40",
       },
       React.createElement(
         "div",
@@ -285,12 +285,12 @@ export default function EducacaoPage() {
           null,
           React.createElement(
             "div",
-            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-900" },
-            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-cyan-500" }),
+            { className: "mb-2 inline-flex items-center gap-2 rounded-full border border-[#cbd5e1] bg-[#f1f5f9] px-2.5 py-1 text-xs font-medium text-[#334155]" },
+            React.createElement("span", { className: "h-1.5 w-1.5 rounded-full bg-[#5A7A96]" }),
             "Acesso Público · Anônimo"
           ),
           React.createElement("h3", { className: "text-lg font-semibold text-zinc-900 flex items-center gap-2" },
-            React.createElement(FuturisticIcon, { name: "medal", className: "h-6 w-6 text-cyan-600" }),
+            React.createElement(FuturisticIcon, { name: "medal", className: "h-6 w-6 text-[#5A7A96]" }),
             "Concursos & Vestibulares"),
           React.createElement(
             "p",

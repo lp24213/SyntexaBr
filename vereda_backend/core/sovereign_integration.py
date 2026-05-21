@@ -104,7 +104,7 @@ def route_request(
         
         if models:
             model_name, decision = quantum.decide_model_route(
-                np.zeros(128),  # placeholder
+                np.zeros(128),  # TODO: substituir por embedding real do runtime local
                 models,
                 complexity,
             )

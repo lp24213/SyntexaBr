@@ -38,6 +38,14 @@ def _api_binary_url(filename: str) -> str:
     return f"{base}/v1/desktop/binary/{quote(filename, safe='')}"
 
 
+@router.get("/binary/")
+@router.head("/binary/")
+def redirect_binary_root() -> RedirectResponse:
+    """Redireciona /v1/desktop/binary/ → página pública de downloads."""
+    base = getattr(settings, "frontend_base_url", "https://syntexabr.com.br").rstrip("/")
+    return RedirectResponse(url=f"{base}/download", status_code=302)
+
+
 @router.get("/binary/{filename}")
 @router.head("/binary/{filename}")
 def serve_desktop_binary(filename: str) -> FileResponse:

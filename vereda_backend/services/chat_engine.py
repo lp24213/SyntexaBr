@@ -99,12 +99,15 @@ def _chat_with_retry(
                 domain=domain,
             )
             if not str(out or "").strip():
-                raise RuntimeError("Resposta vazia do provedor LLM.")
+                raise RuntimeError("[Syntexa V45] Resposta vazia do provedor LLM.")
             return str(out)
         except Exception as exc:
             last_exc = exc
             if attempt >= retries - 1:
-                raise
+                raise RuntimeError(
+                    f"[Syntexa V45] Inferência falhou após {retries} tentativas. "
+                    f"Último erro: {type(exc).__name__}: {exc}"
+                ) from exc
             sleep_s = backoff_base * (2 ** attempt)
             logger.warning(
                 "Falha LLM (tentativa %s/%s), retry em %.2fs: %s",
@@ -115,8 +118,10 @@ def _chat_with_retry(
             )
             time.sleep(sleep_s)
     if last_exc:
-        raise last_exc
-    raise RuntimeError("Falha inesperada no retry do LLM")
+        raise RuntimeError(
+            f"[Syntexa V45] Falha persistente no LLM: {type(last_exc).__name__}: {last_exc}"
+        ) from last_exc
+    raise RuntimeError("[Syntexa V45] Falha inesperada no retry do LLM")
 
 
 def _maybe_alert_runtime_failure(user: Optional[models.User], exc: Exception) -> None:
@@ -681,130 +686,97 @@ def create_chat_completion(
     # Localiza última mensagem do usuário
     last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
     if not last_user:
-        reply_text = _localized_text(
-            locale,
-            "Olá, sou a IA da Syntexa. Me envie uma mensagem.",
-            "Hello, I am Syntexa AI. Send me a message.",
+        raise RuntimeError(
+            "[Syntexa V45] Nenhuma mensagem do usuário no payload. "
+            "Envie pelo menos uma mensagem de usuário para iniciar o chat."
         )
+    content = last_user.content.strip()
+    if not content:
+        raise RuntimeError(
+            "[Syntexa V45] Mensagem do usuário está vazia. "
+            "Envie conteúdo válido para processar a inferência."
+        )
+
+    shared_hit = None
+    if user is None:
+        _sd = _shared_question_digest(content, req.model, req.temperature)
+        shared_hit = shared_question_cache_get(_sd)
+    if shared_hit is not None:
+        reply_text = shared_hit
     else:
-        content = last_user.content.strip()
-        if not content:
-            reply_text = _localized_text(
-                locale,
-                "Recebi sua mensagem vazia. Pode repetir?",
-                "I received an empty message. Can you send it again?",
-            )
+        cache_key = _make_cache_key(req, user)
+        cached = _cache_get(cache_key)
+        if cached is not None:
+            reply_text = cached
         else:
-            shared_hit = None
-            if user is None:
-                _sd = _shared_question_digest(content, req.model, req.temperature)
-                shared_hit = shared_question_cache_get(_sd)
-            if shared_hit is not None:
-                reply_text = shared_hit
-            else:
-                cache_key = _make_cache_key(req, user)
-                cached = _cache_get(cache_key)
-                if cached is not None:
-                    reply_text = cached
-                else:
-                    from vereda_backend.core.job_queue import job_queue_enabled, run_long_chat_sync
+            from vereda_backend.core.job_queue import job_queue_enabled, run_long_chat_sync
 
-                    threshold = int(getattr(settings, "chat_long_job_threshold_tokens", 2500) or 2500)
-                    queued = False
-                    if job_queue_enabled() and req.max_tokens >= threshold:
-                        try:
-                            remote = run_long_chat_sync(
-                                req.model_dump_json(), user.id if user else None
-                            )
-                            if remote:
-                                reply_text = remote
-                                _cache_set(cache_key, reply_text)
-                                queued = True
-                        except Exception as exc:
-                            logger.warning("Fila chat longo indisponível, síncrono: %s", exc)
-                    if (
-                        not queued
-                        and user is None
-                        and job_queue_enabled()
-                        and load_monitor.should_offload_public_to_queue(stress)
-                        and req.max_tokens < threshold
-                    ):
-                        try:
-                            remote = run_long_chat_sync(
-                                req.model_dump_json(), user.id if user else None
-                            )
-                            if remote:
-                                reply_text = remote
-                                _cache_set(cache_key, reply_text)
-                                queued = True
-                        except Exception as exc:
-                            logger.warning("Fila sob carga (público) indisponível: %s", exc)
-                    if not queued:
-
-                        def _run_llm() -> str:
-                            with llm_execution_slot(user, client_ip or "unknown"):
-                                return _compute_chat_reply(db, req, user, content)
-
-                        event, owns_singleflight = _singleflight_enter(cache_key)
-                        if not owns_singleflight:
-                            wait_sec = float(getattr(settings, "chat_singleflight_wait_sec", 8.0))
-                            event.wait(timeout=max(0.2, wait_sec))
-                            cached_after_wait = _cache_get(cache_key)
-                            if cached_after_wait is not None:
-                                reply_text = cached_after_wait
-                            else:
-                                try:
-                                    reply_text = _run_llm()
-                                    _cache_set(cache_key, reply_text)
-                                except SlotTimeoutError:
-                                    reply_text = _localized_text(
-                                        locale,
-                                        "O sistema está com alta demanda. Aguarde um instante ou faça login para obter prioridade.",
-                                        "The system is under high demand. Please wait a moment or sign in for higher priority.",
-                                    )
-                                except Exception as exc:
-                                    logger.exception("Falha ao gerar resposta do chat: %s", exc)
-                                    _maybe_alert_runtime_failure(user, exc)
-                                    raise
-                        else:
-                            try:
-                                try:
-                                    reply_text = _run_llm()
-                                    _cache_set(cache_key, reply_text)
-                                except SlotTimeoutError:
-                                    reply_text = _localized_text(
-                                        locale,
-                                        "O sistema está com alta demanda. Aguarde um instante ou faça login para obter prioridade.",
-                                        "The system is under high demand. Please wait a moment or sign in for higher priority.",
-                                    )
-                                except Exception as exc:
-                                    logger.exception("Falha ao gerar resposta do chat: %s", exc)
-                                    _maybe_alert_runtime_failure(user, exc)
-                                    raise
-                            finally:
-                                _singleflight_leave(cache_key, event)
+            threshold = int(getattr(settings, "chat_long_job_threshold_tokens", 2500) or 2500)
+            queued = False
+            if job_queue_enabled() and req.max_tokens >= threshold:
+                try:
+                    remote = run_long_chat_sync(
+                        req.model_dump_json(), user.id if user else None
+                    )
+                    if remote:
+                        reply_text = remote
+                        _cache_set(cache_key, reply_text)
+                        queued = True
+                except Exception as exc:
+                    logger.warning("Fila chat longo indisponível, síncrono: %s", exc)
             if (
-                reply_text
+                not queued
                 and user is None
-                and content
-                and shared_hit is None
+                and job_queue_enabled()
+                and load_monitor.should_offload_public_to_queue(stress)
+                and req.max_tokens < threshold
             ):
-                _sd = _shared_question_digest(content, req.model, req.temperature)
-                ttl = int(getattr(settings, "chat_shared_cache_ttl_sec", 300) or 300)
-                shared_question_cache_set(_sd, reply_text, ttl_sec=ttl)
-            reply_text = fix_text_encoding(reply_text)
-            if not reply_text:
-                logger.warning("LLM retornou vazio após retries; devolvendo resposta de contingência.")
-                reply_text = _localized_text(
-                    locale,
-                    "Estou com instabilidade momentânea no motor de resposta. Envie novamente em alguns segundos.",
-                    "I am experiencing temporary instability in the response engine. Please send your message again in a few seconds.",
-                )
+                try:
+                    remote = run_long_chat_sync(
+                        req.model_dump_json(), user.id if user else None
+                    )
+                    if remote:
+                        reply_text = remote
+                        _cache_set(cache_key, reply_text)
+                        queued = True
+                except Exception as exc:
+                    logger.warning("Fila sob carga (público) indisponível: %s", exc)
+            if not queued:
+
+                def _run_llm() -> str:
+                    with llm_execution_slot(user, client_ip or "unknown"):
+                        return _compute_chat_reply(db, req, user, content)
+
+                event, owns_singleflight = _singleflight_enter(cache_key)
+                if not owns_singleflight:
+                    wait_sec = float(getattr(settings, "chat_singleflight_wait_sec", 8.0))
+                    event.wait(timeout=max(0.2, wait_sec))
+                    cached_after_wait = _cache_get(cache_key)
+                    if cached_after_wait is not None:
+                        reply_text = cached_after_wait
+                    else:
+                        reply_text = _run_llm()
+                        _cache_set(cache_key, reply_text)
+                else:
+                    try:
+                        reply_text = _run_llm()
+                        _cache_set(cache_key, reply_text)
+                    finally:
+                        _singleflight_leave(cache_key, event)
+    if (
+        reply_text
+        and user is None
+        and content
+        and shared_hit is None
+    ):
+        _sd = _shared_question_digest(content, req.model, req.temperature)
+        ttl = int(getattr(settings, "chat_shared_cache_ttl_sec", 300) or 300)
+        shared_question_cache_set(_sd, reply_text, ttl_sec=ttl)
+    reply_text = fix_text_encoding(reply_text)
     if not reply_text:
-        reply_text = _localized_text(
-            locale,
-            "Estou com instabilidade momentânea no motor de resposta. Envie novamente em alguns segundos.",
-            "I am experiencing temporary instability in the response engine. Please send your message again in a few seconds.",
+        raise RuntimeError(
+            "[Syntexa V45] Inference retornou resposta vazia após todos os retries. "
+            "Nenhum fallback textual é permitido. Verifique disponibilidade do runtime LLM local."
         )
 
     assistant_message = ChatMessage(role="assistant", content=fix_text_encoding(reply_text))
@@ -1080,20 +1052,16 @@ def stream_chat_completion(
     locale = getattr(req, "locale", None)
     last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
     if not last_user:
-        yield _localized_text(
-            locale,
-            "Olá, sou a IA da Syntexa. Me envie uma mensagem.",
-            "Hello, I am Syntexa AI. Send me a message.",
+        raise RuntimeError(
+            "[Syntexa V45] Nenhuma mensagem do usuário no payload. "
+            "Envie pelo menos uma mensagem de usuário para iniciar o chat."
         )
-        return
     content = last_user.content.strip()
     if not content:
-        yield _localized_text(
-            locale,
-            "Recebi sua mensagem vazia. Pode repetir?",
-            "I received an empty message. Can you send it again?",
+        raise RuntimeError(
+            "[Syntexa V45] Mensagem do usuário está vazia. "
+            "Envie conteúdo válido para processar a inferência."
         )
-        return
     _audit_admin_chat_if_needed(db, user, content)
     conv_id = str(user.id) if user else "anon"
     for msg in req.messages:
@@ -1270,24 +1238,15 @@ def stream_chat_completion(
             if not yielded:
                 raise RuntimeError("Streaming vazio do provedor LLM.")
             if not (raw_acc or "").strip():
-                logger.warning("Stream sem texto; fallback non-stream.")
-                try:
-                    full = llm_engine.chat(
-                        stream_payload, temperature=_eff_temp, max_tokens=_max_tokens
-                    )
-                    if (full or "").strip():
-                        yield fix_text_encoding(str(full))
-                    else:
-                        raise RuntimeError("Resposta vazia do LLM (stream e não-stream).")
-                except RuntimeError:
-                    raise
-                except Exception:
-                    logger.exception("Fallback non-stream falhou")
-                    raise RuntimeError("Streaming vazio do provedor LLM.") from None
-    except SlotTimeoutError:
-        yield _localized_text(
-            locale,
-            "O sistema está com alta demanda no momento. Aguarde um instante ou faça login para prioridade maior.",
-            "The system is under high demand right now. Please wait a moment or sign in for higher priority.",
-        )
+                raise RuntimeError(
+                    "[Syntexa V45] Streaming retornou resposta vazia. "
+                    "Nenhum fallback é permitido. Verifique o runtime LLM local."
+                )
+    except SlotTimeoutError as exc:
+        logger.error("[Syntexa V45] SlotTimeoutError no streaming: %s", exc)
+        raise RuntimeError(
+            "[Syntexa V45] Sistema em alta demanda — inference slot indisponível. "
+            "Nenhum fallback textual é permitido. "
+            f"Erro técnico: {type(exc).__name__}: {exc}"
+        ) from exc
 

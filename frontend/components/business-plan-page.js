@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
-import { multimodalExportDocx, multimodalExportPdf } from "../lib/api";
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Ícones inline (SVG) — sem dependências externas                            */
@@ -159,6 +158,82 @@ const PLAN_DOCUMENT = {
       new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
     );
   },
+  meta: {
+    chapters: "14 capítulos operativos",
+    plans: "Planos R$ 0–199",
+    icp: "ICP: Prosumer BR",
+    stage: "Estágio: Seed",
+  },
+  letter: [
+    "Construí a Syntexa porque me cansei de ver gente boa perdendo tarde inteira formatando o que a IA já tinha respondido. A pergunta vinha rápida, a resposta vinha rápida, e aí começava a parte triste: copia, cola, ajusta espaçamento, vira tabela, exporta PDF, manda pro cliente.",
+    "Esse documento não é um deck. É o plano operacional que eu uso pra decidir o que fazer essa semana. Os números são reais — alguns bons, alguns ruins. Os capítulos foram escritos na ordem em que penso: primeiro o que existe hoje, depois quem está atendendo, depois como vamos crescer e, por fim, onde podemos quebrar.",
+    "Se você é investidor lendo isso: bem-vindo. Aviso que não vou aumentar número pra ficar bonito. Se você é usuário: obrigado por chegar até aqui — você é a razão de a Syntexa existir.",
+    "— Luis Paulo",
+  ],
+  demo: {
+    title: "Da pergunta à planilha pronta — sem etapa intermediária",
+    description: "Mesma resposta que o cliente paga consultor pra montar. Aqui sai do chat já formatada, com gráfico e botões de export. Esse é o produto.",
+    chatLabel: "syntexa.app · chat ao vivo",
+    userPrompt: "Monta uma planilha de fluxo de caixa do meu negócio nos últimos 6 meses, com receita, custo e lucro. Quero exportar pro Excel.",
+    aiResponse: "Pronto. Montei o fluxo de caixa Jan-Jun com receita, custo e lucro. Receita total R$ 189.100, lucro acumulado R$ 99.300 (margem ~53%).",
+    sheet: [
+      ["Jan", "R$ 18.500", "R$ 11.200", "R$ 7.300"],
+      ["Fev", "R$ 22.300", "R$ 12.100", "R$ 10.200"],
+      ["Mar", "R$ 28.800", "R$ 14.400", "R$ 14.400"],
+      ["Abr", "R$ 33.500", "R$ 15.800", "R$ 17.700"],
+      ["Mai", "R$ 39.200", "R$ 17.200", "R$ 22.000"],
+      ["Jun", "R$ 46.800", "R$ 19.100", "R$ 27.700"],
+    ],
+    total: { receita: "R$ 189.100", custo: "R$ 89.800", lucro: "R$ 99.300" },
+    sheetCaption: "resposta gerada em 8.4s · 6 fontes consultadas",
+  },
+  plans: [
+    {
+      name: "Gratuito",
+      price: "R$ 0/mês",
+      description: "120 mensagens por dia para experimentar. Chat, pesquisa na web e respostas inteligentes — sem cartão.",
+      features: [
+        "120 mensagens por dia",
+        "Chat com pesquisa na web",
+        "Respostas com contexto e citações",
+        "Sem cartão de crédito",
+      ],
+    },
+    {
+      name: "Básico",
+      price: "R$ 39/mês (estudante: R$ 19,50)",
+      description: "500 mensagens/mês, upload de arquivos e respostas mais completas. Ideal para estudantes e freelancers.",
+      features: [
+        "500 mensagens/mês",
+        "Upload de PDF, Word, Excel e imagens",
+        "Respostas detalhadas com fontes",
+        "Exportação para PDF e Word",
+      ],
+    },
+    {
+      name: "Médio",
+      price: "R$ 99/mês (estudante: R$ 49,50)",
+      description: "Mensagens ilimitadas, geração de imagem/vídeo/áudio, código e contexto estendido. Para profissionais.",
+      features: [
+        "Mensagens ilimitadas (uso justo)",
+        "Geração de imagem, vídeo e áudio",
+        "Análise de código e dados",
+        "Contexto estendido para projetos longos",
+      ],
+    },
+    {
+      name: "Master",
+      price: "R$ 199/mês (estudante: R$ 99,50)",
+      description: "Tudo ilimitado + agentes avançados, suporte prioritário, múltiplos usuários e ferramentas empresariais.",
+      features: [
+        "Tudo do plano Médio, sem limites",
+        "Agentes autônomos e automações",
+        "Múltiplos usuários e SSO",
+        "Suporte prioritário e SLA dedicado",
+      ],
+    },
+  ],
+  footer: "Gerado pelo Syntexa — " + new Date().toLocaleDateString("pt-BR"),
   chapters: [
     {
       id: "intro",
@@ -232,7 +307,7 @@ const PLAN_DOCUMENT = {
       lead: "Stack inteira sob nosso controle. Zero dependência crítica de fornecedor único.",
       paragraphs: [
         "Toda a aplicação — interface, backend, gateway, sistema de exportação, autenticação, integrações — é código autoral, mantido em monorepo próprio. O motor de IA roda em arquitetura híbrida: serviço próprio para tarefas críticas, com fallback inteligente para provedores externos quando necessário, sempre escondendo essa decisão do usuário final.",
-        "A inferência opera em infraestrutura sob nosso controle (Railway para gateway, AWS para GPU, Cloudflare na borda). A camada de fallback existe para garantir disponibilidade enquanto o motor proprietário Syntexa Foundation Model continua em treino — quando ele estiver pronto, é troca de configuração, não rewrite.",
+        "A inferência opera em infraestrutura sob nosso controle (Railway para gateway, AWS para GPU, Cloudflare na borda). A camada de fallback existe para garantir disponibilidade enquanto a infraestrutura proprietária de IA continua em desenvolvimento — quando estiver pronta, é troca de configuração, não rewrite.",
       ],
       bullets: [
         "Frontend Next.js + Cloudflare Pages, deploy global na borda.",
@@ -245,9 +320,9 @@ const PLAN_DOCUMENT = {
       number: "06",
       icon: "chart",
       title: "Capacidade técnica e meta de escala",
-      lead: "Arquitetura projetada para 100 mil sessões simultâneas em pico.",
+      lead: "A arquitetura foi desenhada de forma modular para escalar progressivamente conforme validação de mercado e crescimento da base de usuários.",
       paragraphs: [
-        "A meta operacional declarada é suportar 100 mil usuários concorrentes em janelas de pico, com escalonamento horizontal por camadas: aplicação, fila assíncrona, cache distribuído e banco com leitura otimizada. Cada camada pode crescer independente conforme o gargalo aparece — não estamos otimizando para o que ainda não é problema.",
+        "A infraestrutura utiliza escalonamento horizontal por camadas — aplicação, fila assíncrona, cache distribuído e banco com leitura otimizada — permitindo que cada camada cresça independente conforme o gargalo aparece. Não otimizamos para problemas que ainda não existem; expandimos sob demanda, protegendo margem e runway.",
         "Validação acontece com testes de stress recorrentes em ambiente de produção espelhado. O custo unitário por mensagem cai conforme o volume sobe (cache, batching, modelos quantizados), o que protege margem em escala.",
       ],
       table: {
@@ -297,7 +372,7 @@ const PLAN_DOCUMENT = {
       lead: "Aquisição manual antes de mídia paga. Sempre.",
       paragraphs: [
         "Primeiros 100 pagantes virão de canais orgânicos: conteúdo de demonstração no YouTube e TikTok mostrando casos reais (\"da pergunta à planilha pronta em 12 segundos\"), comunidades de concurso e estudo no Telegram/Discord, indicação direta e SEO técnico em buscas longas.",
-        "Mídia paga só entra depois de provar retenção: se 30% dos free convertem para pago em 30 dias e o LTV/CAC orgânico estiver acima de 3x, abrimos torneira de Meta Ads e Google. Antes disso, queimar dinheiro em mídia é só performance teatral.",
+        "Mídia paga só entra depois de provar retenção: se 30% dos free convertem para pago em 30 dias e o LTV/CAC orgânico estiver acima de 3x, abrimos torneira de Meta Ads e Google. Antes disso, mídia paga tende a gerar crescimento pouco sustentável.",
       ],
       bullets: [
         "Fase 1 (0-60 dias): conteúdo orgânico + outreach manual em comunidades.",
@@ -357,7 +432,7 @@ const PLAN_DOCUMENT = {
           ["+30 dias", "Conversão Free → Pago", "Paywall contextual quando o limite acaba, com prova de valor", "Próximo"],
           ["+60 dias", "Loops de retenção", "Notificações úteis, lembrança de uso, exportação programada", "Planejado"],
           ["+90 dias", "Canal de aquisição", "Dobrar o canal vencedor, abandonar os outros", "Condicional"],
-          ["6 meses", "Foundation Model própria", "Substituir gradualmente provedores externos pelo motor próprio", "Em treino"],
+          ["6 meses", "Infraestrutura proprietária de IA", "Reduzir gradualmente dependência de terceiros", "Em desenvolvimento"],
           ["12 meses", "Expansão B2B/Edu", "Primeira instituição de ensino contratando sob proposta", "Roadmap"],
         ],
       },
@@ -394,7 +469,7 @@ const PLAN_DOCUMENT = {
         "Risco 3 — Diferenciação. Modelos genéricos comoditizam. Mitigação: foco no que ninguém entrega bem em português — exportação profissional, contexto brasileiro, pagamento em BRL, suporte em PT-BR de verdade.",
       ],
       bullets: [
-        "Risco operacional: dependência de provedores externos durante o treino do motor próprio. Mitigação: arquitetura multi-provider com fallback automático.",
+        "Risco operacional: dependência de provedores externos durante o desenvolvimento da infraestrutura proprietária. Mitigação: arquitetura multi-provider com fallback automático.",
         "Risco financeiro: burn sem tração. Mitigação: revisão mensal de runway com gatilho de corte automático em 3 meses de baseline.",
         "Risco regulatório: LGPD e direito do consumidor. Mitigação: política de dados desde o dia 1, compliance leve mas presente.",
       ],
@@ -406,13 +481,29 @@ const PLAN_DOCUMENT = {
       title: "Tese de investimento e próximo passo",
       lead: "Empresa enxuta, produto no ar, founder técnico, mercado claro. Vamos conversar?",
       paragraphs: [
-        "Investir na Syntexa hoje é entrar antes da inflexão de tração. Produto pronto, custo de operação mínimo, motor proprietário em treino, mercado brasileiro pouco atendido por IA com saída profissional em português. O que falta é capital e tempo para encontrar o canal.",
+        "Investir na Syntexa hoje é entrar antes da inflexão de tração. Produto pronto, custo de operação mínimo, infraestrutura proprietária em desenvolvimento, mercado brasileiro pouco atendido por IA com saída profissional em português. O que falta é capital e tempo para encontrar o canal.",
         "Próximo passo concreto: conversa de 45 minutos para diligência objetiva sobre métricas reais (não slides), demonstração ao vivo do produto, e discussão de termos. Sem pitch deck inflado. Sem hype.",
       ],
       bullets: [
         "Pedido: cheque seed + acompanhamento tático mensal de GTM.",
         "Compromisso: relatório mensal de métricas reais, com bons e maus números.",
         "Resultado em 12 meses: primeira coorte de 1.000 pagantes recorrentes ou pivot honesto.",
+      ],
+    },
+    {
+      id: "cubo",
+      number: "15",
+      icon: "signature",
+      title: "O que levar para a primeira conversa",
+      lead: "Demo ao vivo vale mais que vinte slides. Métricas reais, por menores que sejam, valem mais que projeções.",
+      paragraphs: [
+        "A Syntexa transforma IA em entrega profissional pronta. Não vendemos apenas respostas — vendemos workflow, automação e documentos finalizados para o mercado brasileiro.",
+        "Leve para a reunião: uma demonstração ao vivo de menos de 2 minutos (pergunta → geração → export PDF → export Excel → abrir documento pronto). Mais importante que o PDF do plano. E métricas reais do produto, por menores que sejam — 30 usuários, 200 exports, tempo médio de sessão, custo de inferência — porque número pequeno real é melhor que número aspiracional gigante.",
+      ],
+      bullets: [
+        "Demo obrigatória: pergunta → planilha/relatório → export → arquivo pronto em < 2 min.",
+        "Métricas reais: cadastros, exports, sessões, retenção, tempo médio, custo inferência.",
+        "Frase definitiva: transformamos IA em entrega profissional pronta para o mercado brasileiro.",
       ],
     },
   ],
@@ -448,6 +539,256 @@ function downloadBlob(blob, filename) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Geração 100% client-side do Plano de Negócios (sem API).
+ *  - PDF: usa o motor de impressão do navegador via popup com
+ *    HTML formatado + auto-print → "Salvar como PDF".
+ *  - DOCX: HTML compatível com Microsoft Word (mime msword,
+ *    extensão .doc — abre nativamente no Word/LibreOffice).
+ * Evita dependência de api.syntexabr.com.br para o board.
+ * ──────────────────────────────────────────────────────────── */
+function escapeHtml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildPlanHtml(doc) {
+  const head =
+    "<style>" +
+    "body{font-family:'Segoe UI',-apple-system,Roboto,Arial,sans-serif;color:#0f172a;line-height:1.55;max-width:780px;margin:36px auto;padding:0 28px;}" +
+    "h1{font-size:28px;margin:0 0 6px;letter-spacing:-0.02em;}" +
+    "h2{font-size:18px;margin:28px 0 8px;color:#1e293b;border-bottom:1px solid #e2e8f0;padding-bottom:4px;}" +
+    ".subtitle{color:#64748b;font-size:13px;margin-bottom:24px;}" +
+    "p{margin:0 0 10px;font-size:13px;}" +
+    "ul{margin:6px 0 14px 18px;padding:0;font-size:13px;}" +
+    "table{border-collapse:collapse;width:100%;margin:10px 0 14px;font-size:12px;}" +
+    "td,th{border:1px solid #cbd5e1;padding:6px 8px;text-align:left;}" +
+    "th{background:#f1f5f9;}" +
+    ".footer{margin-top:32px;border-top:1px solid #e2e8f0;padding-top:10px;color:#94a3b8;font-size:11px;}" +
+    "@media print{body{margin:0;padding:0 24px;}h2{page-break-after:avoid;}section{page-break-inside:avoid;}}" +
+    "</style>";
+  let body = "<h1>" + escapeHtml(doc.title) + "</h1>";
+  if (doc.subtitle) body += '<p class="subtitle">' + escapeHtml(doc.subtitle) + "</p>";
+  for (const ch of doc.chapters) {
+    body += "<section>";
+    body += "<h2>" + escapeHtml(ch.number + ". " + ch.title) + "</h2>";
+    if (ch.lead) body += "<p><em>" + escapeHtml(ch.lead) + "</em></p>";
+    for (const p of ch.paragraphs || []) body += "<p>" + escapeHtml(p) + "</p>";
+    if (ch.bullets && ch.bullets.length) {
+      body += "<ul>";
+      for (const b of ch.bullets) body += "<li>" + escapeHtml(b) + "</li>";
+      body += "</ul>";
+    }
+    if (ch.table && Array.isArray(ch.table.rows) && ch.table.rows.length) {
+      body += "<table>";
+      ch.table.rows.forEach((row, idx) => {
+        body += "<tr>";
+        const tag = idx === 0 ? "th" : "td";
+        row.forEach((c) => {
+          body += "<" + tag + ">" + escapeHtml(c) + "</" + tag + ">";
+        });
+        body += "</tr>";
+      });
+      body += "</table>";
+    }
+    body += "</section>";
+  }
+  body +=
+    '<div class="footer">Gerado offline pelo Syntexa — ' +
+    new Date().toLocaleDateString("pt-BR") +
+    "</div>";
+  return (
+    "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"/><title>" +
+    escapeHtml(doc.title) +
+    "</title>" +
+    head +
+    "</head><body>" +
+    body +
+    "</body></html>"
+  );
+}
+
+function buildRichPlanHtml(doc) {
+  // V53 — HTML enriquecido para PDF, usando apenas cores hex/rgb (não oklab)
+  // para compatibilidade com html2canvas/jsPDF.
+  const head =
+    "<style>" +
+    "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');" +
+    "body{font-family:'Inter','Segoe UI',Arial,sans-serif;color:#1e293b;line-height:1.6;max-width:800px;margin:0 auto;padding:32px 28px;background:#fff;}" +
+    "h1{font-size:32px;font-weight:700;color:#0f172a;margin:0 0 8px;letter-spacing:-0.02em;}" +
+    "h2{font-size:20px;font-weight:600;color:#1e293b;margin:32px 0 12px;padding-bottom:6px;border-bottom:2px solid #10b981;}" +
+    "h3{font-size:15px;font-weight:600;color:#334155;margin:20px 0 8px;}" +
+    ".subtitle{color:#64748b;font-size:14px;margin-bottom:28px;}" +
+    ".meta{display:flex;gap:24px;flex-wrap:wrap;margin:20px 0;color:#475569;font-size:13px;}" +
+    ".meta-item{display:flex;align-items:center;gap:6px;}" +
+    ".meta-dot{width:8px;height:8px;border-radius:50%;background:#10b981;}" +
+    "p{margin:0 0 12px;font-size:14px;color:#334155;}" +
+    "ul{margin:8px 0 16px 20px;padding:0;font-size:14px;color:#334155;}" +
+    "li{margin-bottom:6px;}" +
+    "strong{color:#0f172a;font-weight:600;}" +
+    "em{color:#475569;font-style:italic;}" +
+    "table{border-collapse:collapse;width:100%;margin:12px 0 16px;font-size:13px;}" +
+    "td,th{border:1px solid #cbd5e1;padding:8px 10px;text-align:left;}" +
+    "th{background:#f8fafc;font-weight:600;color:#1e293b;}" +
+    "tr:nth-child(even){background:#f8fafc;}" +
+    ".demo-box{border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin:16px 0;background:#f8fafc;}" +
+    ".demo-title{font-size:13px;font-weight:600;color:#10b981;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;}" +
+    ".sheet-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;}" +
+    ".sheet-table td,.sheet-table th{border:1px solid #cbd5e1;padding:6px 8px;text-align:right;font-family:'Segoe UI',monospace;}" +
+    ".sheet-table th{background:#ecfdf5;color:#065f46;text-align:left;}" +
+    ".sheet-total{background:#ecfdf5;font-weight:600;color:#065f46;}" +
+    ".footer{margin-top:40px;padding-top:12px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;text-align:center;}" +
+    ".section{page-break-inside:avoid;margin-bottom:24px;}" +
+    "</style>";
+
+  let body = "<div class='section'>";
+  body += "<h1>" + escapeHtml(doc.title) + "</h1>";
+  if (doc.subtitle) body += '<p class="subtitle">' + escapeHtml(doc.subtitle) + "</p>";
+  if (doc.meta) {
+    body += '<div class="meta">';
+    if (doc.meta.chapters) body += '<div class="meta-item"><span class="meta-dot"></span>' + escapeHtml(doc.meta.chapters) + "</div>";
+    if (doc.meta.plans) body += '<div class="meta-item"><span class="meta-dot"></span>' + escapeHtml(doc.meta.plans) + "</div>";
+    if (doc.meta.icp) body += '<div class="meta-item"><span class="meta-dot"></span>' + escapeHtml(doc.meta.icp) + "</div>";
+    if (doc.meta.stage) body += '<div class="meta-item"><span class="meta-dot"></span>' + escapeHtml(doc.meta.stage) + "</div>";
+    body += "</div>";
+  }
+  body += "</div>";
+
+  if (doc.letter && doc.letter.length) {
+    body += "<div class='section'>";
+    body += "<h2>Carta do Fundador</h2>";
+    for (const p of doc.letter) body += "<p>" + escapeHtml(p) + "</p>";
+    body += "</div>";
+  }
+
+  if (doc.demo) {
+    body += "<div class='section'>";
+    body += "<h2>Demonstração</h2>";
+    if (doc.demo.title) body += "<p><strong>" + escapeHtml(doc.demo.title) + "</strong></p>";
+    if (doc.demo.description) body += "<p>" + escapeHtml(doc.demo.description) + "</p>";
+    if (doc.demo.sheet && doc.demo.sheet.length) {
+      body += '<div class="demo-box">';
+      if (doc.demo.chatLabel) body += '<div class="demo-title">' + escapeHtml(doc.demo.chatLabel) + "</div>";
+      if (doc.demo.userPrompt) body += "<p><strong>Usuário:</strong> " + escapeHtml(doc.demo.userPrompt) + "</p>";
+      if (doc.demo.aiResponse) body += "<p><strong>Syntexa:</strong> " + escapeHtml(doc.demo.aiResponse) + "</p>";
+      body += '<table class="sheet-table">';
+      body += "<tr><th>Mês</th><th>Receita</th><th>Custo</th><th>Lucro</th></tr>";
+      for (const row of doc.demo.sheet) {
+        body += "<tr><td>" + escapeHtml(row[0]) + "</td><td>" + escapeHtml(row[1]) + "</td><td>" + escapeHtml(row[2]) + "</td><td>" + escapeHtml(row[3]) + "</td></tr>";
+      }
+      if (doc.demo.total) {
+        body += '<tr class="sheet-total"><td>Total</td><td>' + escapeHtml(doc.demo.total.receita) + "</td><td>" + escapeHtml(doc.demo.total.custo) + "</td><td>" + escapeHtml(doc.demo.total.lucro) + "</td></tr>";
+      }
+      body += "</table>";
+      if (doc.demo.sheetCaption) body += "<p><em>" + escapeHtml(doc.demo.sheetCaption) + "</em></p>";
+      body += "</div>";
+    }
+    body += "</div>";
+  }
+
+  if (doc.chapters && doc.chapters.length) {
+    body += "<div class='section'>";
+    body += "<h2>Índice</h2>";
+    body += "<ul>";
+    for (const ch of doc.chapters) {
+      body += "<li><strong>" + escapeHtml(ch.number) + "</strong> — " + escapeHtml(ch.title) + "</li>";
+    }
+    body += "</ul>";
+    body += "</div>";
+
+    for (const ch of doc.chapters) {
+      body += "<div class='section'>";
+      body += "<h2>CAPÍTULO " + escapeHtml(ch.number) + "</h2>";
+      body += "<h3>" + escapeHtml(ch.title) + "</h3>";
+      if (ch.lead) body += "<p><em>" + escapeHtml(ch.lead) + "</em></p>";
+      for (const p of ch.paragraphs || []) body += "<p>" + escapeHtml(p) + "</p>";
+      if (ch.bullets && ch.bullets.length) {
+        body += "<ul>";
+        for (const b of ch.bullets) body += "<li>" + escapeHtml(b) + "</li>";
+        body += "</ul>";
+      }
+      if (ch.table && Array.isArray(ch.table.rows) && ch.table.rows.length) {
+        body += "<table>";
+        ch.table.rows.forEach((row, idx) => {
+          body += "<tr>";
+          const tag = idx === 0 ? "th" : "td";
+          row.forEach((c) => {
+            body += "<" + tag + ">" + escapeHtml(c) + "</" + tag + ">";
+          });
+          body += "</tr>";
+        });
+        body += "</table>";
+      }
+      body += "</div>";
+    }
+  }
+
+  if (doc.plans && doc.plans.length) {
+    body += "<div class='section'>";
+    body += "<h2>Planos Ativos</h2>";
+    for (const pl of doc.plans) {
+      body += "<h3>" + escapeHtml(pl.name) + " — " + escapeHtml(pl.price) + "</h3>";
+      if (pl.description) body += "<p><em>" + escapeHtml(pl.description) + "</em></p>";
+      if (pl.features && pl.features.length) {
+        body += "<ul>";
+        for (const f of pl.features) body += "<li>" + escapeHtml(f) + "</li>";
+        body += "</ul>";
+      }
+    }
+    body += "</div>";
+  }
+
+  body += '<div class="footer">' + escapeHtml(doc.footer || "Gerado pelo Syntexa — " + new Date().toLocaleDateString("pt-BR")) + "</div>";
+
+  return "<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'/><title>" + escapeHtml(doc.title) + "</title>" + head + "</head><body>" + body + "</body></html>";
+}
+
+async function downloadPlanAsPdf() {
+  // V59 — PDF real via html2pdf.js com buildRichPlanHtml (cores hex, sem oklab).
+  // O buildRichPlanHtml gera HTML autônomo com TODO o conteúdo do PLAN_DOCUMENT.
+  const html2pdf = (await import("html2pdf.js")).default;
+
+  const container = document.createElement("div");
+  container.innerHTML = buildRichPlanHtml(PLAN_DOCUMENT);
+  document.body.appendChild(container);
+
+  const opt = {
+    margin: [10, 10, 10, 10],
+    filename: "Syntexa-Plano-de-Negocios.pdf",
+    image: { type: "jpeg", quality: 0.96 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      logging: false,
+    },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    pagebreak: { mode: ["css", "legacy"], avoid: ".section, table, h2, h3" },
+  };
+
+  try {
+    await html2pdf().set(opt).from(container).save();
+  } finally {
+    document.body.removeChild(container);
+  }
+}
+
+function downloadPlanAsDoc(doc) {
+  const html = buildPlanHtml(doc);
+  // Word/LibreOffice abrem HTML com este mime nativamente.
+  const wordHeader =
+    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">';
+  const full = wordHeader + html.replace(/^<!doctype html>\s*<html[^>]*>/i, "");
+  const blob = new Blob(["\ufeff", full], {
+    type: "application/msword;charset=utf-8",
+  });
+  downloadBlob(blob, "syntexa-plano-de-negocios.doc");
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -739,7 +1080,7 @@ function ChatPreviewMockup() {
 /*  Cards de planos                                                            */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-function PlanCard({ plan, onSubscribe }) {
+export function PlanCard({ plan, onSubscribe }) {
   const isFree = plan.key === "free";
   const isPro = plan.highlighted;
   return (
@@ -813,43 +1154,37 @@ function PlanCard({ plan, onSubscribe }) {
 /*  Página principal                                                            */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-export function BusinessPlanPage({ plans, onSubscribe }) {
+export function BusinessPlanPage({ plans, onSubscribe, showBusinessPlan = true }) {
   const [exportBusy, setExportBusy] = useState(null);
-
-  const pdfSections = useMemo(
-    () => PLAN_DOCUMENT.chapters.map((c) => chapterToPdfSection(c)),
-    []
-  );
 
   const runExport = useCallback(
     async (kind) => {
       if (typeof window === "undefined") return;
-      const token = window.localStorage.getItem("syntexa_token");
       setExportBusy(kind);
       try {
+        // V46 — geração 100% client-side: independe da API e nunca trava no
+        // gateway (`api.syntexabr.com.br`). PDF via popup com print do navegador;
+        // DOCX via HTML msword (.doc), aberto nativamente no Word/LibreOffice.
         if (kind === "pdf") {
-          const blob = await multimodalExportPdf(
-            { title: PLAN_DOCUMENT.title, subtitle: PLAN_DOCUMENT.subtitle, sections: pdfSections },
-            token || undefined
-          );
-          downloadBlob(blob, "syntexa-plano-de-negocios.pdf");
+          downloadPlanAsPdf();
         } else {
-          const blob = await multimodalExportDocx(
-            { title: PLAN_DOCUMENT.title, sections: pdfSections },
-            token || undefined
-          );
-          downloadBlob(blob, "syntexa-plano-de-negocios.docx");
+          downloadPlanAsDoc(PLAN_DOCUMENT);
         }
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        window.alert(
-          "Não consegui gerar o arquivo agora. Pode tentar de novo ou usar Imprimir → Salvar como PDF.\n\n" + msg
-        );
+        // Último fallback: TXT puro — sempre baixa.
+        const text = PLAN_DOCUMENT.chapters.map((ch) => {
+          const parts = [`${ch.number}. ${ch.title}`, "", ch.lead || ""];
+          ch.paragraphs.forEach((p) => parts.push(p));
+          if (ch.bullets) ch.bullets.forEach((b) => parts.push("• " + b));
+          return parts.filter(Boolean).join("\n\n");
+        }).join("\n\n---\n\n");
+        const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+        downloadBlob(blob, "syntexa-plano-de-negocios.txt");
       } finally {
         setExportBusy(null);
       }
     },
-    [pdfSections]
+    []
   );
 
   const handlePrint = useCallback(() => {
@@ -857,7 +1192,7 @@ export function BusinessPlanPage({ plans, onSubscribe }) {
   }, []);
 
   return (
-    <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-10 px-4 py-8 sm:px-6 sm:py-12">
+    <div id="business-plan-root" className="mx-auto flex w-full max-w-[1180px] flex-col gap-10 px-4 py-8 sm:px-6 sm:py-12">
       <style
         dangerouslySetInnerHTML={{
           __html: `

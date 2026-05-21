@@ -179,8 +179,8 @@ export default function ConfigPage() {
           },
           React.createElement(
             "div",
-            { className: "mb-4 flex items-start gap-3 rounded-xl border border-cyan-200 bg-cyan-50 p-3" },
-            React.createElement(FuturisticIcon, { name: "shield", className: "h-5 w-5 text-cyan-400/90 shrink-0 mt-0.5" }),
+            { className: "mb-4 flex items-start gap-3 rounded-xl border border-[#e2e8f0] bg-[#f1f5f9] p-3" },
+            React.createElement(FuturisticIcon, { name: "shield", className: "h-5 w-5 text-[#5A7A96] shrink-0 mt-0.5" }),
             React.createElement(
               "p",
               { className: "text-xs leading-relaxed text-zinc-600" },
@@ -190,7 +190,7 @@ export default function ConfigPage() {
           React.createElement("label", { className: "mb-2 block text-xs font-medium text-zinc-500" }, "IPs (IPv4 ou IPv6, um por linha)"),
           React.createElement("textarea", {
             className:
-              "mb-3 min-h-[140px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 font-mono text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-cyan-300 focus:outline-none",
+              "mb-3 min-h-[140px] w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 font-mono text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#cbd5e1] focus:outline-none",
             placeholder: "203.0.113.10\n2001:db8::1",
             value: ipText,
             disabled: ipLoading,
