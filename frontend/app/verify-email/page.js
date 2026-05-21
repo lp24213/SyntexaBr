@@ -68,12 +68,16 @@ export default function VerifyEmailPage() {
             React.createElement(Input, {
               label: "E-mail",
               type: "email",
+              autoComplete: "off",
               value: email,
               onChange: function (e) { setEmail(e.target.value); },
               required: true,
             }),
             React.createElement(Input, {
               label: "Código de verificação",
+              type: "text",
+              autoComplete: "off",
+              inputMode: "numeric",
               value: code,
               onChange: function (e) { setCode(e.target.value); },
               required: true,
