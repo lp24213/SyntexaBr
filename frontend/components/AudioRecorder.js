@@ -56,9 +56,16 @@ export function AudioRecorder({
       if (onError) onError(e instanceof Error ? e.message : "Microfone indisponível (HTTPS e permissão necessários).");
       return;
     }
-    const mr = new MediaRecorder(stream, {
-      mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : undefined,
-    });
+    var mime = "audio/webm";
+    if (typeof MediaRecorder !== "undefined") {
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) mime = "audio/webm;codecs=opus";
+      else if (!MediaRecorder.isTypeSupported("audio/webm")) {
+        if (MediaRecorder.isTypeSupported("audio/mp4")) mime = "audio/mp4";
+        else mime = "";
+      }
+    }
+    var mrOpts = mime ? { mimeType: mime } : undefined;
+    const mr = new MediaRecorder(stream, mrOpts);
     chunks.current = [];
     mr.ondataavailable = (e) => {
       if (e.data.size) chunks.current.push(e.data);

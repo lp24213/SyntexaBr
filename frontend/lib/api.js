@@ -1308,13 +1308,39 @@ export async function multimodalTranscribe(file, token) {
     headers,
     body: form,
   });
-  await throwIfNotOk(resp);
   const raw = await resp.text();
+  let data = null;
   try {
-    return JSON.parse(raw);
+    data = raw ? JSON.parse(raw) : null;
   } catch {
-    throw new Error(USER_FACING_TRY_AGAIN);
+    data = null;
   }
+  if (!resp.ok) {
+    const detail =
+      (data && (data.detail || data.message)) ||
+      raw ||
+      (await readErrorMessage(resp).catch(() => USER_FACING_TRY_AGAIN));
+    throw new Error(String(detail || USER_FACING_TRY_AGAIN));
+  }
+  return data && typeof data === "object" ? data : { ok: false, text: "", detail: USER_FACING_TRY_AGAIN };
+}
+
+/** STT real no servidor (Azure / Whisper HTTP) — WebM gravado no browser. */
+export async function transcribeAudioBlob(blob, token, filename) {
+  if (!blob || blob.size < 256) {
+    throw new Error("Gravação muito curta. Fale por mais tempo e tente de novo.");
+  }
+  const name = filename || "gravacao.webm";
+  const type = blob.type || "audio/webm";
+  const file = new File([blob], name, { type });
+  const data = await multimodalTranscribe(file, token);
+  const text = String((data && data.text) || "").trim();
+  if (!text) {
+    throw new Error(
+      String((data && data.detail) || "Transcrição vazia. Verifique AZURE_SPEECH_KEY no servidor.")
+    );
+  }
+  return text;
 }
 
 /** Voz (TTS) em PT-BR via backend (edge-tts). Requer login. */
