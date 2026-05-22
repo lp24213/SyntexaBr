@@ -93,7 +93,7 @@ function securityHeaders() {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "geolocation=(), microphone=(), camera=(), payment=()",
+    "Permissions-Policy": "geolocation=(), microphone=(self), camera=(self), payment=()",
     "X-XSS-Protection": "1; mode=block",
   };
 }

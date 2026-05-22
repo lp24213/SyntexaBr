@@ -31,6 +31,9 @@ def strip_llm_markdown_artifacts(text: str) -> str:
     # Vírgulas / pontos com espaço errado antes
     t = re.sub(r"\s+,", ",", t)
     t = re.sub(r"\s+\.", ".", t)
+    # Pontuação colada na palavra seguinte (ex.: "Olá.Como" → "Olá. Como")
+    t = re.sub(r"([.!?])([A-Za-zÀ-ÿ])", r"\1 \2", t)
+    t = re.sub(r"([,;:])([A-Za-zÀ-ÿ])", r"\1 \2", t)
     return t.strip()
 
 

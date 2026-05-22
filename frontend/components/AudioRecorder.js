@@ -34,10 +34,7 @@ export function AudioRecorder({
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState("");
 
-  const defaultLabel =
-    mode === "pipeline"
-      ? "Perguntar em voz (IA)"
-      : "Gravar voz";
+  const defaultLabel = "Microfone";
 
   const stop = useCallback(() => {
     if (rec && rec.state !== "inactive") {

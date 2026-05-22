@@ -12,14 +12,10 @@
 const DESKTOP_HOST = "http://127.0.0.1";
 const DESKTOP_DEFAULT_PORT = 34560;
 
-/** Detecta se estamos rodando dentro do Electron desktop */
+/** Só o app Syntexa Desktop (preload) — não Cursor/VS Code/outros Electron. */
 function isDesktopMode() {
   if (typeof window === "undefined") return false;
-  // Sinalizado pelo preload.js do Electron
-  if (window.__DESKTOP_MODE__ === true) return true;
-  // Detecção via userAgent
-  if (navigator.userAgent.toLowerCase().includes("electron")) return true;
-  return false;
+  return window.__DESKTOP_MODE__ === true;
 }
 
 /** Obtém a porta do backend local (descoberta dinâmica via IPC) */

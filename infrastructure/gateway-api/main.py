@@ -75,7 +75,7 @@ def create_app() -> FastAPI:
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=(), payment=()"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(self), camera=(self), payment=()"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         csp = (
             "default-src 'self'; "

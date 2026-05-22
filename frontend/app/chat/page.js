@@ -25,7 +25,7 @@ import {
   desktopBootDiagnostic,
 } from "../../lib/desktop-api";
 import { t, getClientLocale } from "../../lib/i18n";
-import { sanitizeOutput } from "../../lib/sanitizeOutput";
+import { sanitizeOutput, sanitizeStreamChunk } from "../../lib/sanitizeOutput";
 
 /**
  * V46 — Limpa marcações de Markdown que ficam visíveis como caracteres
@@ -227,7 +227,9 @@ export default function ChatPage() {
   const [attachments, setAttachments] = useState([]);
   const [plan, setPlan] = useState("anon");
   const [listening, setListening] = useState(false);
-  const [recognition, setRecognition] = useState(null);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
+  const recognitionRef = useRef(null);
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [canStop, setCanStop] = useState(false);
   const [desktopMode, setDesktopMode] = useState(false);
@@ -282,10 +284,52 @@ export default function ChatPage() {
     } catch (e) {}
   }, [messages, loading]);
 
-  useEffect(() => {
+  useEffect(function () {
     if (typeof window === "undefined") return;
-    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) setRecognition(new SpeechRecognition());
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setVoiceSupported(false);
+      return;
+    }
+    var rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = "pt-BR";
+    rec.maxAlternatives = 1;
+    rec.onresult = function (e) {
+      var finalText = "";
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal && e.results[i][0]) {
+          finalText += e.results[i][0].transcript;
+        }
+      }
+      finalText = finalText.trim();
+      if (!finalText) return;
+      setVoiceError("");
+      setInput(function (prev) {
+        var base = String(prev || "").trim();
+        return base ? base + " " + finalText : finalText;
+      });
+      setTimeout(function () {
+        autoGrowTextarea();
+      }, 0);
+    };
+    rec.onerror = function (ev) {
+      var code = ev && ev.error ? ev.error : "unknown";
+      if (code === "not-allowed" || code === "service-not-allowed") {
+        setVoiceError("Permita o microfone nas configurações do navegador.");
+      } else if (code === "no-speech") {
+        setVoiceError("Nenhuma fala detectada. Tente de novo.");
+      } else if (code !== "aborted") {
+        setVoiceError("Erro no microfone: " + code);
+      }
+      setListening(false);
+    };
+    rec.onend = function () {
+      setListening(false);
+    };
+    recognitionRef.current = rec;
+    setVoiceSupported(true);
   }, []);
 
   function isAuthErrorMessage(msg) {
@@ -505,7 +549,7 @@ export default function ChatPage() {
         setCanStop(true);
         try {
           await desktopChatStream(nextHistory, function (chunk) {
-            var safeChunk = sanitizeOutput(chunk);
+            var safeChunk = sanitizeStreamChunk(chunk);
             setMessages((prev) => {
               var p = prev.slice();
               var last = p[p.length - 1];
@@ -528,6 +572,14 @@ export default function ChatPage() {
         } finally {
           setCanStop(false);
           abortRef.current = null;
+          setMessages(function (prev) {
+            var p = prev.slice();
+            var last = p[p.length - 1];
+            if (last && last.role === "assistant" && last.content) {
+              p[p.length - 1] = { ...last, content: sanitizeOutput(last.content) };
+            }
+            return p;
+          });
         }
       }
       // ── MODO DESKTOP SEM RUNTIME — DIAGNÓSTICO TÉCNICO REAL ─────────────────────────────
@@ -563,7 +615,7 @@ export default function ChatPage() {
             setCanStop(true);
             try {
               await chatCompletionStream(token, nextHistory, function (chunk) {
-                var safeChunk = sanitizeOutput(chunk);
+                var safeChunk = sanitizeStreamChunk(chunk);
                 setMessages((prev) => {
                   var p = prev.slice();
                   var last = p[p.length - 1];
@@ -576,40 +628,39 @@ export default function ChatPage() {
             } finally {
               setCanStop(false);
               abortRef.current = null;
+              setMessages(function (prev) {
+                var p = prev.slice();
+                var last = p[p.length - 1];
+                if (last && last.role === "assistant" && last.content) {
+                  p[p.length - 1] = { ...last, content: sanitizeOutput(last.content) };
+                }
+                return p;
+              });
             }
           }
         } catch (authErr) {
           var authMsg = authErr instanceof Error ? authErr.message : String(authErr);
-          if (!isAuthErrorMessage(authMsg)) throw authErr;
-          try {
-            window.localStorage.removeItem("syntexa_token");
-          } catch {}
-          setPlan("anon");
-          if (hasMedia) {
-            reply = await publicChatWithMedia(nextHistory, attachments);
-            setMessages((prev) => prev.concat([{ role: "assistant", content: sanitizeOutput(reply) }]));
-          } else {
-            setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
-            const controller = new AbortController();
-            abortRef.current = controller;
-            setCanStop(true);
+          if (isAuthErrorMessage(authMsg)) {
             try {
-              await publicChatStream(nextHistory, function (chunk) {
-                var safeChunk = sanitizeOutput(chunk);
-                setMessages((prev) => {
-                  var p = prev.slice();
-                  var last = p[p.length - 1];
-                  if (last && last.role === "assistant") {
-                    p[p.length - 1] = { ...last, content: last.content + safeChunk };
-                  }
-                  return p;
-                });
-              }, controller.signal);
-            } finally {
-              setCanStop(false);
-              abortRef.current = null;
-            }
+              window.localStorage.removeItem("syntexa_token");
+            } catch (_) {}
+            setPlan("anon");
+            setMessages(function (prev) {
+              var p = prev.slice();
+              var last = p[p.length - 1];
+              if (last && last.role === "assistant" && !String(last.content || "").trim()) {
+                p.pop();
+              }
+              return p.concat([
+                {
+                  role: "assistant",
+                  content: "Sessão expirada. Faça login novamente para continuar o chat.",
+                },
+              ]);
+            });
+            return;
           }
+          throw authErr;
         }
       } else {
         if (hasMedia) {
@@ -622,7 +673,7 @@ export default function ChatPage() {
           setCanStop(true);
           try {
             await publicChatStream(nextHistory, function (chunk) {
-              var safeChunk = sanitizeOutput(chunk);
+              var safeChunk = sanitizeStreamChunk(chunk);
               setMessages((prev) => {
                 var p = prev.slice();
                 var last = p[p.length - 1];
@@ -635,6 +686,14 @@ export default function ChatPage() {
           } finally {
             setCanStop(false);
             abortRef.current = null;
+            setMessages(function (prev) {
+              var p = prev.slice();
+              var last = p[p.length - 1];
+              if (last && last.role === "assistant" && last.content) {
+                p[p.length - 1] = { ...last, content: sanitizeOutput(last.content) };
+              }
+              return p;
+            });
           }
         }
       }
@@ -662,9 +721,15 @@ export default function ChatPage() {
       if (isDev && (detail || stack)) {
         displayMsg += "\n\n— debug —\n" + (detail ? detail + "\n" : "") + (stack ? stack.split("\n").slice(0, 3).join("\n") : "");
       }
-      setMessages((prev) => prev.concat([
-        { role: "assistant", content: displayMsg }
-      ]));
+      setMessages(function (prev) {
+        var p = prev.slice();
+        var last = p[p.length - 1];
+        if (last && last.role === "assistant" && !String(last.content || "").trim()) {
+          p[p.length - 1] = { ...last, content: displayMsg };
+          return p;
+        }
+        return p.concat([{ role: "assistant", content: displayMsg }]);
+      });
     } finally {
       setLoading(false);
     }
@@ -802,22 +867,40 @@ export default function ChatPage() {
   }
 
   function toggleVoice() {
-    if (!recognition) return;
+    var rec = recognitionRef.current;
+    if (!rec || !voiceSupported) {
+      setVoiceError("Microfone indisponível. Use Chrome ou Edge em HTTPS.");
+      return;
+    }
     if (listening) {
-      recognition.stop();
+      try {
+        rec.stop();
+      } catch (_) {}
       setListening(false);
       return;
     }
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "pt-BR";
-    recognition.onresult = function (e) {
-      var t = (e.results[0] && e.results[0][0]) ? e.results[0][0].transcript : "";
-      if (t) setInput(function (prev) { return (prev ? prev + " " : "") + t; });
-    };
-    recognition.onend = function () { setListening(false); };
-    recognition.start();
-    setListening(true);
+    setVoiceError("");
+    try {
+      rec.start();
+      setListening(true);
+    } catch (e) {
+      var msg = e instanceof Error ? e.message : String(e);
+      if (/already started/i.test(msg)) {
+        try {
+          rec.stop();
+        } catch (_) {}
+        setTimeout(function () {
+          try {
+            rec.start();
+            setListening(true);
+          } catch (e2) {
+            setVoiceError("Não foi possível iniciar o microfone.");
+          }
+        }, 200);
+      } else {
+        setVoiceError("Não foi possível iniciar o microfone.");
+      }
+    }
   }
 
   var visible = messages.filter((m) => m.role !== "system");
@@ -1143,7 +1226,7 @@ export default function ChatPage() {
                   className:
                     "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5",
                 },
-                React.createElement(IconMic, null),
+                React.createElement(IconAudio, null),
                 t("speech", locale)
               ),
               visible.length > 0 && React.createElement(ExportMenu, { messages: messages })
@@ -1184,15 +1267,21 @@ export default function ChatPage() {
                   "chat-input syntexa-input min-h-[44px] max-h-28 flex-1 resize-none rounded-xl px-4 py-2.5 text-sm overflow-y-auto min-w-0 relative z-[1]",
                 autoFocus: false,
               }),
-              recognition && React.createElement(
+              React.createElement(
                 "button",
                 {
                   type: "button",
-                  "aria-label": "Falar",
+                  "aria-label": "Microfone",
+                  title: voiceSupported ? "Falar (microfone)" : "Microfone não suportado neste navegador",
                   onClick: toggleVoice,
+                  disabled: loading,
                   className:
                     "shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border " +
-                    (listening ? "border-red-400 bg-red-50 text-[#475569]" : "border-[#e2e8f0] bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569]"),
+                    (listening
+                      ? "border-red-400 bg-red-50 text-red-600"
+                      : voiceSupported
+                        ? "border-[#e2e8f0] bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569]"
+                        : "border-[#e2e8f0] bg-[#f8fafc] text-[#94a3b8] opacity-70"),
                 },
                 listening
                   ? React.createElement(
@@ -1221,7 +1310,13 @@ export default function ChatPage() {
                   },
                   t("stop", locale)
                 )
-            )
+            ),
+            voiceError &&
+              React.createElement(
+                "p",
+                { className: "text-xs text-red-600", role: "alert" },
+                voiceError
+              )
           )
         )
       )

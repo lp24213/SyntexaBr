@@ -563,7 +563,7 @@ export async function publicChatWithMedia(history, files) {
   for (const file of files) {
     form.append("files", file);
   }
-  const resp = await fetchWithResilience( "/public-chat", {
+  const resp = await fetchWithResilience( "/v1/public-chat", {
     method: "POST",
     headers: { "Accept-Language": locale },
     body: form,
