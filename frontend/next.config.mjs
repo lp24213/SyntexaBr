@@ -8,6 +8,12 @@ const nextConfig = {
   async redirects() {
     return [{ source: "/favicon.ico", destination: "/icon.svg", permanent: false }];
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = [...(config.externals || []), "@xenova/transformers"];
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

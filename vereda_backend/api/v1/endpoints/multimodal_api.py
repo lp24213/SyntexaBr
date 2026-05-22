@@ -35,13 +35,12 @@ _log = logging.getLogger(__name__)
 
 @router.get("/capabilities")
 def multimodal_capabilities() -> Dict[str, Any]:
-    _az = bool((getattr(settings, "azure_speech_key", None) or "").strip()) and bool(
-        (getattr(settings, "azure_speech_region", None) or "").strip()
-    )
     return {
-        "stt": bool((settings.local_stt_endpoint or "").strip()) or _az,
+        "stt": bool((settings.local_stt_endpoint or "").strip()),
+        "stt_browser": "xenova_whisper_small",
         "tts": True,
-        "tts_azure": _az,
+        "tts_azure": bool((getattr(settings, "azure_speech_key", None) or "").strip())
+        and bool((getattr(settings, "azure_speech_region", None) or "").strip()),
         "vision_llm": bool(
             (settings.local_llm_endpoint or settings.azure_tgi_endpoint or settings.exllama_endpoint or settings.remote_llm_endpoint or "").strip()
         ),

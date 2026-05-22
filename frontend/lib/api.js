@@ -1325,7 +1325,7 @@ export async function multimodalTranscribe(file, token) {
   return data && typeof data === "object" ? data : { ok: false, text: "", detail: USER_FACING_TRY_AGAIN };
 }
 
-/** STT real no servidor (Azure / Whisper HTTP) — WebM gravado no browser. */
+/** STT no servidor via LOCAL_STT_ENDPOINT (Whisper HTTP próprio) — legado; chat usa Xenova no browser. */
 export async function transcribeAudioBlob(blob, token, filename) {
   if (!blob || blob.size < 256) {
     throw new Error("Gravação muito curta. Fale por mais tempo e tente de novo.");

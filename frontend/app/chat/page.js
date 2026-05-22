@@ -16,8 +16,8 @@ import {
   publicChatStream,
   publicChatWithMedia,
   getChatSessionMessages,
-  transcribeAudioBlob,
 } from "../../lib/api";
+import { transcribeWithXenova, setXenovaSttProgressCallback } from "../../lib/xenova-stt";
 import {
   isDesktopMode,
   desktopChatCompletion,
@@ -229,6 +229,7 @@ export default function ChatPage() {
   const [plan, setPlan] = useState("anon");
   const [listening, setListening] = useState(false);
   const [voiceTranscribing, setVoiceTranscribing] = useState(false);
+  const [voiceProgress, setVoiceProgress] = useState("");
   const [voiceError, setVoiceError] = useState("");
   const micRecorderRef = useRef(null);
   const micStreamRef = useRef(null);
@@ -287,6 +288,15 @@ export default function ChatPage() {
     } catch (e) {}
   }, [messages, loading]);
 
+  useEffect(function () {
+    setXenovaSttProgressCallback(function (msg) {
+      setVoiceProgress(msg || "");
+    });
+    return function () {
+      setXenovaSttProgressCallback(null);
+    };
+  }, []);
+
   function stopMicStream() {
     try {
       var stream = micStreamRef.current;
@@ -309,17 +319,13 @@ export default function ChatPage() {
     return "";
   }
 
-  async function finishMicRecording(blob, mime) {
-    var tok = null;
-    try {
-      tok = window.localStorage.getItem("syntexa_token");
-    } catch (_) {
-      tok = null;
-    }
+  async function finishMicRecording(blob) {
     setVoiceTranscribing(true);
     setVoiceError("");
+    setVoiceProgress("Iniciando transcrição local (Xenova Whisper)…");
     try {
-      var text = await transcribeAudioBlob(blob, tok || undefined, mime.indexOf("mp4") >= 0 ? "gravacao.m4a" : "gravacao.webm");
+      var text = await transcribeWithXenova(blob, { language: "portuguese" });
+      setVoiceProgress("");
       setInput(text);
       setTimeout(function () {
         autoGrowTextarea();
@@ -328,7 +334,8 @@ export default function ChatPage() {
       await sendMessage(text);
     } catch (e) {
       var msg = e instanceof Error ? e.message : String(e);
-      setVoiceError(msg || "Falha na transcrição.");
+      setVoiceError(msg || "Falha na transcrição Xenova.");
+      setVoiceProgress("");
       setVoiceTranscribing(false);
     }
   }
@@ -917,7 +924,7 @@ export default function ChatPage() {
         micRecorderRef.current = null;
         var blob = new Blob(micChunksRef.current, { type: usedMime });
         micChunksRef.current = [];
-        void finishMicRecording(blob, usedMime);
+        void finishMicRecording(blob);
       };
       micRecorderRef.current = recorder;
       recorder.start(250);
@@ -1307,8 +1314,8 @@ export default function ChatPage() {
                   title: listening
                     ? "Clique para parar e transcrever"
                     : voiceTranscribing
-                      ? "Transcrevendo no servidor…"
-                      : "Gravar áudio e enviar ao chat (STT real)",
+                      ? "Transcrevendo com Xenova Whisper no navegador…"
+                      : "Gravar áudio — transcrição local Xenova/Whisper (sem Azure)",
                   onClick: function () {
                     void toggleVoice();
                   },
@@ -1347,14 +1354,14 @@ export default function ChatPage() {
                   t("stop", locale)
                 )
             ),
-            (voiceError || voiceTranscribing) &&
+            (voiceError || voiceTranscribing || voiceProgress) &&
               React.createElement(
                 "p",
                 {
                   className: "text-xs " + (voiceError ? "text-red-600" : "text-[#64748b]"),
                   role: voiceError ? "alert" : "status",
                 },
-                voiceError || "Transcrevendo áudio no servidor…"
+                voiceError || voiceProgress || "Transcrevendo com Xenova Whisper…"
               )
           )
         )

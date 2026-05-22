@@ -3,9 +3,9 @@
 import React, { useCallback, useRef, useState } from "react";
 import {
   CHAT_MAX_TOKENS,
-  multimodalTranscribe,
   multimodalVoiceConversation,
 } from "../lib/api";
+import { transcribeWithXenova } from "../lib/xenova-stt";
 
 /**
  * @param {"transcribe"|"pipeline"} mode
@@ -92,13 +92,7 @@ export function AudioRecorder({
             }
           } else {
             setPhase("llm");
-            const data = await multimodalTranscribe(file, token || undefined);
-            const t = (data && data.text) || "";
-            if (!t) {
-              const detail = (data && data.detail) || "Transcrição vazia.";
-              if (onError) onError(detail);
-              return;
-            }
+            const t = await transcribeWithXenova(file, { language: "portuguese" });
             if (typeof onVoiceSubmitChat === "function") {
               await onVoiceSubmitChat(t);
             } else if (onError) {
@@ -106,14 +100,8 @@ export function AudioRecorder({
             }
           }
         } else {
-          const data = await multimodalTranscribe(file, token || undefined);
-          const t = (data && data.text) || "";
-          if (t) {
-            if (onTranscript) onTranscript(t);
-          } else {
-            const detail = (data && data.detail) || "Transcrição vazia.";
-            if (onError) onError(detail);
-          }
+          const t = await transcribeWithXenova(file, { language: "portuguese" });
+          if (t && onTranscript) onTranscript(t);
         }
       } catch (e) {
         if (onError) onError(e instanceof Error ? e.message : String(e));
