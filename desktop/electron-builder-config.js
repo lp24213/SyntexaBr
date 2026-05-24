@@ -130,131 +130,99 @@ function buildExtraResources() {
   return extras;
 }
 
-/** Configuração principal */
+/** Configuração principal — APENAS NSIS, sem ZIP, sem portable, sem MSI */
 module.exports = {
-  appId: "br.com.syntexabr.desktop",
+  appId: "com.syntexa.desktop",
   productName: "Syntexa AI",
   copyright: "Copyright 2026 SyntexaBR",
   buildVersion: pkg.version,
+
   directories: {
-    output: "dist",
+    output: "release",
     buildResources: "build",
   },
+
   files: buildFiles(),
   extraResources: buildExtraResources(),
+
   asar: true,
   asarUnpack: [
     "backend/**/*",
     "runtime/**/*",
-    "vereda_ai/**/*",
-    "llm-quantum/**/*",
-    "checkpoints/**/*",
   ],
-  compression: "maximum",
+  compression: "normal",
 
-  // macOS (mantido para compatibilidade)
-  mac: {
-    target: ["dmg", "zip"],
-    category: "public.app-category.productivity",
-    artifactName: "SyntexaAI-${version}-macos-universal.${ext}",
-  },
-
-  // Linux Enterprise
-  linux: {
-    target: [
-      { target: "AppImage", arch: ["x64"] },
-      { target: "deb", arch: ["x64"] },
-      { target: "tar.gz", arch: ["x64"] },
-    ],
-    category: "Office;Utility;ArtificialIntelligence",
-    synopsis: "Syntexa AI — Foundation Model Soberana Desktop (Offline)",
-    description:
-      "Runtime neural soberano com Foundation Model 70B, multimodal (TTS/STT/OCR/Vision), " +
-      "QPanda3 quantum layer, e chat cinematográfico. Funciona 100% offline.",
-    maintainer: "SyntexaBR <contato@syntexabr.com.br>",
-    vendor: "SyntexaBR",
-    artifactName: "SyntexaAI-${version}-linux-${arch}.${ext}",
-    desktop: {
-      Name: "Syntexa AI",
-      Comment: "Foundation Model Soberana Desktop",
-      Categories: "Office;Utility;ArtificialIntelligence;",
-      Keywords: "ai;llm;chat;multimodal;offline;soberano;",
-      StartupNotify: "true",
-      Terminal: "false",
-    },
-  },
-
-  // Post-pack para todas as plataformas (symlink-safe, assinatura, permissões)
   afterPack: path.join(__dirname, "scripts", "after-pack.js"),
 
-  // Windows Enterprise
+  // ── WINDOWS — só NSIS ────────────────────────────────────
   win: (function () {
     const cfg = {
       target: [
         { target: "nsis", arch: ["x64"] },
-        { target: "portable", arch: ["x64"] },
-        { target: "msi", arch: ["x64"] },
       ],
-      artifactName: "SyntexaAI-${version}-win-${arch}.${ext}",
+      icon: path.join(__dirname, "build", "icon.ico"),
+      artifactName: "SyntexaAI-Setup-${version}.${ext}",
       publisherName: "SyntexaBR",
       verifyUpdateCodeSignature: false,
-      requestedExecutionLevel: "asInvoker",
-      // Hardened signing
+      requestedExecutionLevel: "requireAdministrator",
       rfc3161TimeStampServer: "http://timestamp.digicert.com",
       timeStampServer: "http://timestamp.digicert.com",
-      signAndEditExecutable: true,
-      signDlls: true,
     };
-    const certFile = process.env.SYNTEXA_CERT_FILE;
-    if (certFile && fs.existsSync(certFile)) {
+    const certPass = process.env.SYNTEXA_CERT_PASS || "";
+    let certFile = process.env.SYNTEXA_CERT_FILE || "";
+    if (!certFile || !fs.existsSync(certFile)) {
+      const candidates = [
+        path.join(__dirname, "..", "Syntexa-codesign-new.pfx"),
+        path.join(__dirname, "..", "Syntexa-codesign.pfx"),
+        path.join(__dirname, "..", "syntexa.pfx"),
+      ];
+      certFile = candidates.find(function(c) { return fs.existsSync(c); }) || "";
+    }
+    if (certFile && certPass) {
       cfg.certificateFile = certFile;
-      cfg.certificatePassword = process.env.SYNTEXA_CERT_PASS || "";
+      cfg.certificatePassword = certPass;
+      console.info("[electron-builder] Certificado: " + certFile);
     } else {
-      // Sem certificado: gera unsigned mas com manifesto de integridade
-      console.warn("[electron-builder] SYNTEXA_CERT_FILE não definido. Build será unsigned (SmartScreen pode alertar).");
+      console.warn("[electron-builder] Sem certificado — build unsigned.");
     }
     return cfg;
   })(),
 
-  // NSIS Installer
+  // ── NSIS installer gráfico profissional ──────────────────
   nsis: {
     oneClick: false,
+    allowElevation: true,
     allowToChangeInstallationDirectory: true,
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
     shortcutName: "Syntexa AI",
-    installerLanguages: ["pt-BR", "en"],
-    language: "1046",
-    artifactName: "SyntexaAI-${version}-Setup.${ext}",
-    // Uninstall display name
-    uninstallDisplayName: "Syntexa AI Foundation Model",
-    // Remove previous version antes de instalar
+    installerIcon: path.join(__dirname, "build", "icon.ico"),
+    uninstallerIcon: path.join(__dirname, "build", "icon.ico"),
+    installerHeaderIcon: path.join(__dirname, "build", "icon.ico"),
+    artifactName: "SyntexaAI-Setup-${version}.${ext}",
+    uninstallDisplayName: "Syntexa AI",
     deleteAppDataOnUninstall: false,
-    // Include custom installer script
-    include: path.join(__dirname, "scripts", "nsis-custom.nsh"),
-    // Mensagens do instalador
-    displayLanguageSelector: true,
     multiLanguageInstaller: true,
+    displayLanguageSelector: false,
+    language: "1046",
     license: path.join(__dirname, "build", "LICENSE.txt"),
+    include: path.join(__dirname, "scripts", "nsis-custom.nsh"),
   },
 
-  // Portable
-  portable: {
-    artifactName: "SyntexaAI-${version}-Portable.${ext}",
-    // Request execution level
-    requestExecutionLevel: "user",
+  // ── Linux — só tar.gz ────────────────────────────────────
+  linux: {
+    target: [
+      { target: "tar.gz", arch: ["x64"] },
+    ],
+    category: "Utility",
+    artifactName: "SyntexaAI-${version}-linux-x64.${ext}",
   },
 
-  // MSI
-  msi: {
-    artifactName: "SyntexaAI-${version}-Installer.${ext}",
-    // Upgrade code para updates via MSI
-    upgradeCode: "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}",
-    // Run after install
-    runAfterFinish: true,
-    // Create desktop shortcut via MSI
-    createDesktopShortcut: true,
-    createStartMenuShortcut: true,
+  // ── macOS ─────────────────────────────────────────────────
+  mac: {
+    target: [{ target: "dmg", arch: ["x64"] }],
+    category: "public.app-category.productivity",
+    artifactName: "SyntexaAI-${version}-macos.${ext}",
   },
 
   publish: null,

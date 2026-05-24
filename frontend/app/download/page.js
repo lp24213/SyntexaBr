@@ -6,7 +6,7 @@ import { AppShell } from "../../components/shell";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 
-const WIN_URL = "https://api.syntexabr.com.br/v1/desktop/binary/SyntexaAI-Setup-1.0.0.exe";
+const WIN_URL = "https://api.syntexabr.com.br/v1/desktop/binary/SyntexaAI-Setup-45.0.0.exe";
 const SHOW_MAC_DESKTOP =
   typeof process !== "undefined" && process.env.NEXT_PUBLIC_SHOW_MAC_DESKTOP === "1";
 const MAC_URL = "";
