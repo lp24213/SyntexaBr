@@ -6,11 +6,11 @@ import { AppShell } from "../../components/shell";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 
-const WIN_URL = "/download/SyntexaAI-Windows.zip";
+const WIN_URL = "https://api.syntexabr.com.br/v1/desktop/binary/SyntexaAI-Setup-1.0.0.exe";
 const SHOW_MAC_DESKTOP =
   typeof process !== "undefined" && process.env.NEXT_PUBLIC_SHOW_MAC_DESKTOP === "1";
 const MAC_URL = "";
-const LINUX_URL = "/download/SyntexaAI-linux-x64.tar.gz";
+const LINUX_URL = "https://api.syntexabr.com.br/v1/desktop/binary/SyntexaAI-linux-x64-45.0.0.tar.gz";
 const IOS_APP_STORE_URL = process.env.NEXT_PUBLIC_IOS_APPSTORE_URL || "";
 const IOS_TESTFLIGHT_URL = process.env.NEXT_PUBLIC_IOS_TESTFLIGHT_URL || "";
 const ANDROID_APK_URL =
@@ -174,14 +174,14 @@ export default function DownloadPage() {
                           rel: "noreferrer",
                           className: btnBase + " bg-white hover:bg-zinc-200 text-black",
                         },
-                        "Baixar para Windows (.zip)"
+                        "Baixar para Windows (.exe)"
                       ),
                       React.createElement(
                         "p",
                         {
                           className: "mt-2 text-[11px] leading-snug text-zinc-600",
                         },
-                        "Executável portátil: na primeira vez que abrir o app, criamos automaticamente o atalho «Syntexa AI» na sua área de trabalho."
+                        "Instalador oficial NSIS — instala, cria atalho no desktop e menu Iniciar. Windows 10/11 x64."
                       )
                     )
                   : React.createElement(

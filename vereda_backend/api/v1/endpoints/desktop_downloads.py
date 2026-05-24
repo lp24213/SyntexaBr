@@ -73,12 +73,28 @@ def serve_desktop_binary(filename: str) -> FileResponse:
                 "(2) deploy-back para enviar vereda_backend/static/desktop/."
             ),
         )
-    return FileResponse(
+    ext = target.suffix.lower()
+    mime_map = {
+        ".exe": "application/vnd.microsoft.portable-executable",
+        ".msi": "application/x-msi",
+        ".dmg": "application/x-apple-diskimage",
+        ".apk": "application/vnd.android.package-archive",
+        ".tar.gz": "application/gzip",
+        ".gz": "application/gzip",
+        ".zip": "application/zip",
+        ".deb": "application/vnd.debian.binary-package",
+        ".AppImage": "application/x-executable",
+    }
+    media_type = mime_map.get(ext, "application/octet-stream")
+    response = FileResponse(
         path=str(target),
         filename=safe,
-        media_type="application/octet-stream",
+        media_type=media_type,
         content_disposition_type="attachment",
     )
+    response.headers["Content-Disposition"] = f'attachment; filename="{safe}"'
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @router.get("/assets/{filename:path}")

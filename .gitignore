@@ -40,9 +40,8 @@ coverage.xml
 # Node / Next.js
 node_modules/
 .next/
-# Instaladores Electron na API (só .gitkeep no repo)
-vereda_backend/static/desktop/*
-!vereda_backend/static/desktop/.gitkeep
+# Instaladores Electron na API — binários grandes são versionados para deploy no Railway
+# vereda_backend/static/desktop/* — NÃO ignorar: necessário para Railway servir os ficheiros
 frontend/public/download/*
 !frontend/public/download/.gitkeep
 out/
