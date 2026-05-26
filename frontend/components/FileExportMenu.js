@@ -341,7 +341,10 @@ export function downloadBlobNamed(blob, name) {
   downloadBlob(blob, name);
 }
 
-const API_BASE = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) || "https://api.syntexabr.com.br";
+// Em produção, sempre usar api.syntexabr.com.br (não .pages.dev)
+// Importar a mesma função que api.js usa para consistência
+const PRODUCTION_API_BASE = "https://api.syntexabr.com.br";
+const API_BASE = PRODUCTION_API_BASE;
 
 /** Chama o backend para gerar PDF/DOCX/XLSX reais e faz download do binário. */
 async function downloadFromBackend(kind, plain, table, token) {

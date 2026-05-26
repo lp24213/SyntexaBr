@@ -47,11 +47,8 @@ export function getApiBase() {
       }
     }
   }
-  // Em produção no browser, usar o mesmo domínio para passar pelo proxy Cloudflare Pages
-  // e evitar CORS direto ao backend Railway
-  if (typeof window !== "undefined" && window.location && window.location.origin) {
-    return window.location.origin.replace(/\/$/, "");
-  }
+  // Em produção: sempre usar PRODUCTION_API_BASE (api.syntexabr.com.br)
+  // Não usar window.location.origin pois frontend pode estar em .pages.dev
   return PRODUCTION_API_BASE.replace(/\/$/, "");
 }
 
