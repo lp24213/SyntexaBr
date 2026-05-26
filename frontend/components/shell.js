@@ -283,7 +283,7 @@ export function AppShell(props) {
               React.createElement("img", {
                 src: "/LOGOTIPO.png",
                 alt: "Syntexa",
-                className: "h-7 w-auto object-contain",
+                className: "h-14 w-auto object-contain",
                 draggable: false,
                 decoding: "async",
               })

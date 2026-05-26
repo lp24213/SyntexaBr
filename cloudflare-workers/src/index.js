@@ -45,7 +45,7 @@ function isDownloadAssetPath(pathname) {
   const rest = pathname.slice("/download/".length);
   if (!rest || rest.includes("/")) return false;
   return (
-    /\.(exe|dmg|deb|apk|aab)$/i.test(rest) || /\.tar\.gz$/i.test(rest)
+    /\.(exe|msi|dmg|deb|apk|aab|AppImage)$/i.test(rest) || /\.tar\.gz$/i.test(rest)
   );
 }
 

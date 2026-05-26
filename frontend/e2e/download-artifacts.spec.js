@@ -33,13 +33,13 @@ test.describe("Downloads de pacotes desktop", () => {
     expect(buf.byteLength).toBeGreaterThan(1_000_000);
   });
 
-  test("API: /v1/desktop/binary/SyntexaAI-linux-x64.tar.gz → 200 e corpo grande", async ({
+  test("API: /v1/desktop/binary/SyntexaAI-linux-x64.AppImage → 200 e corpo grande", async ({
     request,
   }) => {
-    const res = await request.get(`${API}/v1/desktop/binary/SyntexaAI-linux-x64.tar.gz`);
+    const res = await request.get(`${API}/v1/desktop/binary/SyntexaAI-linux-x64.AppImage`);
     expect(
       res.status(),
-      "404 = tar.gz não está na VM. Rode deploy completo com build Electron (Linux)."
+      "404 = AppImage não está na VM. Rode deploy completo com build Electron (Linux)."
     ).toBe(200);
     const buf = await res.body();
     expect(buf.byteLength).toBeGreaterThan(10_000_000);

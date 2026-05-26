@@ -109,3 +109,12 @@ desktop.ini
 # Playwright E2E
 playwright-report/
 test-results/
+
+# Desktop binaries (too large for GitHub)
+desktop/release/
+desktop/dist-*/
+desktop/dist/
+*.msi
+*.exe
+temp_download.exe
+test_download.exe

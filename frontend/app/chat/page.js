@@ -26,6 +26,7 @@ import {
 } from "../../lib/desktop-api";
 import { t, getClientLocale } from "../../lib/i18n";
 import { sanitizeOutput, sanitizeStreamChunk } from "../../lib/sanitizeOutput";
+import { setXenovaSttProgressCallback } from "../../lib/xenova-stt";
 import { MarkdownMessage } from "../../components/MarkdownMessage";
 
 /**
@@ -1405,7 +1406,15 @@ export default function ChatPage() {
                     var role = mm.role === "user" ? "Você:" : "Assistente:";
                     var content = String(mm.content);
                     if (/^Gerando\s/i.test(content)) return;
-                    fullChat.push(role + "\n" + content);
+                    var lines = [role, content];
+                    if (mm.media && mm.media.type) {
+                      var mediaLabel = mm.media.type === "image" ? "Imagem gerada" :
+                        mm.media.type === "video" ? "Vídeo gerado" :
+                        mm.media.type === "audio" ? "Áudio gerado" :
+                        mm.media.type === "speech" ? "Fala gerada" : "Mídia gerada";
+                      lines.push("[" + mediaLabel + "]");
+                    }
+                    fullChat.push(lines.join("\n"));
                   });
                   return fullChat.join("\n\n");
                 },

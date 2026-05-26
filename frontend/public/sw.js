@@ -1,5 +1,5 @@
 /* Syntexa AI — Service Worker PWA */
-const CACHE_NAME = "syntexa-v2";
+const CACHE_NAME = "syntexa-v4";
 const STATIC_ASSETS = [
   "/",
   "/chat/",

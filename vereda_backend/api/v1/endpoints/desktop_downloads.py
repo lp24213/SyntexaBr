@@ -17,6 +17,10 @@ _ASSET_TO_SETTING = {
     "SyntexaAI-macos-universal.dmg": "desktop_macos_url",
     "SyntexaAI-linux-x64.tar.gz": "desktop_linux_url",
     "SyntexaAI-linux-x64-45.0.0.tar.gz": "desktop_linux_url",
+    "SyntexaAI-linux-x64.AppImage": "desktop_linux_url",
+    "SyntexaAI-linux-x64-45.0.0.AppImage": "desktop_linux_url",
+    "SyntexaAI-linux-x64.deb": "desktop_ubuntu_url",
+    "SyntexaAI-linux-x64-45.0.0.deb": "desktop_ubuntu_url",
     "SyntexaAI-android-arm64.apk": "desktop_android_url",
 }
 
@@ -104,12 +108,12 @@ def serve_desktop_binary(filename: str) -> FileResponse:
 @router.head("/assets/{filename:path}")
 def redirect_desktop_asset(filename: str) -> RedirectResponse:
     safe = _safe_filename(filename)
-    # .deb não é gerado no build Windows; link antigo → mesmo pacote .tar.gz na API.
+    # .deb não é gerado no build Windows; link antigo → AppImage genérico na API.
     if safe == "SyntexaAI-ubuntu-22.04-amd64.deb":
         override = (getattr(settings, "desktop_ubuntu_url", None) or "").strip()
         if override:
             return RedirectResponse(url=override, status_code=302)
-        return RedirectResponse(url=_api_binary_url("SyntexaAI-linux-x64.tar.gz"), status_code=302)
+        return RedirectResponse(url=_api_binary_url("SyntexaAI-linux-x64-45.0.0.AppImage"), status_code=302)
     setting_name = _ASSET_TO_SETTING.get(safe)
     if not setting_name:
         raise HTTPException(
