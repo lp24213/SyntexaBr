@@ -19,8 +19,8 @@ LOCAL_BASE_URL = ""
 # V46 — antes apontava para `https://syntexabr.com.br` o que provocava loop:
 # o worker está nas rotas `syntexabr.com.br/*`, então ao tentar buscar o
 # frontend ele caía em si mesmo (servindo cache/deploy antigo). O endpoint
-# de produção do Cloudflare Pages é `<project>.pages.dev` (não tem hash).
-FRONTEND_BASE_URL = "https://syntexa-frontend.pages.dev"
+# de produção do Cloudflare Pages é a alias: production.syntexa-frontend.pages.dev
+FRONTEND_BASE_URL = "https://production.syntexa-frontend.pages.dev"
 
 # ── EDGE SECURITY ──────────────────────────────────────
 REQUIRE_CLOUDFLARE = "true"

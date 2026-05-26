@@ -386,7 +386,7 @@ export default {
       return resp;
     }
 
-    // 9. Frontend → Cloudflare Pages
+    // 9. Frontend → Cloudflare Pages (alias de produção)
     const frontendBase = env.FRONTEND_BASE_URL || "https://production.syntexa-frontend.pages.dev";
     const targetUrl = new URL(frontendBase);
     targetUrl.pathname = pathname;
@@ -397,20 +397,29 @@ export default {
       headers: new Headers(request.headers),
       body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
       redirect: "manual",
-      cf: { cacheTtl: 0 },
+      cf: { cacheTtl: 300 }, // Cache rápido para Pages (5 min)
     };
     init.headers.delete("host");
-    init.headers.set("Cache-Control", "no-cache");
+    init.headers.delete("CF-Connecting-IP"); // Remover headers que podem causar erro
 
     const pagesResp = await fetch(targetUrl.toString(), init);
     const pageHeaders = new Headers(pagesResp.headers);
-    if (!pathname.match(/\.(js|css|mjs|woff2?|png|jpg|jpeg|webp|svg|ico|map)$/i)) {
+    
+    // Assets estáticos: cache longo
+    if (pathname.match(/\.(js|css|mjs|woff2?|png|jpg|jpeg|webp|svg|ico|map)$/i)) {
+      pageHeaders.set("Cache-Control", "public, max-age=31536000, immutable");
+    } 
+    // HTML + API: sem cache
+    else {
       pageHeaders.set("Cache-Control", "no-store, no-cache, must-revalidate");
       pageHeaders.set("Pragma", "no-cache");
       pageHeaders.set("Expires", "0");
-    } else {
-      pageHeaders.set("Cache-Control", "public, max-age=86400, immutable");
     }
+    
+    // Adicionar headers CORS
+    Object.entries(corsHeaders(origin, env)).forEach(([k, v]) => pageHeaders.set(k, v));
+    Object.entries(securityHeaders()).forEach(([k, v]) => pageHeaders.set(k, v));
+    
     return new Response(pagesResp.body, { status: pagesResp.status, headers: pageHeaders });
   },
 };
