@@ -11,9 +11,12 @@ from vereda_backend.core.config import settings
 router = APIRouter(prefix="/desktop", tags=["desktop"])
 
 _ASSET_TO_SETTING = {
+    "SyntexaAI-Setup-45.0.0.msi": "desktop_windows_url",
+    "SyntexaAI-Setup-45.0.0.exe": "desktop_windows_url",
     "SyntexaAI-Setup-1.0.0.exe": "desktop_windows_url",
     "SyntexaAI-macos-universal.dmg": "desktop_macos_url",
     "SyntexaAI-linux-x64.tar.gz": "desktop_linux_url",
+    "SyntexaAI-linux-x64-45.0.0.tar.gz": "desktop_linux_url",
     "SyntexaAI-android-arm64.apk": "desktop_android_url",
 }
 

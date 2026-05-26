@@ -52,6 +52,7 @@ from vereda_backend.core.cache_redis import (
     shared_question_cache_set,
 )
 from vereda_backend.core.text_sanitize import fix_text_encoding, sanitize_for_stream
+from vereda_backend.core.cognitive_layer import CognitiveContext, cognitive_refine
 
 
 _CHAT_CACHE_LOCK = threading.Lock()
@@ -1004,6 +1005,13 @@ def _compute_chat_reply(
             detail=_audit_chat_detail(preview=content or ""),
             ip_address=get_chat_request_context().get("client_ip"),
         )
+    # ── Cognitive layer: post-processing pipeline (anti-generic, humanization, entropy)
+    locale_val = str(getattr(req, "locale", None) or "pt-BR")
+    _cog_ctx = CognitiveContext(
+        user_name=str(getattr(user, "name", None) or getattr(user, "username", None) or "") or None,
+        locale=locale_val,
+    )
+    reply_text = cognitive_refine(reply_text, _cog_ctx)
     return reply_text
 
 

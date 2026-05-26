@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChatLayout } from "../../components/chat-layout";
 import { Button } from "../../components/ui/button";
-import { ExportMenu } from "../../components/chat-export";
+import { FileExportMenu } from "../../components/FileExportMenu";
 import {
   chatCompletionStream,
   chatCompletionWithMedia,
@@ -17,7 +17,6 @@ import {
   publicChatWithMedia,
   getChatSessionMessages,
 } from "../../lib/api";
-import { transcribeWithXenova, setXenovaSttProgressCallback } from "../../lib/xenova-stt";
 import {
   isDesktopMode,
   desktopChatCompletion,
@@ -27,6 +26,7 @@ import {
 } from "../../lib/desktop-api";
 import { t, getClientLocale } from "../../lib/i18n";
 import { sanitizeOutput, sanitizeStreamChunk } from "../../lib/sanitizeOutput";
+import { MarkdownMessage } from "../../components/MarkdownMessage";
 
 /**
  * V46 — Limpa marcações de Markdown que ficam visíveis como caracteres
@@ -61,6 +61,15 @@ function cleanAssistantText(input) {
   // Lista "-/* " → "• "
   s = s.replace(/^[ \t]{0,6}[*\-+][ \t]+/gm, "• ");
   // Lista numerada "1. " continua igual (legível)
+  // Markdown table separator rows (| --- | --- |) → empty
+  s = s.replace(/^\s*\|[\s\-:|]+\|\s*$/gm, "");
+  // Pipe table rows: | A | B | C | → "A  B  C"
+  s = s.replace(/^\s*\|(.+)\|\s*$/gm, function (_m, inner) {
+    return inner.split("|").map(function (c) { return c.trim(); }).filter(Boolean).join("  ");
+  });
+  // Residual lone pipe chars (e.g. table artifacts not caught above)
+  s = s.replace(/\s\|\s/g, "  ");
+  s = s.replace(/^\||\|$/gm, "");
   // Colapsa 3+ quebras de linha em 2
   s = s.replace(/\n{3,}/g, "\n\n");
   return s.trim();
@@ -240,10 +249,12 @@ export default function ChatPage() {
   const [desktopReady, setDesktopReady] = useState(false);
   const [bootDiagnostic, setBootDiagnostic] = useState(null);
   const [bootFailures, setBootFailures] = useState([]);
+  const [authToken, setAuthToken] = useState(null);
   const abortRef = useRef(null);
   var messagesEndRef = useRef(null);
   var textareaRef = useRef(null);
   var locale = getClientLocale();
+  const speechRef = useRef(null);
 
   // Detecção de modo desktop + boot validation obrigatória
   useEffect(function () {
@@ -294,6 +305,13 @@ export default function ChatPage() {
     });
     return function () {
       setXenovaSttProgressCallback(null);
+      // Limpa SpeechRecognition se estiver ativo
+      try {
+        if (speechRef.current) {
+          speechRef.current.abort();
+          speechRef.current = null;
+        }
+      } catch (_) {}
     };
   }, []);
 
@@ -322,20 +340,27 @@ export default function ChatPage() {
   async function finishMicRecording(blob) {
     setVoiceTranscribing(true);
     setVoiceError("");
-    setVoiceProgress("Iniciando transcrição local (Xenova Whisper)…");
+    setVoiceProgress("A transcrever…");
     try {
-      var text = await transcribeWithXenova(blob, { language: "portuguese" });
+      // Usa backend API para STT (não precisa baixar modelo no browser)
+      var fd = new FormData();
+      fd.append("file", blob, "audio.webm");
+      var resp = await fetch("https://api.syntexabr.com.br/v1/voice/stt", {
+        method: "POST",
+        body: fd,
+      });
+      if (!resp.ok) throw new Error("STT failed: " + resp.status);
+      var data = await resp.json();
+      var text = data.text || data.transcript || "";
+      if (!text) throw new Error("Transcrição vazia");
       setVoiceProgress("");
       setInput(text);
-      setTimeout(function () {
-        autoGrowTextarea();
-      }, 0);
+      setTimeout(function () { autoGrowTextarea(); }, 0);
       setVoiceTranscribing(false);
       await sendMessage(text);
     } catch (e) {
-      var msg = e instanceof Error ? e.message : String(e);
-      setVoiceError(msg || "Falha na transcrição Xenova.");
       setVoiceProgress("");
+      setVoiceError("Erro na transcrição. Tente novamente.");
       setVoiceTranscribing(false);
     }
   }
@@ -353,6 +378,7 @@ export default function ChatPage() {
     if (typeof window === "undefined") return;
     try {
       const token = window.localStorage.getItem("syntexa_token");
+      setAuthToken(token || null);
       if (!token) {
         setPlan("anon");
         return;
@@ -877,64 +903,169 @@ export default function ChatPage() {
     }
   }
 
+  function stopSpeechRecognition() {
+    try {
+      if (speechRef.current) {
+        speechRef.current.stop();
+        speechRef.current.abort();
+        speechRef.current = null;
+      }
+    } catch (_) {}
+  }
+
+  async function startMediaRecorder() {
+    var stream;
+    // 1) tenta configuração completa
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
+    } catch (e1) {
+      // 2) fallback: pedido mínimo de áudio
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e2) {
+        throw e1; // propaga o erro original
+      }
+    }
+    micStreamRef.current = stream;
+    micChunksRef.current = [];
+    var mime = pickMicMimeType();
+    var opts = mime ? { mimeType: mime } : undefined;
+    var recorder = new MediaRecorder(stream, opts);
+    var usedMime = recorder.mimeType || mime || "audio/webm";
+    recorder.ondataavailable = function (e) {
+      if (e.data && e.data.size) micChunksRef.current.push(e.data);
+    };
+    recorder.onerror = function () {
+      setVoiceError("Erro na gravação de áudio.");
+      setListening(false);
+      stopMicStream();
+      micRecorderRef.current = null;
+    };
+    recorder.onstop = function () {
+      setListening(false);
+      stopMicStream();
+      micRecorderRef.current = null;
+      var blob = new Blob(micChunksRef.current, { type: usedMime });
+      micChunksRef.current = [];
+      void finishMicRecording(blob);
+    };
+    micRecorderRef.current = recorder;
+    recorder.start(250);
+    setListening(true);
+  }
+
+  function startWebSpeechFallback() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return false;
+    stopSpeechRecognition();
+    var rec = new SR();
+    rec.lang = "pt-BR";
+    rec.continuous = false;
+    rec.interimResults = true;
+    var finalTranscript = "";
+    var interimTranscript = "";
+    rec.onstart = function () {
+      setListening(true);
+      setVoiceError("");
+    };
+    rec.onresult = function (event) {
+      interimTranscript = "";
+      for (var i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+      setInput(finalTranscript + interimTranscript);
+      try { autoGrowTextarea(); } catch (_) {}
+    };
+    rec.onerror = function (event) {
+      setListening(false);
+      speechRef.current = null;
+      var errCode = event && event.error ? event.error : "";
+      if (errCode === "not-allowed" || errCode === "service-not-allowed") {
+        setVoiceError("Permissão de microfone negada. Toque no cadeado ao lado da URL e permita o acesso.");
+      } else if (errCode === "no-speech") {
+        setVoiceError("Não detectamos nenhuma fala. Fale mais perto do microfone e tente novamente.");
+      } else if (errCode === "audio-capture") {
+        setVoiceError("Microfone não encontrado. Verifique se há um microfone conectado e tente novamente.");
+      } else if (errCode === "network") {
+        setVoiceError("Sem conexão. Verifique sua internet e tente novamente.");
+      } else if (errCode === "aborted") {
+        setVoiceError("");
+      } else {
+        setVoiceError("Não foi possível usar o microfone. Tente novamente.");
+      }
+    };
+    rec.onend = function () {
+      setListening(false);
+      speechRef.current = null;
+      if (finalTranscript) {
+        setInput(finalTranscript);
+        try { autoGrowTextarea(); } catch (_) {}
+      }
+    };
+    speechRef.current = rec;
+    try {
+      rec.start();
+      return true;
+    } catch (e) {
+      speechRef.current = null;
+      return false;
+    }
+  }
+
   async function toggleVoice() {
     if (voiceTranscribing || loading) return;
-    if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setVoiceError("Microfone indisponível neste navegador.");
-      return;
-    }
-    if (typeof MediaRecorder === "undefined") {
-      setVoiceError("Gravação de áudio não suportada neste navegador.");
-      return;
-    }
+
+    // Se MediaRecorder estiver ativo, para
     var mr = micRecorderRef.current;
     if (mr && mr.state === "recording") {
-      try {
-        mr.requestData();
-      } catch (_) {}
-      try {
-        mr.stop();
-      } catch (_) {}
+      try { mr.requestData(); } catch (_) {}
+      try { mr.stop(); } catch (_) {}
       setListening(false);
       return;
     }
+
+    // Se SpeechRecognition estiver ativo, para
+    if (speechRef.current) {
+      stopSpeechRecognition();
+      setListening(false);
+      return;
+    }
+
+    if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setVoiceError("Este navegador não suporta acesso ao microfone. Use Chrome ou Edge atualizado.");
+      return;
+    }
+    if (typeof MediaRecorder === "undefined") {
+      setVoiceError("Gravação de áudio não suportada. Use Chrome ou Edge atualizado.");
+      return;
+    }
+
     setVoiceError("");
+
+    var hasSpeechAPI = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (hasSpeechAPI) {
+      var started = startWebSpeechFallback();
+      if (started) return;
+    }
+
     try {
-      var stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
-      micStreamRef.current = stream;
-      micChunksRef.current = [];
-      var mime = pickMicMimeType();
-      var opts = mime ? { mimeType: mime } : undefined;
-      var recorder = new MediaRecorder(stream, opts);
-      var usedMime = recorder.mimeType || mime || "audio/webm";
-      recorder.ondataavailable = function (e) {
-        if (e.data && e.data.size) micChunksRef.current.push(e.data);
-      };
-      recorder.onerror = function () {
-        setVoiceError("Erro na gravação de áudio.");
-        setListening(false);
-        stopMicStream();
-        micRecorderRef.current = null;
-      };
-      recorder.onstop = function () {
-        setListening(false);
-        stopMicStream();
-        micRecorderRef.current = null;
-        var blob = new Blob(micChunksRef.current, { type: usedMime });
-        micChunksRef.current = [];
-        void finishMicRecording(blob);
-      };
-      micRecorderRef.current = recorder;
-      recorder.start(250);
-      setListening(true);
+      setVoiceProgress("Preparando microfone…");
+      await startMediaRecorder();
+      return;
     } catch (e) {
       stopMicStream();
       micRecorderRef.current = null;
+      setVoiceProgress("");
       var errName = e && e.name ? e.name : "";
-      if (errName === "NotAllowedError" || errName === "PermissionDeniedError") {
-        setVoiceError("Permita o microfone nas configurações do navegador.");
+      var isPermissionDenied = errName === "NotAllowedError" || errName === "PermissionDeniedError";
+      if (isPermissionDenied) {
+        setVoiceError("Microfone bloqueado. Clique no cadeado 🔒 ao lado da URL → Microfone → Permitir e recarregue a página.");
       } else {
         setVoiceError(e instanceof Error ? e.message : "Não foi possível acessar o microfone.");
       }
@@ -1014,11 +1145,9 @@ export default function ChatPage() {
                     React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true }),
                     React.createElement("span", null, m.content)
                   )
-                : React.createElement(
-                    "p",
-                    { className: "whitespace-pre-wrap" },
-                    m.role === "assistant" ? cleanAssistantText(m.content) : m.content
-                  ),
+                : m.role === "assistant"
+                  ? React.createElement(MarkdownMessage, { content: m.content })
+                  : React.createElement("p", { className: "whitespace-pre-wrap" }, m.content),
               m.media && m.media.type === "image" &&
                 React.createElement(ChatImage, {
                   src: m.media.url,
@@ -1216,18 +1345,18 @@ export default function ChatPage() {
             ),
           React.createElement(
             "div",
-            { className: "flex flex-col gap-2" },
+            { className: "flex flex-col gap-1.5" },
             React.createElement(
               "div",
-              { className: "flex gap-2 overflow-x-auto pb-1 scrollbar-none" },
+              { className: "flex flex-wrap gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none]" },
+              // ── Geração de mídia ──
               React.createElement(
                 "button",
                 {
                   type: "button",
                   onClick: function () { handleGenerateMedia("image"); },
                   disabled: loading || !input.trim(),
-                  className:
-                    "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5",
+                  className: "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5 transition-colors",
                 },
                 React.createElement(IconImage, null),
                 t("image", locale)
@@ -1238,8 +1367,7 @@ export default function ChatPage() {
                   type: "button",
                   onClick: function () { handleGenerateMedia("audio"); },
                   disabled: loading || !input.trim(),
-                  className:
-                    "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5",
+                  className: "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5 transition-colors",
                 },
                 React.createElement(IconAudio, null),
                 t("audio", locale)
@@ -1250,8 +1378,7 @@ export default function ChatPage() {
                   type: "button",
                   onClick: function () { handleGenerateMedia("video"); },
                   disabled: loading || !input.trim(),
-                  className:
-                    "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5",
+                  className: "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5 transition-colors",
                 },
                 React.createElement(IconVideo, null),
                 t("video", locale)
@@ -1262,13 +1389,27 @@ export default function ChatPage() {
                   type: "button",
                   onClick: function () { handleGenerateMedia("speech"); },
                   disabled: loading || !input.trim(),
-                  className:
-                    "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5",
+                  className: "shrink-0 h-9 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-xs text-[#475569] hover:bg-[#f1f5f9] disabled:opacity-40 inline-flex items-center gap-1.5 transition-colors",
                 },
                 React.createElement(IconAudio, null),
                 t("speech", locale)
               ),
-              visible.length > 0 && React.createElement(ExportMenu, { messages: messages })
+              // ── Separador + export (só aparece quando há mensagens) ──
+              visible.length > 0 && React.createElement("div", { className: "h-9 w-px bg-[#e2e8f0] shrink-0 self-center" }),
+              visible.length > 0 && React.createElement(FileExportMenu, {
+                token: authToken,
+                getExportText: function () {
+                  var fullChat = [];
+                  messages.forEach(function (mm) {
+                    if (!mm || !mm.content) return;
+                    var role = mm.role === "user" ? "Você:" : "Assistente:";
+                    var content = String(mm.content);
+                    if (/^Gerando\s/i.test(content)) return;
+                    fullChat.push(role + "\n" + content);
+                  });
+                  return fullChat.join("\n\n");
+                },
+              })
             ),
             React.createElement(
               "div",
@@ -1310,12 +1451,12 @@ export default function ChatPage() {
                 "button",
                 {
                   type: "button",
-                  "aria-label": voiceTranscribing ? "Transcrevendo áudio" : listening ? "Parar gravação" : "Gravar áudio",
+                  "aria-label": voiceTranscribing ? "Processando voz" : listening ? "Parar" : "Falar",
                   title: listening
-                    ? "Clique para parar e transcrever"
+                    ? "Clique para parar"
                     : voiceTranscribing
-                      ? "Transcrevendo com Xenova Whisper no navegador…"
-                      : "Gravar áudio — transcrição local Xenova/Whisper (sem Azure)",
+                      ? "Processando voz…"
+                      : "Clique para falar",
                   onClick: function () {
                     void toggleVoice();
                   },
@@ -1361,7 +1502,7 @@ export default function ChatPage() {
                   className: "text-xs " + (voiceError ? "text-red-600" : "text-[#64748b]"),
                   role: voiceError ? "alert" : "status",
                 },
-                voiceError || voiceProgress || "Transcrevendo com Xenova Whisper…"
+                voiceError || voiceProgress || "Escutando…"
               )
           )
         )

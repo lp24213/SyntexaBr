@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { PwaInstallButton } from "./PwaInstallButton";
 import { encryptedPath } from "../lib/routes";
 import { getAdminMe } from "../lib/api";
 import { getClientLocale, t } from "../lib/i18n";
@@ -307,6 +308,7 @@ export function AppShell(props) {
             })
           ),
           React.createElement("div", { className: "flex items-center gap-3 min-w-0 flex-1 justify-end" },
+            React.createElement(PwaInstallButton, { className: "hidden sm:inline-flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] border border-[rgba(15,23,42,0.08)] hover:bg-[rgba(20,24,30,0.04)] transition-colors duration-150" }),
             authed
               ? React.createElement(
                   "button",

@@ -84,8 +84,12 @@ export function sanitizeOutput(text) {
   s = s.replace(/[\u200b-\u200f\u2060\ufeff]/g, "");
   s = s.replace(/\u202f/g, " ");
   s = s.replace(/\xa0/g, " ");
-  s = s.replace(/\\\\(?=[a-zA-Z0-9\\-_])/g, "\\");
-  s = s.replace(/\|{3,}/g, "|");
+  s = s.replace(/\\{2,}\s*$/gm, "");         // \\ at end of line (LaTeX row terminator) → nothing
+  s = s.replace(/\\{2,}/g, "\n");             // remaining \\ → newline (LaTeX line-break)
+  s = s.replace(/^\|{1,}\s*/gm, "");           // || or | at start of line (broken table row prefix)
+  s = s.replace(/\|{2,}/g, "|");               // remaining multiple pipes → single
+  s = s.replace(/~~([^~]*)~~/g, "$1");         // ~~strikethrough~~ → text
+  s = s.replace(/~~+/g, "");                   // lone ~~ artifacts → nothing
   s = s.replace(/\*{3,}/g, "**");
   s = s.replace(/#{4,}/g, "###");
   s = s.replace(/&{2,}/g, "&");
@@ -154,22 +158,46 @@ export function sanitizeForMarkdown(text) {
 }
 
 export function sanitizeForExport(text) {
-  let s = sanitizeOutput(text);
-  if (!s) return "";
+  if (!text) return "";
+  // Para export, NÃO passar pelo sanitizeOutput genÃ©rico que destrÃ³i pipes de tabelas.
+  // Fazer limpeza cirurÃºrgica preservando linhas com | (tabelas Markdown).
+  let s = String(text);
 
+  // Encoding e caracteres invÃ¡lidos (sem mexer em pipes)
+  s = fixMojibakeEncoding(s);
+  s = normalizeBrokenPortuguese(s);
+  s = s.normalize("NFC");
+  s = s.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g, "");
+  s = s.replace(/[\u200b-\u200f\u2060\ufeff]/g, "");
+  s = s.replace(/\u202f/g, " ");
+  s = s.replace(/\xa0/g, " ");
+
+  // Artefactos LaTeX/math
   s = s.replace(/\$\$[\s\S]*?\$\$/g, " ");
   s = s.replace(/(^|\s)\$[^\$\n]+\$(\s|$)/g, " ");
   s = s.replace(/\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\}/g, " ");
+  s = s.replace(/\\{2,}\s*$/gm, "");
+  s = s.replace(/\\{2,}/g, "\n");
   s = s.replace(/\\[a-zA-Z]+\*?(\[[^\]]*\])?(\{[^}]*\})?/g, " ");
   s = s.replace(/\\[a-zA-Z]+/g, " ");
+
+  // HTML tags
   s = s.replace(/<[^>]{1,200}>/g, " ");
-  s = s.replace(/^\s*[|%-]{3,}.*$/gm, "");
+
+  // Markdown inline (mantÃ©m | intacto)
   s = s.replace(/^\s*#+\s*/gm, "");
+  s = s.replace(/\*\*\*([^*]+)\*\*\*/g, "$1");
   s = s.replace(/\*\*([^*]+)\*\*/g, "$1");
   s = s.replace(/\*([^*]+)\*/g, "$1");
+  s = s.replace(/~~([^~]*)~~/g, "$1");
+  s = s.replace(/~~+/g, "");
+
+  // EspaÃ§o por linha, SEM remover | das tabelas
   s = s
     .split("\n")
     .map(function (line) {
+      // Linhas de tabela (contÃªm |): preservar espaÃ§amento interno, apenas trim leve
+      if (line.indexOf("|") !== -1) return line.replace(/^[ \t]+|[ \t]+$/g, "");
       return line.replace(/[ \t]+/g, " ").trim();
     })
     .join("\n");

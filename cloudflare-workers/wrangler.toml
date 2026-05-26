@@ -1,17 +1,25 @@
 name = "syntexa-gateway"
 main = "src/index.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-11-01"
+
+# Variáveis de ambiente (nível raiz — usadas no deploy padrão)
+[vars]
+AWS_BASE_URL = "http://98.94.86.193:8000"
+RAILWAY_BASE_URL = "https://syntexa-backend-production.up.railway.app"
+AWS_DOWNLOAD_URL = "http://cdn.syntexabr.com.br/downloads"
+ENVIRONMENT = "production"
 
 [env.production]
 routes = [
   { pattern = "api.syntexabr.com.br/*", zone_name = "syntexabr.com.br" },
-  { pattern = "syntexa.syntexabr.com.br/*", zone_name = "syntexabr.com.br" }
+  { pattern = "syntexa.syntexabr.com.br/*", zone_name = "syntexabr.com.br" },
+  { pattern = "syntexabr.com.br/download/*", zone_name = "syntexabr.com.br" }
 ]
 
-# Variáveis de ambiente
-[vars]
+[env.production.vars]
 AWS_BASE_URL = "http://98.94.86.193:8000"
 RAILWAY_BASE_URL = "https://syntexa-backend-production.up.railway.app"
+AWS_DOWNLOAD_URL = "http://cdn.syntexabr.com.br/downloads"
 ENVIRONMENT = "production"
 
 # Secrets (configurar via wrangler secret put)

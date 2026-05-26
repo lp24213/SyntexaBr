@@ -33,8 +33,20 @@ export function AudioRecorder({
   const chunks = useRef([]);
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState("");
+  const [recording, setRecording] = useState(false);
+  const speechRef = useRef(null);
 
   const defaultLabel = "Microfone";
+
+  const stopSpeech = useCallback(() => {
+    try {
+      if (speechRef.current) {
+        speechRef.current.stop();
+        speechRef.current.abort();
+        speechRef.current = null;
+      }
+    } catch (_) {}
+  }, []);
 
   const stop = useCallback(() => {
     if (rec && rec.state !== "inactive") {
@@ -43,18 +55,23 @@ export function AudioRecorder({
       } catch (_) {}
       rec.stop();
     }
+    stopSpeech();
     setRec(null);
-  }, [rec]);
+    setRecording(false);
+  }, [rec, stopSpeech]);
 
-  const start = useCallback(async () => {
+  const startMediaRecorder = useCallback(async () => {
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true },
       });
-    } catch (e) {
-      if (onError) onError(e instanceof Error ? e.message : "Microfone indisponível (HTTPS e permissão necessários).");
-      return;
+    } catch (e1) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e2) {
+        throw e1;
+      }
     }
     var mime = "audio/webm";
     if (typeof MediaRecorder !== "undefined") {
@@ -67,10 +84,12 @@ export function AudioRecorder({
     var mrOpts = mime ? { mimeType: mime } : undefined;
     const mr = new MediaRecorder(stream, mrOpts);
     chunks.current = [];
+    setRecording(true);
     mr.ondataavailable = (e) => {
       if (e.data.size) chunks.current.push(e.data);
     };
     mr.onstop = async () => {
+      setRecording(false);
       stream.getTracks().forEach((t) => t.stop());
       const blob = new Blob(chunks.current, { type: mr.mimeType || "audio/webm" });
       const file = new File([blob], "gravacao.webm", { type: blob.type || "audio/webm" });
@@ -122,6 +141,73 @@ export function AudioRecorder({
     pipelineMode,
   ]);
 
+  const startWebSpeechFallback = useCallback(() => {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return false;
+    stopSpeech();
+    var rec = new SR();
+    rec.lang = "pt-BR";
+    rec.continuous = false;
+    rec.interimResults = true;
+    var finalTranscript = "";
+    var interimTranscript = "";
+    rec.onstart = function () {
+      speechRef.current = rec;
+      setRecording(true);
+    };
+    rec.onresult = function (event) {
+      interimTranscript = "";
+      for (var i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+    };
+    rec.onerror = function (event) {
+      speechRef.current = null;
+      setRecording(false);
+      var msg = event.error === "not-allowed" || event.error === "service-not-allowed"
+        ? "Microfone bloqueado. Clique no cadeado ao lado da URL e permita o acesso."
+        : event.error === "no-speech"
+          ? "Nenhuma fala detectada."
+          : "Erro no reconhecimento de voz: " + event.error;
+      if (onError) onError(msg);
+    };
+    rec.onend = function () {
+      speechRef.current = null;
+      setRecording(false);
+      if (finalTranscript) {
+        if (typeof onTranscript === "function") onTranscript(finalTranscript);
+        else if (typeof onVoiceSubmitChat === "function") onVoiceSubmitChat(finalTranscript);
+      }
+    };
+    try {
+      rec.start();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }, [onError, onTranscript, onVoiceSubmitChat, stopSpeech]);
+
+  const start = useCallback(async () => {
+    try {
+      await startMediaRecorder();
+    } catch (e) {
+      var errName = e && e.name ? e.name : "";
+      var isPermissionDenied = errName === "NotAllowedError" || errName === "PermissionDeniedError";
+      if (isPermissionDenied) {
+        var started = startWebSpeechFallback();
+        if (!started && onError) {
+          onError("Microfone bloqueado pelo navegador. Clique no cadeado ao lado da URL → Microfone → Permitir. Depois recarregue a página.");
+        }
+      } else {
+        if (onError) onError(e instanceof Error ? e.message : "Microfone indisponível (HTTPS e permissão necessários).");
+      }
+    }
+  }, [startMediaRecorder, startWebSpeechFallback, onError]);
+
   var busyText =
     busy && mode === "pipeline"
       ? phase === "stt"
@@ -135,7 +221,7 @@ export function AudioRecorder({
 
   return (
     <div className={className}>
-      {!rec ? (
+      {!recording ? (
         <button
           type="button"
           disabled={busy}

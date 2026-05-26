@@ -4,7 +4,7 @@ FROM python:3.12-slim-bookworm
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libpq-dev curl \
+    && apt-get install -y --no-install-recommends gcc libpq-dev curl ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.railway.txt .
@@ -16,6 +16,16 @@ COPY vereda_backend ./vereda_backend
 COPY vereda_ai ./vereda_ai
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
+
+# Baixa instaladores desktop durante o build (não precisam estar no repo)
+RUN mkdir -p /app/vereda_backend/static/desktop \
+ && curl -fSL --retry 3 --retry-delay 5 \
+    "http://52.70.129.80/downloads/SyntexaAI-Setup-45.0.0.msi" \
+    -o /app/vereda_backend/static/desktop/SyntexaAI-Setup-45.0.0.msi \
+ && curl -fSL --retry 3 --retry-delay 5 \
+    "http://52.70.129.80/downloads/SyntexaAI-linux-x64-45.0.0.tar.gz" \
+    -o /app/vereda_backend/static/desktop/SyntexaAI-linux-x64-45.0.0.tar.gz \
+ || echo "[desktop] Aviso: falha ao baixar binários desktop — continuando build"
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1

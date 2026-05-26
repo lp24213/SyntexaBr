@@ -174,6 +174,7 @@ function buildInTempWorkaround(reason) {
   }
 
   console.log("[OK] next build concluído; out/ atualizado em", outPath);
+  removeOversizedWasm();
 }
 
 function main() {
@@ -208,6 +209,29 @@ function main() {
   }
 
   console.log("[OK] next build concluído.");
+  removeOversizedWasm();
+}
+
+/**
+ * Cloudflare Pages rejects files > 25 MiB.
+ * ONNX WASM files are ~26 MiB and loaded from CDN by @xenova/transformers
+ * at runtime — safe to remove from the static bundle.
+ */
+function removeOversizedWasm() {
+  const LIMIT = 25 * 1024 * 1024;
+  const mediaDir = path.join(outPath, "_next", "static", "media");
+  if (!fs.existsSync(mediaDir)) return;
+  fs.readdirSync(mediaDir).forEach(function (name) {
+    if (!name.endsWith(".wasm")) return;
+    const fp = path.join(mediaDir, name);
+    try {
+      const stat = fs.statSync(fp);
+      if (stat.size > LIMIT) {
+        fs.rmSync(fp, { force: true });
+        console.log("[build] Removido WASM grande (CDN): " + name + " (" + (stat.size / 1024 / 1024).toFixed(1) + " MiB)");
+      }
+    } catch (e) { /* ignore */ }
+  });
 }
 
 main();

@@ -105,6 +105,36 @@ export default function RootLayout(props) {
     React.createElement(
       "body",
       { className: "antialiased bg-white text-[#0f172a]" },
+      React.createElement(Script, {
+        id: "pwa-register",
+        strategy: "afterInteractive",
+        dangerouslySetInnerHTML: {
+          __html: `(function(){
+  if(!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(function(reg){ console.log('[SW] registado:', reg.scope); })
+      .catch(function(err){ console.warn('[SW] falhou:', err); });
+  });
+  var _deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    _deferredPrompt = e;
+    window.__syntexaPwaPrompt = e;
+    document.dispatchEvent(new CustomEvent('syntexa:pwa-ready'));
+  });
+  window.__syntexaInstallPwa = function(){
+    if(!_deferredPrompt) return;
+    _deferredPrompt.prompt();
+    _deferredPrompt.userChoice.then(function(r){
+      _deferredPrompt = null;
+      window.__syntexaPwaPrompt = null;
+      document.dispatchEvent(new CustomEvent('syntexa:pwa-installed', {detail: r.outcome}));
+    });
+  };
+})();`
+        }
+      }),
       React.createElement(Suspense, { fallback: null }, React.createElement(AppWrapper, null, children))
     )
   );

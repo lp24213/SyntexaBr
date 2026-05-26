@@ -154,11 +154,11 @@ module.exports = {
 
   afterPack: path.join(__dirname, "scripts", "after-pack.js"),
 
-  // ── WINDOWS — só NSIS ────────────────────────────────────
+  // ── WINDOWS — MSI (instalador nativo REAL que nunca abre com WinRAR) ─────
   win: (function () {
     const cfg = {
       target: [
-        { target: "nsis", arch: ["x64"] },
+        { target: "msi", arch: ["x64"] },
       ],
       icon: path.join(__dirname, "build", "icon.ico"),
       artifactName: "SyntexaAI-Setup-${version}.${ext}",
@@ -188,7 +188,7 @@ module.exports = {
     return cfg;
   })(),
 
-  // ── NSIS installer gráfico profissional ──────────────────
+  // ── NSIS installer gráfico profissional (como Cursor/Claude) ────────
   nsis: {
     oneClick: false,
     allowElevation: true,
@@ -206,16 +206,23 @@ module.exports = {
     displayLanguageSelector: false,
     language: "1046",
     license: path.join(__dirname, "build", "LICENSE.txt"),
-    include: path.join(__dirname, "scripts", "nsis-custom.nsh"),
+    include: path.join(__dirname, "scripts", "nsis-installer.nsh"),
   },
 
-  // ── Linux — só tar.gz ────────────────────────────────────
+  // ── Linux — AppImage nativo como VSCode/Cursor ─────────────────────
   linux: {
     target: [
-      { target: "tar.gz", arch: ["x64"] },
+      { target: "AppImage", arch: ["x64"] },
+      { target: "deb", arch: ["x64"] },
     ],
     category: "Utility",
     artifactName: "SyntexaAI-${version}-linux-x64.${ext}",
+    icon: path.join(__dirname, "build", "icon.png"),
+    desktop: {
+      Name: "Syntexa AI",
+      Comment: "Inteligência Artificial Soberana",
+      Keywords: "ai;chat;assistant;",
+    },
   },
 
   // ── macOS ─────────────────────────────────────────────────

@@ -1,0 +1,641 @@
+{
+  "version": "45.0.0",
+  "schema_version": "V45",
+  "build_time": "2026-05-25T14:37:21.835Z",
+  "platform": "win32",
+  "arch": 1,
+  "files": [
+    {
+      "path": "resources/app.asar",
+      "sha256": "34727967882954220b08f87c0fc21bf58c28f11f63232b42246a7e02ad0f99d7",
+      "size": 2396836
+    },
+    {
+      "path": "resources/app.asar.unpacked/backend/boot_validator.py",
+      "sha256": "211570dc4db1ee569e12446a54155888844efcc74cda09e90dd952611f62a956",
+      "size": 16190
+    },
+    {
+      "path": "resources/app.asar.unpacked/backend/desktop_server.py",
+      "sha256": "dd8040f0caf91ae5cd6627925c929bb0f7e4da4b6fb3c07b3d5e1dd57797ea1c",
+      "size": 32049
+    },
+    {
+      "path": "resources/app.asar.unpacked/backend/logs/boot_validation.log",
+      "sha256": "8faf0d87d0bf4c6112c167cffeea4646e0c536a3f10b94c850ab96d98d86bebc",
+      "size": 3568
+    },
+    {
+      "path": "resources/llm-quantum/hybrid_quantum_runtime.py",
+      "sha256": "d879f239340ee72b00841a17a852d2aefb5905dcacbbf9b06dd872aafaa3fc27",
+      "size": 11620
+    },
+    {
+      "path": "resources/llm-quantum/hybrid_router.py",
+      "sha256": "512aa5c18d5676b57299b540b335ab3dc083f5ba2613539551c3c0e1d9d5b442",
+      "size": 3695
+    },
+    {
+      "path": "resources/llm-quantum/quantum_optimizer.py",
+      "sha256": "dba86ee3f810ea65be27ad5b115b55da228626b2fb1b89b84d8a77fa20ade8c4",
+      "size": 6107
+    },
+    {
+      "path": "resources/llm-quantum/quantum_orchestrator.py",
+      "sha256": "6d92444b3a8864bd5e5b334893cb191d38fd1fe5a3170438cfb09781856af737",
+      "size": 8620
+    },
+    {
+      "path": "resources/llm-quantum/quantum_scheduler.py",
+      "sha256": "cd50b3e77f078dd333c668e83434a3dcd55dc504f76631845124171f091fdfbd",
+      "size": 9535
+    },
+    {
+      "path": "resources/llm-quantum/README.md",
+      "sha256": "14bbd3efe14daaa7814bef994b7a8d103fb77ca18895655ad9d0cc3656070cc3",
+      "size": 125
+    },
+    {
+      "path": "resources/llm-quantum/__init__.py",
+      "sha256": "ec266a17c32f77b9c6908b01128b452a60bc89bf7f254076b23a0dadc8c2b385",
+      "size": 371
+    },
+    {
+      "path": "resources/vereda_ai/agents/base_agent.py",
+      "sha256": "b3c8070d2ac0a03173b7e2ccef7e0293b23a0bf064213523a13c30cb1ff329e8",
+      "size": 403
+    },
+    {
+      "path": "resources/vereda_ai/agents/code_agent.py",
+      "sha256": "888d537d98b56fc76955cf71e2d79723900ac618180923e1f68da3fb4360f9f4",
+      "size": 602
+    },
+    {
+      "path": "resources/vereda_ai/agents/crypto_agent.py",
+      "sha256": "7e215d04c0f5d3621596220ff2b6797af80608b451a18d49f8ed760187d1cffa",
+      "size": 1260
+    },
+    {
+      "path": "resources/vereda_ai/agents/executor.py",
+      "sha256": "cf497eb64c607f8a5e07e40b7e4c9d72953bccb600521fda1e53f7d74e160be2",
+      "size": 50584
+    },
+    {
+      "path": "resources/vereda_ai/agents/general_agent.py",
+      "sha256": "5f279cba993e2b9bd4b4bf1b7db81658e9b626dc51f58bfc6ca99ab137c9d188",
+      "size": 914
+    },
+    {
+      "path": "resources/vereda_ai/agents/knowledge_agent.py",
+      "sha256": "0d206b4a23653ccfa2ff35954c5b1c992847ec462fb2c813e9c32e3d0eaa55da",
+      "size": 721
+    },
+    {
+      "path": "resources/vereda_ai/agents/math_agent.py",
+      "sha256": "e717c7c4bf056ac4a6dd2e0dbef2b685acb0de50834d118f836aed732a0e0420",
+      "size": 1187
+    },
+    {
+      "path": "resources/vereda_ai/agents/planner.py",
+      "sha256": "4449d975efb2fbff0efce407f7ae83d969139a2f07e014418e1db64c602fb8fe",
+      "size": 1150
+    },
+    {
+      "path": "resources/vereda_ai/agents/task_manager.py",
+      "sha256": "ee03c69d679f673021f6f80635f942340836b781720b5abafdfb2ddc2fc336de",
+      "size": 1243
+    },
+    {
+      "path": "resources/vereda_ai/agents/vision_agent.py",
+      "sha256": "04d157db821f569b8fb0ec55e812a5b0871d6b7909e59d40a39c5159d4e8953a",
+      "size": 1228
+    },
+    {
+      "path": "resources/vereda_ai/agents/__init__.py",
+      "sha256": "1c438e3f81dea0bacf91546fb292b832e51978fcab08376c57d4f5b8cf329b09",
+      "size": 532
+    },
+    {
+      "path": "resources/vereda_ai/ai/agent_system.py",
+      "sha256": "fce20b3bc7f362b0438ba90b09535c2e79f7b677df830092168f01dfa5bbc603",
+      "size": 6985
+    },
+    {
+      "path": "resources/vereda_ai/ai/llm_engine.py",
+      "sha256": "38b8de8d515e657e6fa505e09d1cb12b8e334b5ff346283d445e9cb236b2b7bb",
+      "size": 35219
+    },
+    {
+      "path": "resources/vereda_ai/ai/memory_system.py",
+      "sha256": "f11d4449b75b5bb8b29a59f3f2ccca1c677dd7bc375f44c50df2ea17ec4990d4",
+      "size": 878
+    },
+    {
+      "path": "resources/vereda_ai/ai/reasoning_engine.py",
+      "sha256": "ba7c53eaf3d5afcd7f9ea89f3321beda87ef71add87da12d6308411aae1a21cb",
+      "size": 820
+    },
+    {
+      "path": "resources/vereda_ai/ai/routing_engine.py",
+      "sha256": "670c8b35201340dca526057a9536c906ff4eb4fedadf8f281696078961e1654a",
+      "size": 721
+    },
+    {
+      "path": "resources/vereda_ai/ai/__init__.py",
+      "sha256": "ee7c54e686171b46b807d40add5f5ff4e14c63f9d2623aacebf12aa73ad29386",
+      "size": 159
+    },
+    {
+      "path": "resources/vereda_ai/audio/music_generation.py",
+      "sha256": "a24c06488432c05660575b9dbed77b2fe63241bae05dd464830aac146c3d46fe",
+      "size": 439
+    },
+    {
+      "path": "resources/vereda_ai/audio/__init__.py",
+      "sha256": "865da64798c243daa0c613a20202cbaf9264c45306ba18a8e92893250b0c7fa4",
+      "size": 64
+    },
+    {
+      "path": "resources/vereda_ai/cache/response_cache.py",
+      "sha256": "3ad97c05dd8adb057fc6a55077fc6509f1f5d03d70f4fbc15ae4059bdaf0fcca",
+      "size": 1100
+    },
+    {
+      "path": "resources/vereda_ai/cache/retrieval_cache.py",
+      "sha256": "b3f5771799edbf828be776813977710dd91e7dc86ec6129c8f2186b091db84a8",
+      "size": 1858
+    },
+    {
+      "path": "resources/vereda_ai/cache/web_search_cache.py",
+      "sha256": "1683edf1907649f0089176dc72a4182fc571e1a97f5e096a15c0be7b2b1bf3d0",
+      "size": 1948
+    },
+    {
+      "path": "resources/vereda_ai/cache/__init__.py",
+      "sha256": "c974be77277bc850374efa35b8d440870c406977730605becb7b492489cf4922",
+      "size": 241
+    },
+    {
+      "path": "resources/vereda_ai/core/config.py",
+      "sha256": "11406828f0bd113d4ea6b0b3965b4d9dd83de76a67451d73535c194e47027b3b",
+      "size": 10452
+    },
+    {
+      "path": "resources/vereda_ai/core/events.py",
+      "sha256": "ef5edd26b99c1a03cc91036abc24bc1f00a7cd98295185d9f61469f559209dae",
+      "size": 579
+    },
+    {
+      "path": "resources/vereda_ai/core/logging.py",
+      "sha256": "366bad3e043fe34f05f606736e0a790d96a8df82f05898838635a8035807247d",
+      "size": 432
+    },
+    {
+      "path": "resources/vereda_ai/core/security.py",
+      "sha256": "a2864a343deb618e28cfeca478e5c6095f2748201a98412de9438962e7d9023c",
+      "size": 884
+    },
+    {
+      "path": "resources/vereda_ai/database/models.py",
+      "sha256": "8bd17037cc219a459a1655f6b3a11ff4fa55063d0883b3da23cab99321baf418",
+      "size": 1344
+    },
+    {
+      "path": "resources/vereda_ai/database/session.py",
+      "sha256": "93d8151eee4c303516e5cdcc699cd20c0b582ec930a06c1d985b9fdda18da3ac",
+      "size": 543
+    },
+    {
+      "path": "resources/vereda_ai/database/__init__.py",
+      "sha256": "305956dbf48d16c930d4def5545fe4b6001de0bb8336dc269b5cbfc2dfbc2e21",
+      "size": 122
+    },
+    {
+      "path": "resources/vereda_ai/execution/code_validator.py",
+      "sha256": "9164da90c1925b4f6fc36ac901a2051b7270027a561405850cafb2968f081247",
+      "size": 1503
+    },
+    {
+      "path": "resources/vereda_ai/execution/docker_runner.py",
+      "sha256": "5e39d284bdc4634966d05fe5e082ba57f8e6adfcb22c4cd06e7cb869b331f260",
+      "size": 409
+    },
+    {
+      "path": "resources/vereda_ai/execution/sandbox.py",
+      "sha256": "3822f750f1495a74da840a59392d0686f46d98eab30f2862511294b61953e3be",
+      "size": 1327
+    },
+    {
+      "path": "resources/vereda_ai/execution/__init__.py",
+      "sha256": "dc4bfee9a8b02675a20488fcad6708260b399ab95b9f719105a7e8189b03e0cb",
+      "size": 113
+    },
+    {
+      "path": "resources/vereda_ai/knowledge/document_ingestion.py",
+      "sha256": "ffe2cc635b90d903a6414c6a070fcb630ceb15dbc77241e0264f960a4ecb8a1d",
+      "size": 4762
+    },
+    {
+      "path": "resources/vereda_ai/knowledge/open_embedding_backend.py",
+      "sha256": "49933a60bcbabc55f1981e8516a0962a72b4792c18730da4deb2feebb3cb66d2",
+      "size": 6545
+    },
+    {
+      "path": "resources/vereda_ai/knowledge/rag_engine.py",
+      "sha256": "8a6227846c726714b0438e91a2f45a8f0ca50a35b8f0e1224df768a3f37d88fa",
+      "size": 907
+    },
+    {
+      "path": "resources/vereda_ai/knowledge/vector_db.py",
+      "sha256": "305fdefb9cbba0c651ba16e0040ee78189647a46025c0b46a65d2e9914b73df2",
+      "size": 536
+    },
+    {
+      "path": "resources/vereda_ai/knowledge/vector_db_faiss.py",
+      "sha256": "5ee8881c60d94f0883b4fc7786e9f5a23b24fe17ad36e32527f4dd8ac2f0071a",
+      "size": 3603
+    },
+    {
+      "path": "resources/vereda_ai/knowledge/__init__.py",
+      "sha256": "d4b2593ba1a36bcde023716fefa04a11549ea5cba29864903ad03f51a8ef09e3",
+      "size": 108
+    },
+    {
+      "path": "resources/vereda_ai/math/engineering_engine.py",
+      "sha256": "35d0da5ea8f036b52f1ccac97abffea96d194930df520237ef4e5285c37c6b9e",
+      "size": 713
+    },
+    {
+      "path": "resources/vereda_ai/math/numeric_engine.py",
+      "sha256": "9e2b0997b20777fdf409b2c657511da2f6a3ba55410a864f3e0d8956d7010817",
+      "size": 331
+    },
+    {
+      "path": "resources/vereda_ai/math/physics_engine.py",
+      "sha256": "1b50f27f57053a1c57833a1f3ada5ca069aa2aa5caed2d2afdd59153c0baaad5",
+      "size": 539
+    },
+    {
+      "path": "resources/vereda_ai/math/symbolic_engine.py",
+      "sha256": "855eb95b05d70ed862f70635c7e885d69ae70dfdf93f42a9d6c1a39283c662f6",
+      "size": 981
+    },
+    {
+      "path": "resources/vereda_ai/media/image_generation.py",
+      "sha256": "45182bce7003511c75daf93012e16b558e2b68282c10880ffda9519bf1f2d906",
+      "size": 482
+    },
+    {
+      "path": "resources/vereda_ai/media/video_generation.py",
+      "sha256": "9107bdcad83e86ddab2ec850dc82a19d6713883dc311a4d2d680f60db7bd6dbf",
+      "size": 422
+    },
+    {
+      "path": "resources/vereda_ai/media/__init__.py",
+      "sha256": "4bd491f3e6e605f33fab8af931573e24af3fe4c25cae01121627d90a3dd6729c",
+      "size": 126
+    },
+    {
+      "path": "resources/vereda_ai/memory/chat_history_db.py",
+      "sha256": "c09a8ced9072a408d4928ce1bc4f1f20a2bfba6a3198a0fd3bb4042058971bc3",
+      "size": 1631
+    },
+    {
+      "path": "resources/vereda_ai/memory/conversation_memory.py",
+      "sha256": "6de183764cab73ed4b6642a35e77b0f3d31c74d973850d9b366522ebc1d404e6",
+      "size": 808
+    },
+    {
+      "path": "resources/vereda_ai/memory/episodic_memory.py",
+      "sha256": "ba7d21bd9310e7fab25c5c2d8353f34d0bae70c0cda4012c9a9175c2c6d47d44",
+      "size": 804
+    },
+    {
+      "path": "resources/vereda_ai/memory/semantic_memory.py",
+      "sha256": "075cfc94f1c6d41c82de70fe1c4a5ea787e14f872677e4eb4bd6740ca88e9ef8",
+      "size": 795
+    },
+    {
+      "path": "resources/vereda_ai/memory/vector_store.py",
+      "sha256": "38e6604c08a625ed05a8a87e3cc777b609f109ca5a2987bd53b994c40e9b73fa",
+      "size": 3815
+    },
+    {
+      "path": "resources/vereda_ai/memory/__init__.py",
+      "sha256": "4c04be9410b9330f994dbbba4d5103372c3c735fc3635661d2e1be1c2980b072",
+      "size": 256
+    },
+    {
+      "path": "resources/vereda_ai/plugins/loader.py",
+      "sha256": "762fa68f87942a325322bfa6240f104ba466c375b6bb9c508c54bc42b99a1f40",
+      "size": 2172
+    },
+    {
+      "path": "resources/vereda_ai/plugins/__init__.py",
+      "sha256": "473c1e6a0bc9f463b8c20928e4f20585261d5fd0cdcac9924066238727b123d3",
+      "size": 142
+    },
+    {
+      "path": "resources/vereda_ai/reasoning/engine.py",
+      "sha256": "287fe2d182f9d54709d92d36a2290509186c730b4ad2d93668f9bd52575aaabc",
+      "size": 2852
+    },
+    {
+      "path": "resources/vereda_ai/reasoning/__init__.py",
+      "sha256": "bddf29e31a4487047643b19ead1d6e76f831e6189f4f95759a5f2d738f7dd6a2",
+      "size": 99
+    },
+    {
+      "path": "resources/vereda_ai/research/arxiv_client.py",
+      "sha256": "c62053a5e3de7294c6b7d200535b19b7a2629525d0f735089ecfc9be298820fd",
+      "size": 3846
+    },
+    {
+      "path": "resources/vereda_ai/research/context_compression.py",
+      "sha256": "316f97f3fa0a3b4bc86db8b6716494b6f86642eb33ce3c422ad56201e9c07a6d",
+      "size": 1614
+    },
+    {
+      "path": "resources/vereda_ai/research/research_engine.py",
+      "sha256": "fddb5d52d98d7bcd1f84628823148c3abffc079234c965bd334ce0d76c096709",
+      "size": 5923
+    },
+    {
+      "path": "resources/vereda_ai/research/tool_selector.py",
+      "sha256": "cd20befda38840a1dfe52a44b8a459307893513d15e0439d9de404299f04bf2e",
+      "size": 2902
+    },
+    {
+      "path": "resources/vereda_ai/research/web_search_enhanced.py",
+      "sha256": "46ace85a7691befc5a521c12cffe8d8c5566ef73545dcad0fcbffa9018e073e5",
+      "size": 3878
+    },
+    {
+      "path": "resources/vereda_ai/research/__init__.py",
+      "sha256": "28458c97a3f04769a61196c2a80111a11b9c8ddede41189816e6cb2e9e9cf9d5",
+      "size": 685
+    },
+    {
+      "path": "resources/vereda_ai/router/prompt_router.py",
+      "sha256": "4730758c2a7739dcef214e6ea6eb87494eeb8611607ce94bfb7ac918fc378aeb",
+      "size": 3306
+    },
+    {
+      "path": "resources/vereda_ai/router/__init__.py",
+      "sha256": "90001298448f5cffdaad796b24e1caf43a99aa821c0f0e32eda483681498221e",
+      "size": 222
+    },
+    {
+      "path": "resources/vereda_ai/science/crypto_engine.py",
+      "sha256": "3c1f1bee8e98dd0228de0a617be3b990a21901ed1a02ebdab2aee880cfd7c512",
+      "size": 6486
+    },
+    {
+      "path": "resources/vereda_ai/science/engineering_engine.py",
+      "sha256": "c5fe14a08f04db8ce2b79070e881aa0ee11074b0941bc05a3f5341cff2957b20",
+      "size": 245
+    },
+    {
+      "path": "resources/vereda_ai/science/math_engine.py",
+      "sha256": "5d41c25b6de03c2b7634538ef0fb4df02d39043835fadc6f618889c1e8c5df9b",
+      "size": 366
+    },
+    {
+      "path": "resources/vereda_ai/science/math_ext.py",
+      "sha256": "70fa066b87a567fa8380889883b4c5b53c6c185ab25c053404c082e07f9433fb",
+      "size": 3094
+    },
+    {
+      "path": "resources/vereda_ai/science/physics_engine.py",
+      "sha256": "7fc0095e4405e9ffabe6e9ea00fe8998cb0d4df36068439090ddc4acc33794a7",
+      "size": 215
+    },
+    {
+      "path": "resources/vereda_ai/science/quantum_engine.py",
+      "sha256": "24fc8bc177c77b5f9bda1ac39006f44be443c26959583fe2df5ab18242412a98",
+      "size": 2474
+    },
+    {
+      "path": "resources/vereda_ai/science/simulation_engine.py",
+      "sha256": "62805e2cdf76859dd95725d8b2dc51810600bb8e566326283b7f6b89665a0193",
+      "size": 453
+    },
+    {
+      "path": "resources/vereda_ai/science/__init__.py",
+      "sha256": "cd394970cb11937187fb2bc724b2081e77725694947a6de375bec27c845d6b1c",
+      "size": 422
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/admin_control.py",
+      "sha256": "57e5ead1531b5ec3c77484b3dd4c26fa1184929797de5e706ad06c0de0d7b4ae",
+      "size": 14070
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/dataset_pipeline.py",
+      "sha256": "8948fbf46eb8e0849f90ce8107e96d5170ba3a591b56054df017d572b2b2de88",
+      "size": 11231
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/foundation_inference.py",
+      "sha256": "41ebe5ff92e4b860a27c2038713a381327564450765bc3a704e007de5d84f080",
+      "size": 15627
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/foundation_inference_cli.py",
+      "sha256": "e10401bc2a7464251239d41d0cc2770a75dc6c0742b180904c98e9ebe23eb94a",
+      "size": 3366
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/foundation_model.py",
+      "sha256": "8d90590e924eef2bd7e0954fa51fd75c1948d3e735e6852ea957dc99be8413bc",
+      "size": 23747
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/foundation_runtime.py",
+      "sha256": "355d42c6bfa4da998bab66031ae7b0d45e20975c4eaab4ad15ecd3dd3a160ed7",
+      "size": 5810
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/foundation_tokenizer.py",
+      "sha256": "9c99c0d200b5d0067b4b8d8636e4132c3efc9fd1cd27d3119e5a42d653439d17",
+      "size": 10177
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/foundation_trainer.py",
+      "sha256": "e1407b41fd6f47e19142b8d599f794ce359ae7612185e4adf99a6a3d3c473888",
+      "size": 17575
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/foundation_trainer_cli.py",
+      "sha256": "4ffed02f5d2a780dfb7c2e93183e66e41c7f2fcf263500e0b584bed590ccce97",
+      "size": 4541
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/hybrid_engine.py",
+      "sha256": "fdbfbdb815697d2d587e3cacae39a702fa5d78d57b10143b430ee6f1224475a4",
+      "size": 16351
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/memory/embeddings.py",
+      "sha256": "0b335bc524f00f568ca1bddf181e0407cb82dd5048f8c119b3499ada806341c0",
+      "size": 3524
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/memory/retrieval.py",
+      "sha256": "237647fa86fb3d7b5c2942795f97707560492caf327e625c1887372cd8bef48c",
+      "size": 7144
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/memory/__init__.py",
+      "sha256": "90a527878c192b3f988b9498f0ff07a6b6911f0f04ed1e03d5c886279d090e63",
+      "size": 311
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/model_manifest.py",
+      "sha256": "ff20375b272aa176264201c485395f2097c9cb8d8451e7d881689368051179b6",
+      "size": 1453
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/model_registry.py",
+      "sha256": "1c416b2f76df766f1b5cf0cb20cbec97bc31c1f9f19ee8cf7644a97bf922da27",
+      "size": 3383
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/multimodal/ocr.py",
+      "sha256": "d4322900b80f55bcebbc88da6db6d5c1775c6232869554b885a051e37ce3b17b",
+      "size": 2826
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/multimodal/stt.py",
+      "sha256": "7c1ef6c72c015ef56a6894b22d1b5d72df06360d54ec471184b43d798fc5a2ed",
+      "size": 2247
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/multimodal/tts.py",
+      "sha256": "9aa7227239f3b25e0e4f03ad3b3693c65502c5e440198fd066216ba7f9e2e5f6",
+      "size": 3431
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/multimodal/vision.py",
+      "sha256": "76df929bcdb1ed6bafee1efc27430066132300f84f7656fbe7e314360c2e1a16",
+      "size": 2806
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/multimodal/__init__.py",
+      "sha256": "12485d9ae5738a5c108fd17f6c308aa8e8b0ca3e753ecdc7481af3db4a5ccb77",
+      "size": 365
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/neural_engine.py",
+      "sha256": "957a968885e23d502204830bb2e125759d83eead2e35c78f39bae3828b98aebf",
+      "size": 1591
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/promotion_attestation.py",
+      "sha256": "5279a897ffff5f77d33aaba93d0aa64954867017615b2dd5da60762af639fc03",
+      "size": 7015
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/runtime_model.py",
+      "sha256": "0ae41f2950f2130af354b860316c9b3ccc8d7dca82a33e5573d6112458f1fc5c",
+      "size": 8088
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/sovereign_guard.py",
+      "sha256": "3b106ef518fb715b586f98a91600892b8acc0da8f207e174e53f440a8c1dd3da",
+      "size": 11584
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/sovereign_orchestrator.py",
+      "sha256": "64fe6b8b892c64d63679b0246048bc056ad1d6cf1040a58388bd2ce398c7941b",
+      "size": 15150
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/tokenizer.py",
+      "sha256": "13019ace3a30b8d8c89ae4d66d6230b9d71ef9744a3fe6a866e9560921a8cf3d",
+      "size": 2624
+    },
+    {
+      "path": "resources/vereda_ai/syntexa_core/__init__.py",
+      "sha256": "bb738d8f44f3028ebca96f68feb54af187d792ee45daa36d23076087aa256826",
+      "size": 2389
+    },
+    {
+      "path": "resources/vereda_ai/tools/base_tool.py",
+      "sha256": "d32355359f5b0789e237f5f749d2e6ce274541ba9770cf7ca80ddab3e1e3ec24",
+      "size": 565
+    },
+    {
+      "path": "resources/vereda_ai/tools/code_executor.py",
+      "sha256": "9a1dc67aa6ba295a52d6c38c63f7d4c3e45938a7a178e6d1f2a206fa152b143e",
+      "size": 1097
+    },
+    {
+      "path": "resources/vereda_ai/tools/code_tool.py",
+      "sha256": "20f91e3d559bebf4eecfc4181efbba73dd9af7ed67ca4497b1a295f90daa8e7e",
+      "size": 1779
+    },
+    {
+      "path": "resources/vereda_ai/tools/crypto_tool.py",
+      "sha256": "bed7a9be5ff55879398ea0881516aa6aed7e14e166b1ad59b8c444f910f269c0",
+      "size": 1652
+    },
+    {
+      "path": "resources/vereda_ai/tools/image_tool.py",
+      "sha256": "5c69e00a00f867c1d4a6bb2e200974ede15a343bb9d65ed93e72d3da6e65b02f",
+      "size": 1500
+    },
+    {
+      "path": "resources/vereda_ai/tools/math_solver.py",
+      "sha256": "c583facfdbe903f29da7619dfb2d40ea6cd9d9ffd37ad96a7ff317b69dcc440b",
+      "size": 455
+    },
+    {
+      "path": "resources/vereda_ai/tools/math_tool.py",
+      "sha256": "c43b1d91c49997f523665f5b17fa3387a60873bdd55feebad5d5beb84b8b1d3d",
+      "size": 980
+    },
+    {
+      "path": "resources/vereda_ai/tools/web_tool.py",
+      "sha256": "10467cfbf34623a6f0ecf589998fd603645781ea7d70887926a2a2ddfe7e27cd",
+      "size": 1298
+    },
+    {
+      "path": "resources/vereda_ai/tools/__init__.py",
+      "sha256": "f7b2a435e3b43993bcf28731364dc43b9a34df1cca9df0d5d145d3f7896ee830",
+      "size": 506
+    },
+    {
+      "path": "resources/vereda_ai/vision/facial_recognition.py",
+      "sha256": "cea7fd3bc8722224cb54f68000bd1b035696ea9ed374273ad824a3cf387f32b1",
+      "size": 368
+    },
+    {
+      "path": "resources/vereda_ai/vision/image_analysis.py",
+      "sha256": "d0065b1037930e542e12262bfba7a8226ade141b0f0cdd6fb29ea14ef054241d",
+      "size": 428
+    },
+    {
+      "path": "resources/vereda_ai/vision/object_detection.py",
+      "sha256": "18377c72c702bdbba02e03417da200dd07aff871d2cfd1d3badb05177c4dc22c",
+      "size": 280
+    },
+    {
+      "path": "resources/vereda_ai/vision/video_analysis.py",
+      "sha256": "e71b4b9f42cbfdf9fdb24428cca0261c1d842536ef80666f148eb4cc03f6328d",
+      "size": 341
+    },
+    {
+      "path": "resources/vereda_ai/vision/__init__.py",
+      "sha256": "7c107efbacbaa2c0ae84b81f50384e5d482794a38badfd9bba6ad1748ca106e7",
+      "size": 120
+    },
+    {
+      "path": "resources/vereda_ai/__init__.py",
+      "sha256": "d2fbcb30d152d819e397eaec4bc89900a06f8b0cb819c732300517ffb027ab66",
+      "size": 187
+    }
+  ],
+  "symlinks_removed": true,
+  "signed": false
+}

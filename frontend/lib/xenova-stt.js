@@ -44,7 +44,10 @@ async function getTranscriber() {
       const { pipeline, env } = await import("@xenova/transformers");
       env.allowLocalModels = false;
       env.allowRemoteModels = true;
-      if (env.backends && env.backends.onnx && env.backends.onnx.wasm) {
+      if (
+        env.backends && env.backends.onnx && env.backends.onnx.wasm &&
+        typeof SharedArrayBuffer !== "undefined"
+      ) {
         env.backends.onnx.wasm.numThreads = Math.min(
           4,
           typeof navigator !== "undefined" && navigator.hardwareConcurrency

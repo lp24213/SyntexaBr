@@ -1,1 +1,3 @@
 out/download/
+.next/static/media/*.wasm
+.next/static/chunks/*.wasm

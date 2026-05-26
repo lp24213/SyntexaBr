@@ -64,16 +64,19 @@ function securityHeaders() {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "geolocation=(), microphone=(self), camera=(self), payment=()",
+    "Permissions-Policy": "microphone=(self), camera=(self), geolocation=(self), payment=()",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
   };
 }
 
 export default {
   async fetch(request, env) {
-    // AWS EC2 = principal, Railway = fallback
+    // Railway = principal via Workers; AWS = fallback direto se Railway falhar
     const awsBase = env.AWS_BASE_URL || "http://98.94.86.193:8000";
     const railwayBase = env.RAILWAY_BASE_URL || "https://syntexa-backend-production.up.railway.app";
-    const backendBase = awsBase || railwayBase;
+    // Cloudflare Workers bloqueia fetch a IPs públicos directos (error 1003).
+    // Railway é HTTPS com domínio — sempre acessível pelo Worker.
+    const backendBase = railwayBase || awsBase;
     var frontendBase = "https://production.syntexa-frontend.pages.dev";
     const origin = request.headers.get("Origin") || "";
 
@@ -86,13 +89,45 @@ export default {
 
     if (
       (request.method === "GET" || request.method === "HEAD") &&
-      backendBase &&
       isDownloadAssetPath(pathname)
     ) {
       const name = pathname.slice("/download/".length);
-      const base = backendBase.replace(/\/$/, "");
-      const loc = `${base}/v1/desktop/binary/${encodeURIComponent(name)}`;
-      return Response.redirect(loc, 302);
+      // AWS serve o ficheiro directamente via HTTP — o Worker faz proxy HTTPS
+      const awsDownloadBase = env.AWS_DOWNLOAD_URL || "http://3.90.244.89/downloads";
+      const fileUrl = `${awsDownloadBase}/${encodeURIComponent(name)}`;
+      let upstream;
+      try {
+        upstream = await fetch(fileUrl, { method: request.method });
+      } catch (err) {
+        return new Response("Download temporariamente indisponível.", { status: 503 });
+      }
+      if (!upstream.ok) {
+        return new Response("Ficheiro não encontrado.", { status: 404 });
+      }
+      const ext = name.split(".").pop().toLowerCase();
+      const mimeMap = {
+        exe: "application/vnd.microsoft.portable-executable",
+        msi: "application/x-msi",
+        dmg: "application/x-apple-diskimage",
+        apk: "application/vnd.android.package-archive",
+        gz: "application/gzip",
+        deb: "application/vnd.debian.binary-package",
+      };
+      const mime = mimeMap[ext] || "application/octet-stream";
+      const headers = new Headers();
+      headers.set("Content-Type", mime);
+      headers.set("Content-Disposition", `attachment; filename="${name}"; filename*=UTF-8''${encodeURIComponent(name)}`);
+      headers.set("X-Content-Type-Options", "nosniff");
+      headers.set("Content-Transfer-Encoding", "binary");
+      headers.set("Accept-Ranges", "bytes");
+      headers.set("Cache-Control", "public, max-age=3600, immutable");
+      if (upstream.headers.get("Content-Length")) {
+        headers.set("Content-Length", upstream.headers.get("Content-Length"));
+      }
+      return new Response(request.method === "HEAD" ? null : upstream.body, {
+        status: 200,
+        headers,
+      });
     }
 
     if (isApiRequest(pathname)) {
@@ -169,6 +204,7 @@ export default {
     } else {
       pageHeaders.set("Cache-Control", "public, max-age=86400, immutable");
     }
+    Object.entries(securityHeaders()).forEach(([k, v]) => pageHeaders.set(k, v));
     return new Response(pagesResp.body, {
       status: pagesResp.status,
       headers: pageHeaders,
