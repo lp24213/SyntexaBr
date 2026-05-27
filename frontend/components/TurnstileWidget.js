@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 /**
- * TurnstileWidget - Componente robusto para Cloudflare Turnstile
- * - Carregamento assíncrono seguro
- * - Retry automático
- * - Fallback visual
+ * TurnstileWidget - Componente simples para Cloudflare Turnstile
+ * Abordagem minimalista para evitar loops de re-render.
  */
 export function TurnstileWidget({ 
   siteKey,
@@ -15,140 +13,91 @@ export function TurnstileWidget({
   theme = "light",
   size = "normal",
   className = "",
-  retryAttempts = 3,
 }) {
-  const [isReady, setIsReady] = useState(false);
-  const [token, setToken] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const containerRef = useRef(null);
   const widgetIdRef = useRef(null);
+  const mountedRef = useRef(false);
 
-  // Carregar script do Turnstile com retry
   useEffect(() => {
-    if (!siteKey || typeof window === "undefined") {
-      setLoading(false);
+    // Executar apenas uma vez quando montar
+    if (mountedRef.current || !siteKey || typeof window === "undefined") {
       return;
     }
 
-    const loadTurnstile = (attemptCount = 0) => {
-      // Verificar se já existe
-      if (window.turnstile) {
-        setIsReady(true);
-        setLoading(false);
-        return;
-      }
+    mountedRef.current = true;
 
-      // Verificar se o script já está no DOM (head ou body)
-      const existing = document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
-      if (existing) {
-        // Aguardar carregamento
-        const checkInterval = setInterval(() => {
-          if (window.turnstile) {
-            clearInterval(checkInterval);
-            setIsReady(true);
-            setLoading(false);
-          }
-        }, 100);
-        setTimeout(() => clearInterval(checkInterval), 10000);
-        return;
-      }
+    const initTurnstile = async () => {
+      try {
+        // 1. Carregar script se não existe
+        if (!window.turnstile) {
+          const script = document.createElement("script");
+          script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+          script.async = true;
+          script.defer = true;
+          script.crossOrigin = "anonymous";
 
-      // Criar e carregar script no HEAD
-      const script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-      script.async = true;
-      script.defer = true;
-      script.crossOrigin = "anonymous";
-      
-      script.onload = () => {
-        // Dar tempo para o Turnstile estar pronto
-        setTimeout(() => {
-          if (window.turnstile) {
-            setIsReady(true);
-            setLoading(false);
-            setError(null);
-          } else {
-            // Se turnstile ainda não está pronto após 1s, falhar
-            setError("Turnstile não carregou corretamente");
-            setLoading(false);
-          }
-        }, 500);
-      };
-
-      script.onerror = () => {
-        if (attemptCount < retryAttempts) {
-          const newAttempt = attemptCount + 1;
-          console.warn(`[Turnstile] Retry ${newAttempt}/${retryAttempts}`);
-          setTimeout(() => loadTurnstile(newAttempt), 2000);
-        } else {
-          console.error("[Turnstile] Script load failed after retries");
-          setError("Falha ao carregar verificação de segurança");
-          setLoading(false);
-          if (onError) onError("Script não carregou");
+          await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+            (document.head || document.documentElement).appendChild(script);
+          });
         }
-      };
 
-      // Injeta no HEAD (mais confiável que BODY)
-      (document.head || document.documentElement).appendChild(script);
-      console.log("[Turnstile] Script injected");
+        // 2. Aguardar window.turnstile estar disponível
+        let retries = 0;
+        while (!window.turnstile && retries < 20) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          retries++;
+        }
+
+        if (!window.turnstile) {
+          throw new Error("Turnstile não carregou");
+        }
+
+        // 3. Renderizar widget
+        if (containerRef.current && !widgetIdRef.current) {
+          widgetIdRef.current = window.turnstile.render(containerRef.current, {
+            sitekey: siteKey,
+            theme: theme,
+            size: size,
+            callback: (token) => {
+              if (onTokenReceived) onTokenReceived(token);
+            },
+            "error-callback": (errorCode) => {
+              console.warn("[Turnstile] Error:", errorCode);
+              if (onError) onError(`Código ${errorCode}`);
+            },
+            "expired-callback": () => {
+              if (onError) onError("Verificação expirou");
+            },
+            "timeout-callback": () => {
+              if (onError) onError("Timeout");
+            },
+            retry: "auto",
+            "retry-interval": 5000,
+            appearance: "interaction-only",
+          });
+        }
+      } catch (err) {
+        console.error("[Turnstile] Error during initialization:", err);
+        if (onError) onError(err.message || "Falha ao carregar Turnstile");
+      }
     };
 
-    loadTurnstile();
-  }, [siteKey, onError, retryAttempts]);
+    initTurnstile();
 
-  // Renderizar widget quando pronto
-  useEffect(() => {
-    if (!isReady || !siteKey || !containerRef.current || !window.turnstile) {
-      return;
-    }
-
-    try {
-      // Limpar widget anterior se existe
-      if (widgetIdRef.current) {
-        try {
-          window.turnstile.remove(widgetIdRef.current);
-        } catch (_) {}
-      }
-
-      // Renderizar widget
-      widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: siteKey,
-        theme: theme,
-        size: size,
-        callback: (token) => {
-          setToken(token);
-          if (onTokenReceived) onTokenReceived(token);
-        },
-        "error-callback": () => {
-          setError("Erro ao verificar. Tente novamente.");
-          if (onError) onError("Erro no widget");
-        },
-        "expired-callback": () => {
-          setToken("");
-          if (onError) onError("Verificação expirou");
-        },
-        "timeout-callback": () => {
-          setError("Tempo limite excedido");
-          if (onError) onError("Timeout");
-        },
-        retry: "auto",
-        "retry-interval": 5000,
-        appearance: "interaction-only",
-      });
-    } catch (err) {
-      setError("Erro ao renderizar widget");
-      if (onError) onError(err.message);
-    }
-
+    // Cleanup
     return () => {
       try {
         if (widgetIdRef.current && window.turnstile) {
           window.turnstile.remove(widgetIdRef.current);
+          widgetIdRef.current = null;
         }
-      } catch (_) {}
+      } catch (err) {
+        console.warn("[Turnstile] Error during cleanup:", err);
+      }
     };
-  }, [isReady, siteKey, theme, size, onTokenReceived, onError]);
+  }, []); // Dependências vazias: executar apenas uma vez
 
   if (!siteKey) {
     return null;
@@ -156,25 +105,7 @@ export function TurnstileWidget({
 
   return (
     <div className={`flex justify-center ${className}`}>
-      <div 
-        ref={containerRef}
-        className={`${loading ? "bg-gray-100 rounded-lg p-3 animate-pulse" : ""}`}
-        style={{
-          minHeight: loading ? "65px" : "auto",
-          minWidth: loading ? "300px" : "auto",
-        }}
-      >
-        {loading && (
-          <div className="text-xs text-gray-400 text-center py-2">
-            Carregando verificação de segurança...
-          </div>
-        )}
-      </div>
-      {error && (
-        <div className="text-xs text-red-500 mt-2 text-center">
-          {error}
-        </div>
-      )}
+      <div ref={containerRef} />
     </div>
   );
 }
