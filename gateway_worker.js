@@ -397,9 +397,12 @@ export default {
       return resp;
     }
 
-    // 9. Frontend → Cloudflare Pages (alias de produção)
-    const frontendBase = env.FRONTEND_BASE_URL || "https://production.syntexa-frontend.pages.dev";
-    const targetUrl = new URL(frontendBase);
+    // 9. Frontend → Cloudflare Pages (deployment atual)
+    // IMPORTANTE: não usar syntexabr.com.br aqui — causaria loop! 
+    // O FRONTEND_BASE_URL é apenas para devolvê-lo aos clientes nas APIs.
+    // Para o proxy interno, sempre usar o deployment Pages direto via FRONTEND_PAGES_URL.
+    const pagesDeployment = env.FRONTEND_PAGES_URL || "https://954f6265.syntexa-frontend.pages.dev";
+    const targetUrl = new URL(pagesDeployment);
     targetUrl.pathname = pathname;
     targetUrl.search = incomingUrl.search;
 
@@ -410,27 +413,54 @@ export default {
       redirect: "manual",
       cf: { cacheTtl: 300 }, // Cache rápido para Pages (5 min)
     };
+    // Limpar headers que causam conflito
     init.headers.delete("host");
-    init.headers.delete("CF-Connecting-IP"); // Remover headers que podem causar erro
+    init.headers.delete("CF-Connecting-IP");
+    init.headers.delete("CF-IPCountry");
+    init.headers.set("User-Agent", "Syntexa-Gateway/1.0");
 
     const pagesResp = await fetch(targetUrl.toString(), init);
     const pageHeaders = new Headers(pagesResp.headers);
-    
+
+    // Reescrever Location (redirects) para apontar para o domínio público
+    const deployHost = pagesDeployment;
+    const publicHost = env.FRONTEND_BASE_URL || "https://syntexabr.com.br";
+    const location = pageHeaders.get("Location") || pageHeaders.get("location");
+    if (location) {
+      try {
+        const newLocation = location.replace(deployHost, publicHost);
+        pageHeaders.set("Location", newLocation);
+      } catch (_) {}
+    }
+
     // Assets estáticos: cache longo
     if (pathname.match(/\.(js|css|mjs|woff2?|png|jpg|jpeg|webp|svg|ico|map)$/i)) {
       pageHeaders.set("Cache-Control", "public, max-age=31536000, immutable");
-    } 
-    // HTML + API: sem cache
-    else {
-      pageHeaders.set("Cache-Control", "no-store, no-cache, must-revalidate");
-      pageHeaders.set("Pragma", "no-cache");
-      pageHeaders.set("Expires", "0");
+      // Stream assets unchanged
+      return new Response(pagesResp.body, { status: pagesResp.status, headers: pageHeaders });
     }
-    
-    // Adicionar headers CORS
+
+    // HTML: precisamos reescrever links internos que apontem para pages.dev
+    const contentType = (pageHeaders.get("content-type") || "").toLowerCase();
+    if (contentType.includes("text/html") || pathname === "/" || pathname.endsWith("/")) {
+      try {
+        const bodyText = await pagesResp.text();
+        const rewritten = bodyText.split(deployHost).join(publicHost).split("https://production.syntexa-frontend.pages.dev").join(publicHost);
+        // Adicionar headers CORS e segurança
+        Object.entries(corsHeaders(origin, env)).forEach(([k, v]) => pageHeaders.set(k, v));
+        Object.entries(securityHeaders()).forEach(([k, v]) => pageHeaders.set(k, v));
+        return new Response(rewritten, { status: pagesResp.status, headers: pageHeaders });
+      } catch (err) {
+        // Fallback: retornar o body original
+        Object.entries(corsHeaders(origin, env)).forEach(([k, v]) => pageHeaders.set(k, v));
+        Object.entries(securityHeaders()).forEach(([k, v]) => pageHeaders.set(k, v));
+        return new Response(pagesResp.body, { status: pagesResp.status, headers: pageHeaders });
+      }
+    }
+
+    // Outros: JSON, etc.
     Object.entries(corsHeaders(origin, env)).forEach(([k, v]) => pageHeaders.set(k, v));
     Object.entries(securityHeaders()).forEach(([k, v]) => pageHeaders.set(k, v));
-    
     return new Response(pagesResp.body, { status: pagesResp.status, headers: pageHeaders });
   },
 };
