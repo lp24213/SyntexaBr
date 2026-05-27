@@ -3,8 +3,8 @@
 import React, { useEffect, useRef } from "react";
 
 /**
- * TurnstileWidget - Componente simples para Cloudflare Turnstile
- * Abordagem minimalista para evitar loops de re-render.
+ * TurnstileWidget - MINIMAL SEM LOOPS
+ * O script é global e persistente. Uma única instância basta.
  */
 export function TurnstileWidget({ 
   siteKey,
@@ -16,88 +16,113 @@ export function TurnstileWidget({
 }) {
   const containerRef = useRef(null);
   const widgetIdRef = useRef(null);
-  const mountedRef = useRef(false);
 
+  // ─ Carregar script GLOBAL (uma única vez por aplicação)
   useEffect(() => {
-    // Executar apenas uma vez quando montar
-    if (mountedRef.current || !siteKey || typeof window === "undefined") {
+    if (typeof window === "undefined") return;
+
+    // Se script já existe globalmente, não fazer nada
+    if (window.turnstileLoaded) {
       return;
     }
 
-    mountedRef.current = true;
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = "anonymous";
 
-    const initTurnstile = async () => {
-      try {
-        // 1. Carregar script se não existe
-        if (!window.turnstile) {
-          const script = document.createElement("script");
-          script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-          script.async = true;
-          script.defer = true;
-          script.crossOrigin = "anonymous";
-
-          await new Promise((resolve, reject) => {
-            script.onload = resolve;
-            script.onerror = reject;
-            (document.head || document.documentElement).appendChild(script);
-          });
-        }
-
-        // 2. Aguardar window.turnstile estar disponível
-        let retries = 0;
-        while (!window.turnstile && retries < 20) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          retries++;
-        }
-
-        if (!window.turnstile) {
-          throw new Error("Turnstile não carregou");
-        }
-
-        // 3. Renderizar widget
-        if (containerRef.current && !widgetIdRef.current) {
-          widgetIdRef.current = window.turnstile.render(containerRef.current, {
-            sitekey: siteKey,
-            theme: theme,
-            size: size,
-            callback: (token) => {
-              if (onTokenReceived) onTokenReceived(token);
-            },
-            "error-callback": (errorCode) => {
-              console.warn("[Turnstile] Error:", errorCode);
-              if (onError) onError(`Código ${errorCode}`);
-            },
-            "expired-callback": () => {
-              if (onError) onError("Verificação expirou");
-            },
-            "timeout-callback": () => {
-              if (onError) onError("Timeout");
-            },
-            retry: "auto",
-            "retry-interval": 5000,
-            appearance: "interaction-only",
-          });
-        }
-      } catch (err) {
-        console.error("[Turnstile] Error during initialization:", err);
-        if (onError) onError(err.message || "Falha ao carregar Turnstile");
-      }
+    script.onload = () => {
+      window.turnstileLoaded = true;
     };
 
-    initTurnstile();
+    script.onerror = () => {
+      console.error("[Turnstile] Failed to load script");
+    };
 
-    // Cleanup
+    document.head.appendChild(script);
+  }, []); // Executar apenas uma vez
+
+  // ─ Renderizar widget quando estiver pronto
+  useEffect(() => {
+    if (!siteKey || !containerRef.current || typeof window === "undefined") {
+      return;
+    }
+
+    // Se window.turnstile ainda não existe, aguardar um pouco
+    if (!window.turnstile) {
+      const timeout = setTimeout(() => {
+        if (window.turnstile && containerRef.current && !widgetIdRef.current) {
+          try {
+            widgetIdRef.current = window.turnstile.render(containerRef.current, {
+              sitekey: siteKey,
+              theme: theme,
+              size: size,
+              callback: (token) => {
+                if (onTokenReceived) onTokenReceived(token);
+              },
+              "error-callback": () => {
+                if (onError) onError("Erro na verificação");
+              },
+              "expired-callback": () => {
+                if (onError) onError("Expirou");
+              },
+              "timeout-callback": () => {
+                if (onError) onError("Timeout");
+              },
+              retry: "auto",
+              "retry-interval": 5000,
+              appearance: "interaction-only",
+            });
+          } catch (err) {
+            console.error("[Turnstile] Render error:", err);
+          }
+        }
+      }, 500);
+
+      return () => clearTimeout(timeout);
+    }
+
+    // window.turnstile já existe, renderizar imediatamente
+    try {
+      if (!widgetIdRef.current) {
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+          sitekey: siteKey,
+          theme: theme,
+          size: size,
+          callback: (token) => {
+            if (onTokenReceived) onTokenReceived(token);
+          },
+          "error-callback": () => {
+            if (onError) onError("Erro na verificação");
+          },
+          "expired-callback": () => {
+            if (onError) onError("Expirou");
+          },
+          "timeout-callback": () => {
+            if (onError) onError("Timeout");
+          },
+          retry: "auto",
+          "retry-interval": 5000,
+          appearance: "interaction-only",
+        });
+      }
+    } catch (err) {
+      console.error("[Turnstile] Render error:", err);
+    }
+
     return () => {
+      // Cleanup: remover widget quando componente desmontar
       try {
         if (widgetIdRef.current && window.turnstile) {
           window.turnstile.remove(widgetIdRef.current);
           widgetIdRef.current = null;
         }
       } catch (err) {
-        console.warn("[Turnstile] Error during cleanup:", err);
+        // Ignorar erros de cleanup
       }
     };
-  }, []); // Dependências vazias: executar apenas uma vez
+  }, [siteKey]); // Só depender de siteKey
 
   if (!siteKey) {
     return null;
