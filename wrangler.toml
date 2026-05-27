@@ -21,7 +21,7 @@ LOCAL_BASE_URL = ""
 FRONTEND_BASE_URL = "https://syntexabr.com.br"
 # FRONTEND_PAGES_URL: URL atual do deployment no Cloudflare Pages
 # Atualizar automaticamente a cada novo deploy do Pages
-FRONTEND_PAGES_URL = "https://954f6265.syntexa-frontend.pages.dev"
+FRONTEND_PAGES_URL = "https://3f60167c.syntexa-frontend.pages.dev"
 
 # ── EDGE SECURITY ──────────────────────────────────────
 REQUIRE_CLOUDFLARE = "true"
