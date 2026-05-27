@@ -16,11 +16,9 @@ routes = [
 BACKEND_BASE_URL = "https://syntexa-backend-production.up.railway.app"
 AWS_BASE_URL = "http://98.94.86.193:8000"
 LOCAL_BASE_URL = ""
-# V46 — antes apontava para `https://syntexabr.com.br` o que provocava loop:
-# o worker está nas rotas `syntexabr.com.br/*`, então ao tentar buscar o
-# frontend ele caía em si mesmo (servindo cache/deploy antigo). O endpoint
-# de produção do Cloudflare Pages é a alias: production.syntexa-frontend.pages.dev
-FRONTEND_BASE_URL = "https://production.syntexa-frontend.pages.dev"
+# V47 — PRODUÇÃO: Frontend servido direto em syntexabr.com.br
+# (Cloudflare Pages roteado via CNAME para pages.dev)
+FRONTEND_BASE_URL = "https://syntexabr.com.br"
 
 # ── EDGE SECURITY ──────────────────────────────────────
 REQUIRE_CLOUDFLARE = "true"
@@ -32,9 +30,12 @@ RATE_LIMIT_MAX = "200"
 PROXY_TIMEOUT_MS = "45000"
 
 # ── KV BINDING (rate limiting + sessions) ──────────────
-[[kv_namespaces]]
-binding = "VEREDA_KV"
-id = "0d6be95610b94bb7a3f388ae8c093e16"
+# O rate limiting do edge depende deste binding. Para ativar:
+#   1. wrangler kv:namespace create "VEREDA_KV"
+#   2. Copie o id retornado abaixo e descomente as 4 linhas.
+# [[kv_namespaces]]
+# binding = "VEREDA_KV"
+# id = "<substituir-pelo-id-real-do-kv>"
 
 # ── SECRETS (configurar via: wrangler secret put <nome>) ─
 # VEREDA_SECRET_KEY
