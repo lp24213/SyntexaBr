@@ -608,6 +608,12 @@ function splitChatBlocks(rawText) {
 
 /** Gera ficheiro client-side. `kind`: pdf | xlsx | docx | csv | txt | html */
 export async function downloadStructuredExport(kind, rawText, token) {
+  // Debug: garantir que temos conteúdo
+  if (!rawText || String(rawText).trim().length === 0) {
+    alert("Nenhum conteúdo para exportar. Envie uma mensagem primeiro.");
+    return;
+  }
+
   let plain = plainTextForExport(rawText);
   if (!String(plain || "").trim()) plain = fallbackBody();
   const table = detectTable(plain);

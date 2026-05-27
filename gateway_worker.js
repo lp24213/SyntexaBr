@@ -79,11 +79,22 @@ function isWebSocketUpgrade(request) {
 }
 
 function corsHeaders(origin, env) {
-  const allowed = env.FRONTEND_BASE_URL || "https://syntexabr.com.br";
+  // Aceitar qualquer origem de syntexabr.com.br (www ou sem www)
+  const allowedDomains = [
+    "https://syntexabr.com.br",
+    "https://www.syntexabr.com.br",
+    "https://api.syntexabr.com.br",
+    "https://production.syntexa-frontend.pages.dev",
+    env.FRONTEND_BASE_URL,
+  ];
+  
+  const isAllowed = allowedDomains.includes(origin);
+  
   return {
-    "Access-Control-Allow-Origin": origin && (origin === allowed || allowed === "*") ? origin : allowed,
+    "Access-Control-Allow-Origin": isAllowed ? origin : "https://syntexabr.com.br",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Requested-With, Accept, X-Vereda-Signature, X-Session-Id",
+    "Access-Control-Allow-Credentials": "true",
     "Access-Control-Max-Age": "86400",
   };
 }
