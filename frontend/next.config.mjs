@@ -6,6 +6,9 @@ const nextConfig = {
   distDir: "out",
   images: { unoptimized: true },
   turbopack: {},
+  env: {
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADXPQoicsnfeZhcl",
+  },
   async redirects() {
     return [{ source: "/favicon.ico", destination: "/icon.svg", permanent: false }];
   },

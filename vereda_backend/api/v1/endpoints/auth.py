@@ -39,6 +39,7 @@ from vereda_backend.core.rate_limit import (
     password_reset_limiter,
     verify_email_limiter,
 )
+from vereda_backend.core.turnstile import verify_turnstile_token
 from vereda_backend.db import models
 from vereda_backend.db.session import get_db
 from vereda_backend.schemas.auth import (
@@ -122,6 +123,12 @@ def login(
         get_client_ip(request),
         detail="Muitas tentativas de login. Aguarde 1 minuto.",
     )
+    turnstile_token = request.headers.get("x-turnstile-token") or ""
+    if not verify_turnstile_token(turnstile_token, remote_ip=get_client_ip(request)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Verificação de segurança falhou. Atualize a página e tente novamente.",
+        )
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         # Webhook de login com falha (via Resend)
@@ -510,6 +517,12 @@ def public_register(
     Cadastro público com validação mais solta: aceita o JSON vindo do frontend
     e garante apenas os campos mínimos para criar o usuário e enviar o código.
     """
+    turnstile_token = payload.get("turnstile_token") or ""
+    if not verify_turnstile_token(turnstile_token, remote_ip=get_client_ip(request)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Verificação de segurança falhou. Atualize a página e tente novamente.",
+        )
     if not is_test_request(request):
         register_limiter.check(
             get_client_ip(request),

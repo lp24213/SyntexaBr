@@ -32,10 +32,9 @@ RATE_LIMIT_MAX = "200"
 PROXY_TIMEOUT_MS = "45000"
 
 # ── KV BINDING (rate limiting + sessions) ──────────────
-# Criar: wrangler kv:namespace create "VEREDA_KV"
-# [[kv_namespaces]]
-# binding = "VEREDA_KV"
-# id = "<substituir-pelo-id-real-do-kv>"
+[[kv_namespaces]]
+binding = "VEREDA_KV"
+id = "0d6be95610b94bb7a3f388ae8c093e16"
 
 # ── SECRETS (configurar via: wrangler secret put <nome>) ─
 # VEREDA_SECRET_KEY

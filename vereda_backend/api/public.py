@@ -28,6 +28,7 @@ from vereda_backend.services.conversation_store import (
 )
 from vereda_backend.core.syntexa_intel import detect_language, detect_sentiment, detect_subject
 from vereda_backend.core.syntexa_intel import remember_user_preference
+from vereda_backend.core.config import settings
 from vereda_backend.services.media_engine import (
     analyze_video_basic,
     describe_image_with_vision_llm,
@@ -97,6 +98,25 @@ def _attachments_context(file_list: List) -> str:
     return "\nContexto dos anexos:\n" + "\n".join(lines)
 
 
+def _validate_chat_payload(body: dict) -> None:
+    """Valida tamanho e estrutura do payload antes de model_validate."""
+    messages = body.get("messages") or []
+    max_msgs = int(getattr(settings, "chat_max_messages", 48) or 48)
+    max_chars = int(getattr(settings, "chat_max_message_chars", 12000) or 12000)
+    if len(messages) > max_msgs:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Máximo de {max_msgs} mensagens por requisição.",
+        )
+    for msg in messages:
+        content = (msg.get("content") or "") if isinstance(msg, dict) else (getattr(msg, "content", None) or "")
+        if len(content) > max_chars:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Mensagem excede {max_chars} caracteres.",
+            )
+
+
 async def _parse_public_chat_body(request: Request) -> Tuple[ChatRequest, list]:
     """
     Aceita application/json (body = ChatRequest) ou multipart/form-data
@@ -115,6 +135,7 @@ async def _parse_public_chat_body(request: Request) -> Tuple[ChatRequest, list]:
             data = json.loads(payload_str)
         except json.JSONDecodeError as e:
             raise HTTPException(status_code=400, detail=f"payload JSON inválido: {e}")
+        _validate_chat_payload(data)
         req = ChatRequest.model_validate(data)
         files = form.getlist("files")
         file_list = [f for f in files if f and getattr(f, "filename", None)]
@@ -134,6 +155,7 @@ async def _parse_public_chat_body(request: Request) -> Tuple[ChatRequest, list]:
         body = await request.json()
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="JSON inválido no corpo da requisição.")
+    _validate_chat_payload(body)
     req = ChatRequest.model_validate(body)
     return req, []
 

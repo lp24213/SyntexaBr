@@ -65,6 +65,10 @@ class Settings(BaseSettings):
     stripe_price_medium: str = Field(default="", validation_alias="STRIPE_PRICE_MEDIUM")
     stripe_price_master: str = Field(default="", validation_alias="STRIPE_PRICE_MASTER")
     stripe_webhook_secret: str = Field(default="", validation_alias="STRIPE_WEBHOOK_SECRET")
+    turnstile_secret_key: str | None = Field(
+        default=None, validation_alias="TURNSTILE_SECRET_KEY",
+        description="Chave secreta Cloudflare Turnstile (siteverify).",
+    )
     frontend_base_url: str = Field(
         default="https://syntexabr.com.br", validation_alias="FRONTEND_BASE_URL"
     )

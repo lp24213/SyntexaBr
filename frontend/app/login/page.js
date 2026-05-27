@@ -10,6 +10,51 @@ import { Button } from "../../components/ui/button";
 import { login, getMe, verifyTwoFactor, githubLoginUrl } from "../../lib/api";
 import { encryptedPath } from "../../lib/routes";
 
+const TURNSTILE_SITE_KEY =
+  (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) ||
+  "";
+
+function useTurnstile(siteKey) {
+  const [token, setToken] = useState("");
+  const [ready, setReady] = useState(false);
+  const widgetRef = React.useRef(null);
+
+  React.useEffect(function () {
+    if (!siteKey) return;
+    if (typeof window === "undefined") return;
+    if (window.turnstile) {
+      setReady(true);
+      return;
+    }
+    const existing = document.querySelector('script[src*="challenges.cloudflare.com/turnstile/v0/api.js"]');
+    if (!existing) {
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.defer = true;
+      script.onload = function () { setReady(true); };
+      document.body.appendChild(script);
+    } else {
+      setReady(true);
+    }
+  }, [siteKey]);
+
+  React.useEffect(function () {
+    if (!ready || !siteKey || !widgetRef.current || !window.turnstile) return;
+    const id = window.turnstile.render(widgetRef.current, {
+      sitekey: siteKey,
+      callback: function (tok) { setToken(tok); },
+      "expired-callback": function () { setToken(""); },
+      "error-callback": function () { setToken(""); },
+    });
+    return function () {
+      if (window.turnstile && id) window.turnstile.remove(id);
+    };
+  }, [ready, siteKey]);
+
+  return { token, widgetRef };
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +62,7 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [twoFactorToken, setTwoFactorToken] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
+  const { token: turnstileToken, widgetRef } = useTurnstile(TURNSTILE_SITE_KEY);
 
   async function finishLogin(accessToken, fallbackEmail, refreshToken) {
     window.localStorage.setItem("syntexa_token", accessToken);
@@ -72,9 +118,13 @@ export default function LoginPage() {
   async function handleSubmit(ev) {
     ev.preventDefault();
     setError(null);
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError("Aguarde a verificação de segurança carregar.");
+      return;
+    }
     setLoading(true);
     try {
-      const data = await login(email, password);
+      const data = await login(email, password, turnstileToken);
       if (data && data.requires_2fa && data.two_factor_token) {
         setTwoFactorToken(String(data.two_factor_token));
         setError(null);
@@ -136,6 +186,7 @@ export default function LoginPage() {
       React.createElement("div", { className: "space-y-3" },
         React.createElement(Input, { label: "E-mail", type: "email", autoComplete: "email", value: email, onChange: setEmailFromEvent, required: true }),
         React.createElement(Input, { label: "Senha", type: "password", autoComplete: "current-password", value: password, onChange: setPasswordFromEvent, required: true })),
+      TURNSTILE_SITE_KEY ? React.createElement("div", { ref: widgetRef, className: "flex justify-center" }) : null,
       error ? React.createElement("p", { className: "text-sm text-red-400" }, error) : null,
       React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? "Entrando..." : "Entrar"),
       React.createElement("button", {

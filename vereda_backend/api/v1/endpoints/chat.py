@@ -103,6 +103,25 @@ def _attachments_context(file_list: List) -> str:
     return "\nContexto dos anexos:\n" + "\n".join(lines)
 
 
+def _validate_chat_payload(body: dict) -> None:
+    """Valida tamanho e estrutura do payload antes de model_validate."""
+    messages = body.get("messages") or []
+    max_msgs = int(getattr(settings, "chat_max_messages", 48) or 48)
+    max_chars = int(getattr(settings, "chat_max_message_chars", 12000) or 12000)
+    if len(messages) > max_msgs:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Máximo de {max_msgs} mensagens por requisição.",
+        )
+    for msg in messages:
+        content = (msg.get("content") or "") if isinstance(msg, dict) else (getattr(msg, "content", None) or "")
+        if len(content) > max_chars:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Mensagem excede {max_chars} caracteres.",
+            )
+
+
 async def _parse_chat_body(request: Request) -> Tuple[ChatRequest, List]:
     """Aceita application/json ou multipart/form-data (payload + files)."""
     content_type = (request.headers.get("content-type") or "").lower()
@@ -117,6 +136,7 @@ async def _parse_chat_body(request: Request) -> Tuple[ChatRequest, List]:
             data = json.loads(payload_str)
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Pedido inválido.")
+        _validate_chat_payload(data)
         req = ChatRequest.model_validate(data)
         files = form.getlist("files")
         file_list = [f for f in files if f and getattr(f, "filename", None)]
@@ -136,6 +156,7 @@ async def _parse_chat_body(request: Request) -> Tuple[ChatRequest, List]:
         body = await request.json()
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="JSON inválido no corpo da requisição.")
+    _validate_chat_payload(body)
     return ChatRequest.model_validate(body), []
 
 

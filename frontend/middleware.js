@@ -20,10 +20,18 @@ export function middleware(request) {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
-  // ── CORS para API routes (permite cross-origin requests) ──
+  // ── CORS para API routes (espelha o Worker: apenas domínios Syntexa) ──
   const isApi = pathname.startsWith("/api") || pathname.startsWith("/public-chat");
   if (isApi) {
-    response.headers.set("Access-Control-Allow-Origin", "*");
+    const allowedOrigins = [
+      "https://syntexabr.com.br",
+      "https://www.syntexabr.com.br",
+      "https://api.syntexabr.com.br",
+      "https://production.syntexa-frontend.pages.dev",
+    ];
+    const reqOrigin = request.headers.get("origin") || "";
+    const corsOrigin = allowedOrigins.includes(reqOrigin) ? reqOrigin : allowedOrigins[0];
+    response.headers.set("Access-Control-Allow-Origin", corsOrigin);
     response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
     response.headers.set("Access-Control-Max-Age", "86400");

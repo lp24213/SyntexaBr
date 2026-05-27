@@ -179,14 +179,18 @@ function createStreamGuard(externalSignal, idleMs = STREAM_IDLE_TIMEOUT_MS, tota
   };
 }
 
-export async function login(email, password) {
+export async function login(email, password, turnstileToken = "") {
   const body = new URLSearchParams();
   body.set("username", email);
   body.set("password", password);
   body.set("grant_type", "password");
-  const resp = await fetchWithResilience( "/v1/auth/login", {
+  const headers = { "Content-Type": "application/x-www-form-urlencoded" };
+  if (turnstileToken) {
+    headers["X-Turnstile-Token"] = turnstileToken;
+  }
+  const resp = await fetchWithResilience("/v1/auth/login", {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers,
     body,
   });
   if (!resp.ok) throw new Error(await readErrorMessage(resp));
