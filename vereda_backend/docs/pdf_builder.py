@@ -356,7 +356,7 @@ def build_pdf_bytes(
         canvas.line(margin_lr, footer_y_line, page_w - margin_lr, footer_y_line)
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(_SITE_MUTED)
-        canvas.drawString(margin_lr, footer_y_text, "© Syntexa — Todos os direitos reservados")
+        # Rodapé simples: apenas página e data (sem branding Syntexa)
         canvas.drawCentredString(page_w / 2, footer_y_text, f"Página {p}")
         canvas.drawRightString(
             page_w - margin_lr,

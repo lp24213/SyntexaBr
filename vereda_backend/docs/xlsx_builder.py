@@ -89,13 +89,6 @@ def build_xlsx_bytes(
             f"A{header_row_idx}:{end_col}{ws.max_row}"
         )
 
-    # Rodapé institucional
-    foot_row = ws.max_row + 2
-    ws.merge_cells(start_row=foot_row, start_column=1, end_row=foot_row, end_column=max_cols)
-    fc = ws.cell(row=foot_row, column=1, value="© Syntexa — Todos os direitos reservados")
-    fc.font = Font(bold=True, size=10, color="334155")
-    fc.alignment = Alignment(vertical="center", horizontal="center")
-
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
