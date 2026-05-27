@@ -280,62 +280,8 @@ function copyrightLine() {
 }
 
 /** CSV: colunas reais com tabela; senão duas colunas (#, linha) para abrir bem no Excel. */
-function buildCsvBlob(plain, table) {
-  if (table && table.rows && table.rows.length) {
-    const ncol = table.rows[0].length;
-    const outMatrix = [];
-    const intro = String(table.intro || "").trim();
-    if (intro) {
-      const introLines = intro.split(/\n/).map(function (l) {
-        return l.trim();
-      });
-      for (let li = 0; li < introLines.length; li++) {
-        if (!introLines[li]) continue;
-        const row = [introLines[li]];
-        while (row.length < ncol) row.push("");
-        outMatrix.push(row);
-      }
-      if (outMatrix.length) {
-        const blank = [];
-        for (let c = 0; c < ncol; c++) blank.push("");
-        outMatrix.push(blank);
-      }
-    }
-    for (let r = 0; r < table.rows.length; r++) {
-      outMatrix.push(table.rows[r].slice());
-    }
-    const rows = outMatrix.map(function (row) {
-      while (row.length < ncol) row.push("");
-      return row.slice(0, ncol).map(quoteCsvCell);
-    });
-    rows.push([quoteCsvCell(copyrightLine())]);
-    return "\uFEFF" + rows.join("\n");
-  }
-  const lines = plain
-    .split(/\n+/)
-    .map(function (l) {
-      return l.trim();
-    })
-    .filter(Boolean);
-  const out = [["#", "Texto"]];
-  for (let i = 0; i < lines.length; i++) {
-    out.push([String(i + 1), lines[i]]);
-  }
-  out.push(["", ""]);
-  out.push(["", copyrightLine()]);
-  return (
-    "\uFEFF" +
-    out
-      .map(function (row) {
-        return row
-          .map(function (cell) {
-            return '"' + String(cell).replace(/"/g, '""') + '"';
-          })
-          .join(",");
-      })
-      .join("\n")
-  );
-}
+// DEPRECATED: usar apenas a lógica dentro de downloadStructuredExport()
+// function buildCsvBlob(plain, table) { ... }
 
 export function downloadBlobNamed(blob, name) {
   downloadBlob(blob, name);
@@ -345,57 +291,6 @@ export function downloadBlobNamed(blob, name) {
 // Importar a mesma função que api.js usa para consistência
 const PRODUCTION_API_BASE = "https://api.syntexabr.com.br";
 const API_BASE = PRODUCTION_API_BASE;
-
-/** Chama o backend para gerar PDF/DOCX/XLSX reais e faz download do binário. */
-async function downloadFromBackend(kind, plain, table, token) {
-  const title = "Syntexa — Relatório Inteligente";
-  const subtitle = defaultSubtitle();
-  let url, body, filename, mime;
-
-  if (kind === "pdf") {
-    url = API_BASE + "/v1/multimodal/export/pdf";
-    const sections = [];
-    if (table && table.rows && table.rows.length >= 2) {
-      if (table.intro) sections.push({ heading: "Introdução", body: table.intro });
-      sections.push({ heading: "Dados", body: "", table_rows: table.rows });
-    } else {
-      sections.push({ heading: "Conteúdo", body: plain || fallbackBody() });
-    }
-    body = JSON.stringify({ title, subtitle, sections });
-    filename = "syntexa-documento.pdf";
-    mime = "application/pdf";
-  } else if (kind === "docx") {
-    url = API_BASE + "/v1/multimodal/export/docx";
-    const sections = [];
-    if (table && table.rows && table.rows.length >= 2) {
-      if (table.intro) sections.push({ heading: "Introdução", body: table.intro });
-      sections.push({ heading: "Dados", body: "", table_rows: table.rows });
-    } else {
-      sections.push({ heading: "Conteúdo", body: plain || fallbackBody() });
-    }
-    body = JSON.stringify({ title, sections });
-    filename = "syntexa-documento.docx";
-    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-  } else if (kind === "xlsx") {
-    url = API_BASE + "/v1/multimodal/export/xlsx";
-    let rows;
-    if (table && table.rows && table.rows.length >= 2) {
-      rows = table.rows;
-    } else {
-      rows = [["Conteúdo"], [plain || fallbackBody()]];
-    }
-    body = JSON.stringify({ sheet_title: "Syntexa", rows, header: true, document_title: title });
-    filename = "syntexa-planilha.xlsx";
-    mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-  }
-
-  const headers = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = "Bearer " + token;
-  const resp = await fetch(url, { method: "POST", headers, body });
-  if (!resp.ok) throw new Error("Erro do servidor ao gerar " + kind.toUpperCase() + " (" + resp.status + ")");
-  const blob = await resp.blob();
-  downloadBlob(blob, filename);
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * HELPERS DE PARSING — Markdown leve → segmentos estruturados
@@ -590,47 +485,65 @@ function blocksToHtml(blocks, opts) {
 
 /** Separa raw chat-text em mensagens. Cada mensagem retorna { role, content }. */
 function splitChatBlocks(rawText) {
-  const blocks = String(rawText || "").split(/\n\n(?=Você:|Assistente:)/);
+  const text = String(rawText || "").trim();
+  if (!text) return [];
+  
+  // Encontra todas as posições de "Você:" e "Assistente:"
   const out = [];
-  blocks.forEach(function (block) {
-    const isUser = block.indexOf("Você:") === 0;
-    const isAI = block.indexOf("Assistente:") === 0;
-    const content = block.replace(/^(Você:|Assistente:)\s*/, "").trim();
-    if (!content) return;
-    out.push({ role: isUser ? "user" : isAI ? "ai" : "doc", content: content });
-  });
+  let lastIdx = 0;
+  const regex = /\n(Você:|Assistente:)\s*/g;
+  let match;
+  
+  while ((match = regex.exec(text)) !== null) {
+    const role = match[1].trim();
+    const startIdx = match.index + match[0].length;
+    
+    // Encontra o próximo rótulo ou fim do texto
+    const nextMatch = regex.exec(text);
+    const endIdx = nextMatch ? nextMatch.index : text.length;
+    
+    const content = text.substring(startIdx, endIdx).trim();
+    
+    if (content && content.length > 0) {
+      out.push({
+        role: role === "Você:" ? "user" : "ai",
+        content: content
+      });
+    }
+    
+    if (!nextMatch) break;
+    // Volta o lastIndex para encontrar proxima iteracao
+    regex.lastIndex = nextMatch.index + 1;
+  }
+  
   return out;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * EXPORTAÇÃO PRINCIPAL
+ * EXPORTAÇÃO PRINCIPAL — VERSÃO CORRIGIDA
  * ═════════════════════════════════════════════════════════════════════════ */
 
-/** Gera ficheiro client-side. `kind`: pdf | xlsx | docx | csv | txt | html */
+/** Gera ficheiro. `kind`: pdf | xlsx | docx | csv | txt | html */
 export async function downloadStructuredExport(kind, rawText, token) {
-  // Debug: garantir que temos conteúdo
+  // Validação
   if (!rawText || String(rawText).trim().length === 0) {
     alert("Nenhum conteúdo para exportar. Envie uma mensagem primeiro.");
     return;
   }
 
-  let plain = plainTextForExport(rawText);
-  if (!String(plain || "").trim()) plain = fallbackBody();
-  const table = detectTable(plain);
-
-  // ── TXT ─────────────────────────────────────────────────────────────────────
+  const title = "Syntexa — Documento";
+  const subtitle = new Date().toLocaleString("pt-BR");
+  
+  // ─────────────────────────────────────────────────────────────────────────────
+  // TXT: Split por "Você:" e "Assistente:" + salva como plaintext
   if (kind === "txt") {
     const chat = splitChatBlocks(rawText);
     let out = "";
-    if (chat.length) {
-      chat.forEach(function (m) {
-        if (m.role === "user") out += "─── PERGUNTA ───\n" + m.content + "\n\n";
-        else if (m.role === "ai") out += "─── RESPOSTA ───\n" + m.content + "\n\n";
-        else out += m.content + "\n\n";
-      });
-    } else {
-      out = plain;
-    }
+    chat.forEach(function (m) {
+      const label = m.role === "user" ? "PERGUNTA:" : "RESPOSTA:";
+      out += label + "\n" + m.content + "\n\n";
+    });
+    if (!out.trim()) out = rawText;
     downloadBlob(
       new Blob([out.trim() + "\n"], { type: "text/plain;charset=utf-8" }),
       "documento.txt"
@@ -638,234 +551,141 @@ export async function downloadStructuredExport(kind, rawText, token) {
     return;
   }
 
-  // ── CSV ─────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CSV: Perguntas e respostas em 2 colunas
   if (kind === "csv") {
-    const csv = buildCsvBlob(plain, table);
-    downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), "documento.csv");
-    return;
-  }
-
-  // ── Conteúdo principal: extrai conversa em PERGUNTA/RESPOSTA + parseia markdown
-  const chat = splitChatBlocks(rawText);
-  // Concatena só o conteúdo (sem rótulos role) para parsing; mantém perguntas como heading h3
-  const blocksAll = [];
-  if (chat.length) {
+    const chat = splitChatBlocks(rawText);
+    const rows = [["Tipo", "Conteúdo"]];
     chat.forEach(function (m) {
-      if (m.role === "user") {
-        blocksAll.push({ type: "h3", text: "Pergunta" });
-        // Tratar texto como parágrafo
-        blocksAll.push({ type: "p", text: m.content });
-      } else if (m.role === "ai") {
-        // Parseia markdown completo da resposta
-        const parsed = parseMarkdown(m.content);
-        if (parsed.length) parsed.forEach(function (b) { blocksAll.push(b); });
-        else blocksAll.push({ type: "p", text: m.content });
-      } else {
-        const parsed = parseMarkdown(m.content);
-        parsed.forEach(function (b) { blocksAll.push(b); });
-      }
+      const tipo = m.role === "user" ? "Pergunta" : "Resposta";
+      rows.push([tipo, m.content]);
     });
-  } else {
-    parseMarkdown(plain).forEach(function (b) { blocksAll.push(b); });
-  }
-
-  // ── XLSX — usa o pacote xlsx para gerar ficheiro nativo .xlsx ──────────────
-  if (kind === "xlsx" || kind === "_xlsx_legacy") {
-    const wb = XLSX.utils.book_new();
-
-    // Coleta tabelas markdown encontradas; se não houver tabelas, gera linhas de texto.
-    const markdownTables = blocksAll.filter(function (b) { return b.type === "table"; });
-
-    if (markdownTables.length) {
-      markdownTables.forEach(function (t, idx) {
-        const aoa = [t.header.slice()];
-        t.rows.forEach(function (r) { aoa.push(r.slice()); });
-        const ws = XLSX.utils.aoa_to_sheet(aoa);
-        // Largura das colunas baseada no maior conteúdo
-        const ncol = t.header.length;
-        const colW = [];
-        for (let c = 0; c < ncol; c++) {
-          let max = String(t.header[c] || "").length;
-          t.rows.forEach(function (r) { max = Math.max(max, String(r[c] || "").length); });
-          colW.push({ wch: Math.min(60, Math.max(12, max + 2)) });
-        }
-        ws["!cols"] = colW;
-        // Wrap text e altura mínima
-        const range = XLSX.utils.decode_range(ws["!ref"]);
-        for (let R = range.s.r; R <= range.e.r; ++R) {
-          for (let C = range.s.c; C <= range.e.c; ++C) {
-            const addr = XLSX.utils.encode_cell({ r: R, c: C });
-            const cell = ws[addr];
-            if (!cell) continue;
-            cell.s = cell.s || {};
-            cell.s.alignment = { vertical: "top", wrapText: true };
-            if (R === 0) cell.s.font = { bold: true };
-          }
-        }
-        XLSX.utils.book_append_sheet(wb, ws, "Tabela " + (idx + 1));
-      });
-    } else if (table && table.rows && table.rows.length) {
-      // Tabela detectada por separadores não-markdown
-      const aoa = table.rows.slice();
-      const ws = XLSX.utils.aoa_to_sheet(aoa);
-      const ncol = aoa[0].length;
-      const colW = [];
-      for (let c = 0; c < ncol; c++) {
-        let max = 12;
-        aoa.forEach(function (r) { max = Math.max(max, String(r[c] || "").length); });
-        colW.push({ wch: Math.min(60, max + 2) });
-      }
-      ws["!cols"] = colW;
-      XLSX.utils.book_append_sheet(wb, ws, "Dados");
-    } else {
-      // Conversa completa em duas colunas (Tipo | Conteúdo)
-      const aoa = [["Tipo", "Conteúdo"]];
-      if (chat.length) {
-        chat.forEach(function (m) {
-          const tag = m.role === "user" ? "Pergunta" : m.role === "ai" ? "Resposta" : "Documento";
-          aoa.push([tag, m.content]);
-        });
-      } else {
-        aoa.push(["Texto", plain]);
-      }
-      const ws = XLSX.utils.aoa_to_sheet(aoa);
-      ws["!cols"] = [{ wch: 14 }, { wch: 100 }];
-      // Wrap text na coluna B
-      const range = XLSX.utils.decode_range(ws["!ref"]);
-      ws["!rows"] = [];
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        const rowH = R === 0 ? 22 : 60;
-        ws["!rows"].push({ hpt: rowH });
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const addr = XLSX.utils.encode_cell({ r: R, c: C });
-          const cell = ws[addr];
-          if (!cell) continue;
-          cell.s = cell.s || {};
-          cell.s.alignment = { vertical: "top", wrapText: true };
-          if (R === 0) cell.s.font = { bold: true };
-        }
-      }
-      XLSX.utils.book_append_sheet(wb, ws, "Documento");
-    }
-
-    const arr = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const csv = rows.map(function (row) {
+      return row.map(function (cell) {
+        return '"' + String(cell).replace(/"/g, '""') + '"';
+      }).join(",");
+    }).join("\n");
     downloadBlob(
-      new Blob([arr], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
-      "documento.xlsx"
+      new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }),
+      "documento.csv"
     );
     return;
   }
 
-  // ── HTML — documento autónomo, visual limpo, SEM branding ──────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // HTML: Gera HTML auto-contido com CSS
   if (kind === "html") {
-    const htmlDoc = buildCleanHtmlDocument(blocksAll);
-    downloadBlob(new Blob([htmlDoc], { type: "text/html;charset=utf-8" }), "documento.html");
+    const chat = splitChatBlocks(rawText);
+    const bodyHtml = chat.map(function (m) {
+      const heading = m.role === "user" ? '<h3 style="color:#0f172a;margin-top:20px;margin-bottom:8px;">Pergunta</h3>' : '<h3 style="color:#0f172a;margin-top:20px;margin-bottom:8px;">Resposta</h3>';
+      const content = '<p style="margin:0 0 12px;font-size:14px;line-height:1.7;color:#1e293b;text-align:justify;">' + escHtml(m.content).replace(/\n/g, "<br/>") + '</p>';
+      return heading + content;
+    }).join("\n");
+    const htmlDoc = buildCleanHtmlDocument([]);
+    // Inject content
+    const htmlWithContent = htmlDoc.replace(
+      /<div class="page-body">/,
+      '<div class="page-body">' + bodyHtml
+    );
+    downloadBlob(
+      new Blob([htmlWithContent], { type: "text/html;charset=utf-8" }),
+      "documento.html"
+    );
     return;
   }
 
-  // ── PDF — html2pdf.js no cliente, visual profissional, SEM branding ────────
-  if (kind === "pdf" || kind === "_pdf_legacy") {
-    const html2pdf = (await import("html2pdf.js")).default;
-    const innerHtml = blocksToHtml(blocksAll);
-
-    // Container OFFSCREEN com largura fixa A4 ~794px @ 96dpi
-    const pdfWrap = document.createElement("div");
-    pdfWrap.style.cssText = [
-      "position:fixed",
-      "left:-10000px",
-      "top:0",
-      "width:794px",
-      "background:#ffffff",
-      "color:#1e293b",
-      "font-family:'Segoe UI',Inter,Arial,sans-serif",
-      "padding:48px 56px",
-      "box-sizing:border-box",
-      "line-height:1.6",
-    ].join(";");
-    pdfWrap.innerHTML = innerHtml || '<p style="color:#94a3b8;font-style:italic;text-align:center;padding:40px;">Sem conteúdo para exportar.</p>';
-
-    document.body.appendChild(pdfWrap);
-    try {
-      await html2pdf().set({
-        margin: [12, 0, 14, 0],
-        filename: "documento.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false, windowWidth: 794 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait", compress: true },
-        pagebreak: { mode: ["css", "legacy"] },
-      }).from(pdfWrap).save();
-    } finally {
-      try { document.body.removeChild(pdfWrap); } catch (e) { /* ignore */ }
-    }
-    return;
-  }
-
-  // ── DOCX — RTF que o Word abre nativamente, sem branding ──────────────────
-  if (kind === "docx" || kind === "_docx_legacy") {
-    function _rtfSafe(s) {
-      return String(s || "").replace(/[\\{}]/g, "").replace(/[\u0080-\uffff]/g, function (c) {
-        return "\\u" + c.charCodeAt(0) + "?";
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PDF, DOCX, XLSX: Envia para backend (MUITO MAIS CONFIÁVEL)
+  // Converte a conversa em sections estruturadas
+  const chat = splitChatBlocks(rawText);
+  const sections = [];
+  
+  chat.forEach(function (m) {
+    if (m.role === "user") {
+      sections.push({
+        heading: "Pergunta",
+        body: m.content
+      });
+    } else if (m.role === "ai") {
+      sections.push({
+        heading: "Resposta",
+        body: m.content
       });
     }
-    var rtf = "{\\rtf1\\ansi\\ansicpg1252\\deff0\n";
-    rtf += "{\\fonttbl{\\f0\\fswiss\\fcharset0 Calibri;}{\\f1\\fswiss\\fcharset0 Calibri;}}\n";
-    rtf += "{\\colortbl ;\\red15\\green23\\blue42;\\red100\\green116\\blue139;\\red255\\green255\\blue255;\\red30\\green41\\blue59;}\n";
+  });
+  
+  if (sections.length === 0) {
+    sections.push({ heading: "Conteúdo", body: rawText });
+  }
 
-    blocksAll.forEach(function (b) {
-      if (b.type === "h1") {
-        rtf += "\\pard\\sb240\\sa120\\cf1\\f1\\fs36\\b " + _rtfSafe(b.text) + "\\b0\\par\n";
-      } else if (b.type === "h2") {
-        rtf += "\\pard\\sb200\\sa100\\cf1\\f1\\fs28\\b " + _rtfSafe(b.text) + "\\b0\\par\n";
-      } else if (b.type === "h3") {
-        rtf += "\\pard\\sb160\\sa80\\cf1\\f1\\fs24\\b " + _rtfSafe(b.text) + "\\b0\\par\n";
-      } else if (b.type === "p") {
-        rtf += "\\pard\\sb60\\sa120\\cf1\\f0\\fs22 " + _rtfSafe(b.text).replace(/\n/g, "\\line ") + "\\par\n";
-      } else if (b.type === "ul") {
-        b.items.forEach(function (it) {
-          rtf += "\\pard\\fi-300\\li500\\sb40\\sa60\\cf1\\f0\\fs22 \\bullet  " + _rtfSafe(it) + "\\par\n";
-        });
-      } else if (b.type === "ol") {
-        b.items.forEach(function (it, idx) {
-          rtf += "\\pard\\fi-300\\li500\\sb40\\sa60\\cf1\\f0\\fs22 " + (idx + 1) + ".  " + _rtfSafe(it) + "\\par\n";
-        });
-      } else if (b.type === "code") {
-        rtf += "\\pard\\sb80\\sa80\\cf4\\f0\\fs20 " + _rtfSafe(b.text).replace(/\n/g, "\\line ") + "\\par\n";
-      } else if (b.type === "quote") {
-        rtf += "\\pard\\li400\\sb80\\sa80\\cf2\\f0\\fs22\\i " + _rtfSafe(b.text).replace(/\n/g, "\\line ") + "\\i0\\par\n";
-      } else if (b.type === "hr") {
-        rtf += "\\pard\\brdrb\\brdrs\\brdrw10\\brsp20\\par\n";
-      } else if (b.type === "table") {
-        var ncolsT = b.header.length;
-        var cellW = Math.floor(8600 / ncolsT);
-        // Header
-        rtf += "\\trowd\\trgaph115\\trleft0\n";
-        for (var c0 = 0; c0 < ncolsT; c0++) {
-          rtf += "\\clcbpat1 \\clbrdrt\\brdrs\\brdrw10\\clbrdrb\\brdrs\\brdrw10\\clbrdrl\\brdrs\\brdrw10\\clbrdrr\\brdrs\\brdrw10 ";
-          rtf += "\\cellx" + ((c0 + 1) * cellW) + "\n";
-        }
-        b.header.forEach(function (h) {
-          rtf += "\\pard\\intbl\\cf3\\f1\\fs20\\b " + _rtfSafe(h) + "\\b0\\cell\n";
-        });
-        rtf += "\\row\n";
-        // Rows
-        b.rows.forEach(function (r, ri) {
-          rtf += "\\trowd\\trgaph115\\trleft0\n";
-          for (var c1 = 0; c1 < ncolsT; c1++) {
-            if (ri % 2 === 1) rtf += "\\clcbpat3 ";
-            rtf += "\\clbrdrt\\brdrs\\brdrw10\\clbrdrb\\brdrs\\brdrw10\\clbrdrl\\brdrs\\brdrw10\\clbrdrr\\brdrs\\brdrw10 ";
-            rtf += "\\cellx" + ((c1 + 1) * cellW) + "\n";
-          }
-          r.forEach(function (cell) {
-            rtf += "\\pard\\intbl\\cf1\\f0\\fs20 " + _rtfSafe(cell) + "\\cell\n";
-          });
-          rtf += "\\row\n";
-        });
-        rtf += "\\pard\\par\n";
-      }
+  // PDF via backend
+  if (kind === "pdf") {
+    const url = API_BASE + "/v1/multimodal/export/pdf";
+    const body = JSON.stringify({ title, subtitle, sections });
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
+    
+    try {
+      const resp = await fetch(url, { method: "POST", headers, body });
+      if (!resp.ok) throw new Error("Status " + resp.status);
+      const blob = await resp.blob();
+      downloadBlob(blob, "documento.pdf");
+      console.log("[EXPORT SUCCESS] PDF gerado via backend");
+    } catch (err) {
+      console.error("[EXPORT ERROR] PDF:", err);
+      throw err;
+    }
+    return;
+  }
+
+  // DOCX via backend
+  if (kind === "docx") {
+    const url = API_BASE + "/v1/multimodal/export/docx";
+    const body = JSON.stringify({ title, sections });
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
+    
+    try {
+      const resp = await fetch(url, { method: "POST", headers, body });
+      if (!resp.ok) throw new Error("Status " + resp.status);
+      const blob = await resp.blob();
+      downloadBlob(blob, "documento.docx");
+      console.log("[EXPORT SUCCESS] DOCX gerado via backend");
+    } catch (err) {
+      console.error("[EXPORT ERROR] DOCX:", err);
+      throw err;
+    }
+    return;
+  }
+
+  // XLSX via backend
+  if (kind === "xlsx") {
+    const rows = [["Tipo", "Conteúdo"]];
+    chat.forEach(function (m) {
+      const tipo = m.role === "user" ? "Pergunta" : "Resposta";
+      rows.push([tipo, m.content]);
     });
-
-    rtf += "}";
-    downloadBlob(new Blob([rtf], { type: "application/msword" }), "documento.docx");
+    
+    const url = API_BASE + "/v1/multimodal/export/xlsx";
+    const body = JSON.stringify({
+      sheet_title: "Documento",
+      rows: rows,
+      header: true,
+      document_title: title
+    });
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
+    
+    try {
+      const resp = await fetch(url, { method: "POST", headers, body });
+      if (!resp.ok) throw new Error("Status " + resp.status);
+      const blob = await resp.blob();
+      downloadBlob(blob, "documento.xlsx");
+      console.log("[EXPORT SUCCESS] XLSX gerado via backend");
+    } catch (err) {
+      console.error("[EXPORT ERROR] XLSX:", err);
+      throw err;
+    }
     return;
   }
 }
