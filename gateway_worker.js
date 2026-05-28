@@ -401,7 +401,27 @@ export default {
     // IMPORTANTE: não usar syntexabr.com.br aqui — causaria loop! 
     // O FRONTEND_BASE_URL é apenas para devolvê-lo aos clientes nas APIs.
     // Para o proxy interno, sempre usar o deployment Pages direto via FRONTEND_PAGES_URL.
-    const pagesDeployment = env.FRONTEND_PAGES_URL || "https://954f6265.syntexa-frontend.pages.dev";
+    
+    // Detectar Pages deployment dinamicamente
+    function getPagesDeploymentUrl(env, request) {
+      // Priority:
+      // 1. Environment variable (mais confiável em CI/CD)
+      if (env.FRONTEND_PAGES_URL) {
+        return env.FRONTEND_PAGES_URL.replace(/\/$/, "");
+      }
+      
+      // 2. Header X-Pages-URL passado pelo CI/CD
+      const headerPagesUrl = request.headers.get("X-Pages-URL");
+      if (headerPagesUrl) {
+        return headerPagesUrl.replace(/\/$/, "");
+      }
+      
+      // 3. Fallback com documentação clara
+      console.warn("[Gateway] Using fallback Pages deployment URL. Set FRONTEND_PAGES_URL in env.");
+      return "https://954f6265.syntexa-frontend.pages.dev";
+    }
+    
+    const pagesDeployment = getPagesDeploymentUrl(env, request);
     const targetUrl = new URL(pagesDeployment);
     targetUrl.pathname = pathname;
     targetUrl.search = incomingUrl.search;

@@ -87,6 +87,14 @@ id_rsa
 id_ed25519
 *.pub
 
+# Screenshots / capturas de tela (podem conter dados sensíveis)
+Captura*
+captura*
+Screenshot*
+screenshot*
+Print*
+print*
+
 # OS
 .DS_Store
 Thumbs.db

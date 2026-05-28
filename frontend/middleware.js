@@ -18,7 +18,17 @@ export function middleware(request) {
   // ── Security headers ───────────────────────────────
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  // Allow Cloudflare Turnstile iframe communication
+  response.headers.set("Referrer-Policy", "origin-when-cross-origin");
+  
+  // Content Security Policy for Turnstile and trusted resources
+  response.headers.set(
+    "Content-Security-Policy",
+    "frame-src 'self' https://challenges.cloudflare.com; " +
+    "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; " +
+    "connect-src 'self' https://challenges.cloudflare.com https://*.syntexabr.com.br; " +
+    "default-src 'self' https:;"
+  );
 
   // ── CORS para API routes (espelha o Worker: apenas domínios Syntexa) ──
   const isApi = pathname.startsWith("/api") || pathname.startsWith("/public-chat");

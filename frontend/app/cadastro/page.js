@@ -7,14 +7,13 @@ import { encryptedPath } from "../../lib/routes";
 import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
+import { TurnstileWidget } from "../../components/TurnstileWidget";
 import { getApiBase } from "../../lib/api";
 import { FuturisticIcon } from "../../components/icons/futuristic-icons";
 
 var API_BASE = getApiBase();
 
-var TURNSTILE_SITE_KEY =
-  (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) ||
-  "";
+var TURNSTILE_SITE_KEY = "0x4AAAAAADXPQoicsnfeZhcl";
 
 var ROLES = [
   {
@@ -51,44 +50,6 @@ var ROLES = [
   },
 ];
 
-function useTurnstile(siteKey) {
-  var [token, setToken] = useState("");
-  var [ready, setReady] = useState(false);
-  var widgetRef = React.useRef(null);
-
-  React.useEffect(function () {
-    if (!siteKey) return;
-    if (typeof window === "undefined") return;
-    if (window.turnstile) { setReady(true); return; }
-    var existing = document.querySelector('script[src*="challenges.cloudflare.com/turnstile/v0/api.js"]');
-    if (!existing) {
-      var script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-      script.async = true;
-      script.defer = true;
-      script.onload = function () { setReady(true); };
-      document.body.appendChild(script);
-    } else {
-      setReady(true);
-    }
-  }, [siteKey]);
-
-  React.useEffect(function () {
-    if (!ready || !siteKey || !widgetRef.current || !window.turnstile) return;
-    var id = window.turnstile.render(widgetRef.current, {
-      sitekey: siteKey,
-      callback: function (tok) { setToken(tok); },
-      "expired-callback": function () { setToken(""); },
-      "error-callback": function () { setToken(""); },
-    });
-    return function () {
-      if (window.turnstile && id) window.turnstile.remove(id);
-    };
-  }, [ready, siteKey]);
-
-  return { token: token, widgetRef: widgetRef };
-}
-
 export default function CadastroPage() {
   // Step 1 = role selector, Step 2 = form
   var [step, setStep] = useState(1);
@@ -108,7 +69,7 @@ export default function CadastroPage() {
   var [loading, setLoading] = useState(false);
   var [error, setError] = useState(null);
   var [success, setSuccess] = useState(null);
-  var { token: turnstileToken, widgetRef } = useTurnstile(TURNSTILE_SITE_KEY);
+  var [turnstileToken, setTurnstileToken] = useState("");
 
   function selectRole(r) {
     setRole(r);
@@ -252,7 +213,13 @@ export default function CadastroPage() {
                     React.createElement("a", { href: "/privacidade", target: "_blank", rel: "noreferrer", className: "underline hover:text-zinc-900" }, "Política de Privacidade"),
                     "."))
                 ,
-                TURNSTILE_SITE_KEY ? React.createElement("div", { ref: widgetRef, className: "flex justify-center" }) : null,
+                TURNSTILE_SITE_KEY ? React.createElement(TurnstileWidget, {
+                  siteKey: TURNSTILE_SITE_KEY,
+                  onTokenReceived: setTurnstileToken,
+                  onError: (err) => setError(`Erro de segurança: ${err}`),
+                  theme: "light",
+                  className: "my-3"
+                }) : null,
                 error ? React.createElement("p", { className: "text-sm text-rose-400" }, error) : null,
                 success ? React.createElement("p", { className: "text-sm text-emerald-400" }, success) : null,
                 React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? "Criando conta..." : "Criar conta"),
