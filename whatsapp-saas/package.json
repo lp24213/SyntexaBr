@@ -1,0 +1,50 @@
+{
+  "name": "syntexa-whatsapp-saas",
+  "version": "1.0.0",
+  "description": "WhatsApp Business SaaS backend powered by Syntexa AI",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "saas",
+    "ai",
+    "syntexa",
+    "fastify",
+    "typescript"
+  ],
+  "author": "Syntexa",
+  "license": "MIT",
+  "dependencies": {
+    "fastify": "^4.25.0",
+    "fastify-cors": "^8.4.2",
+    "fastify-helmet": "^11.1.1",
+    "@fastify/jwt": "^7.8.0",
+    "pg": "^8.11.3",
+    "redis": "^4.6.12",
+    "axios": "^1.6.5",
+    "pydantic": "^2.5.0",
+    "pydantic-core": "^2.14.1",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.3.1",
+    "zod": "^3.22.4",
+    "openai": "^4.20.1",
+    "crypto-js": "^4.2.0",
+    "winston": "^3.11.0",
+    "express-rate-limit": "^7.1.5",
+    "@opentelemetry/api": "^1.7.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.43.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "tsx": "^4.7.0",
+    "@types/node": "^20.10.6",
+    "@types/express-rate-limit": "^6.4.2"
+  }
+}
