@@ -20,8 +20,8 @@ LOCAL_BASE_URL = ""
 # (Cloudflare Pages roteado via CNAME para pages.dev)
 FRONTEND_BASE_URL = "https://syntexabr.com.br"
 # FRONTEND_PAGES_URL: URL PRODUCTION do deployment no Cloudflare Pages
-# Use syntexa-frontend.pages.dev para production (não hash preview)
-FRONTEND_PAGES_URL = "https://syntexa-frontend.pages.dev"
+# Usar production alias (sempre aponta para latest production build)
+FRONTEND_PAGES_URL = "https://production.syntexa-frontend.pages.dev"
 
 # ── EDGE SECURITY ──────────────────────────────────────
 REQUIRE_CLOUDFLARE = "true"
