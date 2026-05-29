@@ -113,7 +113,7 @@ export async function toolsRouter(app: FastifyInstance) {
       }
       
       try {
-        // Validar e limpar dados para garantir formatação PROFISSIONAL
+        // Validar e limpar dados para garantir formatação COMPLETA com somas
         const cleanRows = (rows || []).map((row: any) => {
           if (!row) return {};
           if (typeof row === 'object') {
@@ -127,6 +127,33 @@ export async function toolsRouter(app: FastifyInstance) {
         
         const cleanHeader = (header || []).map(h => typeof h === 'string' ? h.trim() : String(h));
         
+        // Calcular somas por coluna (apenas números)
+        const columnSums: any = {};
+        cleanHeader.forEach((col: string) => {
+          let sum = 0;
+          let hasNumbers = false;
+          cleanRows.forEach((row: any) => {
+            const val = row[col];
+            if (val && !isNaN(parseFloat(val))) {
+              sum += parseFloat(val);
+              hasNumbers = true;
+            }
+          });
+          if (hasNumbers) {
+            columnSums[col] = sum;
+          }
+        });
+        
+        // Adicionar linha de totais se houver cálculos
+        const finalRows = [...cleanRows];
+        if (Object.keys(columnSums).length > 0) {
+          const totalRow: any = { '***TOTAL***': 'TOTAL' };
+          cleanHeader.forEach((col: string) => {
+            totalRow[col] = columnSums[col] || '';
+          });
+          finalRows.push(totalRow);
+        }
+        
         const response = await fetch(`${process.env.SYNTEXA_API_BASE}/v1/multimodal/export/xlsx`, {
           method: 'POST',
           headers: {
@@ -135,14 +162,17 @@ export async function toolsRouter(app: FastifyInstance) {
           },
           body: JSON.stringify({ 
             sheet_title: title || 'Export',
-            rows: cleanRows, 
+            rows: finalRows, 
             header: cleanHeader,
             formatting: {
               autowidth: true,
               bold_header: true,
+              bold_total: true,
               borders: 'thin',
               freeze_header: true,
-              alignment: 'left'
+              alignment: 'left',
+              number_format: '#,##0.00',
+              highlight_total: true
             }
           }),
         });

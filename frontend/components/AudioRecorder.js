@@ -110,17 +110,95 @@ export function AudioRecorder({
               onError("Configure onVoicePipelineResult no modo pipeline server.");
             }
           } else {
-            setPhase("llm");
-            const t = await transcribeWithXenova(file, { language: "portuguese" });
-            if (typeof onVoiceSubmitChat === "function") {
+            setPhase("stt");
+            let t = "";
+            try {
+              // Tentar Xenova primeiro
+              t = await transcribeWithXenova(file, { language: "portuguese" });
+            } catch (xenovaErr) {
+              console.warn("[AudioRecorder] Xenova falhou, usando fallback Web Speech", xenovaErr);
+              // Fallback para Web Speech API
+              t = await new Promise((resolve, reject) => {
+                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SR) {
+                  reject(new Error("Nenhum motor STT disponível"));
+                  return;
+                }
+                const rec = new SR();
+                rec.lang = "pt-BR";
+                rec.continuous = false;
+                rec.interimResults = false;
+                let finalTranscript = "";
+                rec.onresult = function (event) {
+                  for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                      finalTranscript += event.results[i][0].transcript;
+                    }
+                  }
+                };
+                rec.onerror = function (event) {
+                  reject(new Error("Erro STT: " + event.error));
+                };
+                rec.onend = function () {
+                  resolve(finalTranscript);
+                };
+                try {
+                  rec.start();
+                } catch (e) {
+                  reject(e);
+                }
+              });
+            }
+            if (t && typeof onVoiceSubmitChat === "function") {
               await onVoiceSubmitChat(t);
-            } else if (onError) {
-              onError("Configure onVoiceSubmitChat no modo pipeline chat.");
+            } else if (onError && !t) {
+              onError("Nenhuma transcrição obtida. Fale mais alto.");
             }
           }
         } else {
-          const t = await transcribeWithXenova(file, { language: "portuguese" });
+          setPhase("stt");
+          let t = "";
+          try {
+            // Tentar Xenova primeiro
+            t = await transcribeWithXenova(file, { language: "portuguese" });
+          } catch (xenovaErr) {
+            console.warn("[AudioRecorder] Xenova falhou, usando fallback Web Speech", xenovaErr);
+            // Fallback para Web Speech API
+            t = await new Promise((resolve, reject) => {
+              const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+              if (!SR) {
+                reject(new Error("Nenhum motor STT disponível"));
+                return;
+              }
+              const rec = new SR();
+              rec.lang = "pt-BR";
+              rec.continuous = false;
+              rec.interimResults = false;
+              let finalTranscript = "";
+              rec.onresult = function (event) {
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                  if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                  }
+                }
+              };
+              rec.onerror = function (event) {
+                reject(new Error("Erro STT: " + event.error));
+              };
+              rec.onend = function () {
+                resolve(finalTranscript);
+              };
+              try {
+                rec.start();
+              } catch (e) {
+                reject(e);
+              }
+            });
+          }
           if (t && onTranscript) onTranscript(t);
+          else if (onError && !t) {
+            onError("Nenhuma transcrição obtida. Fale mais alto.");
+          }
         }
       } catch (e) {
         if (onError) onError(e instanceof Error ? e.message : String(e));
