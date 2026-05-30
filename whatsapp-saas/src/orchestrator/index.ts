@@ -10,7 +10,7 @@
  */
 
 import axios from 'axios';
-import { pgPool, redis } from '../index.js';
+import { pgPool } from '../index.js';
 import { logger } from '../lib/logger.js';
 
 export interface Message {
@@ -201,7 +201,7 @@ async function sendWhatsAppMessage(
 ) {
   try {
     await axios.post(
-      `https://graph.instagram.com/v18.0/${phoneNumberId}/messages`,
+      `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`,
       {
         messaging_product: 'whatsapp',
         to: recipientPhone.replace(/\D/g, ''),

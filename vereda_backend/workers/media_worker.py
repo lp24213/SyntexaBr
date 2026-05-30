@@ -8,8 +8,11 @@ from vereda_backend.docs.pdf_builder import build_pdf_bytes
 from vereda_backend.docs.xlsx_builder import build_xlsx_bytes
 
 
-def sync_build_pdf(title: str, sections: List[Dict[str, Any]], subtitle: Optional[str]) -> bytes:
-    return build_pdf_bytes(title, sections, subtitle)
+def sync_build_pdf(
+    title: str, sections: List[Dict[str, Any]], subtitle: Optional[str],
+    *, styled: bool = True, include_footer: bool = False,
+) -> bytes:
+    return build_pdf_bytes(title, sections, subtitle, styled=styled, include_footer=include_footer)
 
 
 def sync_build_xlsx(

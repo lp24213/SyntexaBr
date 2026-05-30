@@ -1,20 +1,25 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
-import { pgPool, redis } from '../index.js';
+import { redis } from '../index.js';
 import { logger } from '../lib/logger.js';
-import { orchestrateMessage } from '../orchestrator/index.js';
 
 export async function webhookRouter(app: FastifyInstance) {
   /**
    * GET /webhook/whatsapp
-   * Validação de webhook com Meta
+   * Validação inicial de webhook com Meta
    */
   app.get('/whatsapp', async (request: FastifyRequest, reply: FastifyReply) => {
-    const token = request.query.hub_verify_token;
-    const challenge = request.query.hub_challenge;
+    const query = request.query as any;
+    const token = query.hub_verify_token;
+    const challenge = query.hub_challenge;
+
+    if (!token || !challenge) {
+      logger.warn('❌ Webhook verification: missing parameters');
+      return reply.code(400).send({ error: 'Missing parameters' });
+    }
 
     if (token !== process.env.WHATSAPP_VERIFY_TOKEN) {
-      logger.warn('❌ Invalid verify token');
+      logger.warn('❌ Webhook verification: invalid token');
       return reply.code(403).send({ error: 'Invalid verify token' });
     }
 
@@ -24,30 +29,32 @@ export async function webhookRouter(app: FastifyInstance) {
 
   /**
    * POST /webhook/whatsapp
-   * Recebe eventos da Meta
+   * Recebe eventos da Meta com validação HMAC
    */
   app.post('/whatsapp', async (request: FastifyRequest, reply: FastifyReply) => {
-    const signature = request.headers['x-hub-signature-256'] || '';
-    const body = JSON.stringify(request.body);
-
-    // Validar assinatura
-    const expected = 'sha256=' + crypto
-      .createHmac('sha256', process.env.WHATSAPP_APP_SECRET || '')
-      .update(body)
-      .digest('hex');
-
-    if (signature !== expected) {
-      logger.warn('❌ Invalid webhook signature');
-      return reply.code(403).send({ error: 'Invalid signature' });
-    }
-
-    // Responder rapidamente para Meta
-    reply.code(200).send({ received: true });
-
     try {
+      const signature = request.headers['x-hub-signature-256'] || '';
+      const body = JSON.stringify(request.body);
+
+      // Validar assinatura HMAC
+      const hmac = crypto
+        .createHmac('sha256', process.env.WHATSAPP_APP_SECRET || '')
+        .update(body)
+        .digest('hex');
+
+      const expected = 'sha256=' + hmac;
+
+      if (signature !== expected) {
+        logger.warn('❌ Invalid webhook signature');
+        return reply.code(403).send({ error: 'Invalid signature' });
+      }
+
+      // Responder rapidamente para Meta (não pode levar mais que 20s)
+      reply.code(200).send({ received: true });
+
+      // Processar eventos assincronamente
       const data = request.body as any;
 
-      // Processar cada entrada
       for (const entry of data.entry || []) {
         for (const change of entry.changes || []) {
           if (change.field !== 'messages') continue;
@@ -56,25 +63,39 @@ export async function webhookRouter(app: FastifyInstance) {
           const contacts = change.value.contacts || [];
           const phone_number_id = change.value.metadata?.phone_number_id;
 
+          if (!phone_number_id) {
+            logger.error('❌ No phone_number_id in webhook');
+            continue;
+          }
+
+          // SEGURANÇA: Validar que phone_number_id existe no BD
+          // Será feito no orchestrator, mas logamos aqui
+          logger.info(`📨 Webhook received for phone_number_id: ${phone_number_id}, messages: ${messages.length}`);
+
           for (const message of messages) {
             try {
-              // Enqueue para processamento assíncrono
-              await redis.lPush('queue:messages', JSON.stringify({
-                phone_number_id,
-                message,
-                contacts,
-                timestamp: Date.now(),
-              }));
-
-              logger.info(`📨 Message queued: ${message.id}`);
+              // Enfileirar com validação
+              await redis.lPush(
+                'queue:messages',
+                JSON.stringify({
+                  phone_number_id,
+                  message,
+                  contacts,
+                  receivedAt: new Date().toISOString()
+                })
+              );
+              
+              logger.info(`✅ Message enqueued: ${message.id}`);
             } catch (error) {
-              logger.error('Failed to queue message:', error);
+              logger.error('Failed to enqueue message:', error);
             }
           }
         }
       }
+
     } catch (error) {
       logger.error('Webhook processing error:', error);
+      // Não devemos retornar erro para Meta - é tarde demais de qualquer forma
     }
   });
 }

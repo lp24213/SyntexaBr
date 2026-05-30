@@ -20,6 +20,8 @@ class PdfExportBody(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
     subtitle: Optional[str] = Field(None, max_length=500)
     sections: List[Dict[str, Any]] = Field(default_factory=list)
+    styled: bool = Field(default=True, description="PDF com capa, sumário e visual profissional. False = limpo, só texto.")
+    include_footer: bool = Field(default=False, description="Incluir rodapé de página/data no PDF.")
 
 
 class XlsxExportBody(BaseModel):
@@ -56,7 +58,10 @@ class SmartExportBody(BaseModel):
 @router.post("/export/pdf")
 def multimodal_export_pdf(body: PdfExportBody) -> Response:
     try:
-        raw = run_pdf_export_sync(body.title, body.sections, body.subtitle)
+        raw = run_pdf_export_sync(
+            body.title, body.sections, body.subtitle,
+            styled=body.styled, include_footer=body.include_footer
+        )
     except Exception as exc:
         _log.exception("pdf export")
         raise HTTPException(status_code=503, detail="Falha ao gerar PDF.") from exc

@@ -111,16 +111,22 @@ def build_pdf_bytes(
     title: str,
     sections: Sequence[Dict[str, Any]],
     subtitle: str | None = None,
+    *,
+    styled: bool = True,
+    include_footer: bool = False,
 ) -> bytes:
     """
     sections: [{"heading": str, "body": str, "table_rows": optional [[cell, ...], ...]}, ...]
+    styled=True: capa, sumário, encerramento, cores — visual profissional.
+    styled=False: PDF limpo, só texto e seções, sem branding.
+    include_footer=False: sem rodapé de página/data (padrão).
     """
     buf = io.BytesIO()
     page_w, page_h = A4
     margin_lr = 1.85 * cm
-    # Margens maiores: faixa reservada para cabeçalho/rodapé desenhados no canvas (evita “cortar” texto).
-    margin_top = 2.45 * cm
-    margin_bottom = 2.35 * cm
+    # Margens menores quando sem rodapé; maiores quando com rodapé/header canvas.
+    margin_top = 2.0 * cm if not styled else 2.45 * cm
+    margin_bottom = 1.8 * cm if not include_footer else 2.35 * cm
     usable_w = page_w - 2 * margin_lr
 
     doc = SimpleDocTemplate(
@@ -184,92 +190,61 @@ def build_pdf_bytes(
 
     story: List[Any] = []
 
-    # Capa — visual site: fundo claro, acento azul (sem faixa verde)
-    cover_inner = Table(
-        [
-            [Paragraph(_esc("Syntexa"), h_cover_accent)],
-            [Paragraph(_esc(title_clean), h_cover_title)],
-        ]
-        + (
-            [[Paragraph(_esc(subtitle_clean), h_cover_sub)]]
-            if subtitle_clean
-            else []
-        )
-        + [
-            [Paragraph(_esc("Plano de Negócios — documento para investidores e parceiros"), h_cover_sub)],
-        ],
-        colWidths=[usable_w - 28],
-    )
-    cover_inner.setStyle(
-        TableStyle(
+    if styled:
+        # Capa — visual site: fundo claro, acento azul
+        cover_inner = Table(
             [
-                ("BACKGROUND", (0, 0), (-1, -1), _SITE_CARD),
-                ("BOX", (0, 0), (-1, -1), 1, _SITE_BORDER),
-                ("LINEBEFORE", (0, 0), (0, -1), 4, _SITE_PRIMARY),
-                ("LEFTPADDING", (0, 0), (-1, -1), 20),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 20),
-                ("TOPPADDING", (0, 0), (-1, -1), 22),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 22),
+                [Paragraph(_esc(title_clean), h_cover_title)],
             ]
+            + (
+                [[Paragraph(_esc(subtitle_clean), h_cover_sub)]]
+                if subtitle_clean
+                else []
+            ),
+            colWidths=[usable_w - 28],
         )
-    )
-    cover_shell = Table([[cover_inner]], colWidths=[usable_w])
-    cover_shell.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, -1), _SITE_BG),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-            ]
+        cover_inner.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), _SITE_CARD),
+                    ("BOX", (0, 0), (-1, -1), 1, _SITE_BORDER),
+                    ("LINEBEFORE", (0, 0), (0, -1), 4, _SITE_PRIMARY),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 20),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 20),
+                    ("TOPPADDING", (0, 0), (-1, -1), 22),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 22),
+                ]
+            )
         )
-    )
-    story.append(cover_shell)
-    story.append(Spacer(1, 0.45 * cm))
-    meta = Table(
-        [
-            [
-                Paragraph(
-                    _esc(
-                        "Documento institucional · Exportado a partir do site syntexabr.com.br "
-                        "· Mantenha confidencialidade conforme acordos em vigor."
-                    ),
-                    body_style,
-                )
-            ]
-        ],
-        colWidths=[usable_w],
-    )
-    meta.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, -1), _SITE_PRIMARY_SOFT),
-                ("BOX", (0, 0), (-1, -1), 0.55, colors.HexColor("#BFDBFE")),
-                ("LEFTPADDING", (0, 0), (-1, -1), 12),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 12),
-                ("TOPPADDING", (0, 0), (-1, -1), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-            ]
+        cover_shell = Table([[cover_inner]], colWidths=[usable_w])
+        cover_shell.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), _SITE_BG),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ]
+            )
         )
-    )
-    story.append(meta)
-    story.append(Spacer(1, 0.6 * cm))
-    story.append(PageBreak())
+        story.append(cover_shell)
+        story.append(Spacer(1, 0.45 * cm))
+        story.append(PageBreak())
 
-    # Sumário
-    toc_title = Paragraph("<b>Sumário</b>", h2)
-    toc_raw: List[List[Any]] = [["#", "Capítulo"]]
-    for idx, sec in enumerate(sections, start=1):
-        head = strip_llm_markdown_artifacts(str(sec.get("heading") or f"Seção {idx}")).strip()
-        toc_raw.append([str(idx), head])
-    w_num = 1.15 * cm
-    toc_table = _table_with_wrapping(toc_raw, [w_num, usable_w - w_num], styles=styles, header_row=True)
-    story.append(toc_title)
-    story.append(Spacer(1, 0.25 * cm))
-    story.append(toc_table)
-    story.append(PageBreak())
+        # Sumário
+        toc_title = Paragraph("<b>Sumário</b>", h2)
+        toc_raw: List[List[Any]] = [["#", "Capítulo"]]
+        for idx, sec in enumerate(sections, start=1):
+            head = strip_llm_markdown_artifacts(str(sec.get("heading") or f"Seção {idx}")).strip()
+            toc_raw.append([str(idx), head])
+        w_num = 1.15 * cm
+        toc_table = _table_with_wrapping(toc_raw, [w_num, usable_w - w_num], styles=styles, header_row=True)
+        story.append(toc_title)
+        story.append(Spacer(1, 0.25 * cm))
+        story.append(toc_table)
+        story.append(PageBreak())
 
     for sec in sections:
         head = strip_llm_markdown_artifacts(str(sec.get("heading") or "Seção"))
@@ -293,41 +268,41 @@ def build_pdf_bytes(
                 story.append(t)
         story.append(Spacer(1, 0.4 * cm))
 
-    closing_title = Paragraph("<b>Encerramento</b>", h2)
-    closing_inner = Table(
-        [
+    if styled:
+        # Encerramento só no modo estilizado
+        closing_title = Paragraph("<b>Encerramento</b>", h2)
+        closing_inner = Table(
             [
-                Paragraph(
-                    _esc(
-                        "Próximos passos sugeridos: (1) alinhamento com investidores e parceiros; "
-                        "(2) data room com métricas e documentação jurídica; "
-                        "(3) cronograma de implantação e expansão comercial."
-                    ),
-                    body_style,
-                )
+                [
+                    Paragraph(
+                        _esc(
+                            "Este documento foi gerado automaticamente. "
+                            "Revise as informações antes de uso oficial."
+                        ),
+                        body_style,
+                    )
+                ],
             ],
-            [Paragraph(_esc("Syntexa — inteligência aplicada à educação, com padrão visual e institucional."), body_style)],
-        ],
-        colWidths=[usable_w - 24],
-    )
-    closing_inner.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, -1), _SITE_CARD),
-                ("BOX", (0, 0), (-1, -1), 0.8, _SITE_PRIMARY),
-                ("LEFTPADDING", (0, 0), (-1, -1), 14),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 14),
-                ("TOPPADDING", (0, 0), (-1, -1), 12),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
-            ]
+            colWidths=[usable_w - 24],
         )
-    )
-    closing_shell = Table([[closing_inner]], colWidths=[usable_w])
-    closing_shell.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), _SITE_BG)]))
-    story.append(PageBreak())
-    story.append(closing_title)
-    story.append(Spacer(1, 0.35 * cm))
-    story.append(closing_shell)
+        closing_inner.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), _SITE_CARD),
+                    ("BOX", (0, 0), (-1, -1), 0.8, _SITE_PRIMARY),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 14),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 14),
+                    ("TOPPADDING", (0, 0), (-1, -1), 12),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                ]
+            )
+        )
+        closing_shell = Table([[closing_inner]], colWidths=[usable_w])
+        closing_shell.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), _SITE_BG)]))
+        story.append(PageBreak())
+        story.append(closing_title)
+        story.append(Spacer(1, 0.35 * cm))
+        story.append(closing_shell)
 
     header_y_line = page_h - 1.05 * cm
     header_y_text = page_h - 0.82 * cm
@@ -337,32 +312,32 @@ def build_pdf_bytes(
     def _draw_page(canvas, doc_obj) -> None:
         canvas.saveState()
         p = doc_obj.page
-        # Capa (página 1): só rodapé discreto — sem faixa superior a competir com o layout
-        if p > 1:
+        if styled and p > 1:
+            # Header discreto apenas no modo estilizado e a partir da página 2
             canvas.setStrokeColor(_SITE_BORDER)
             canvas.setLineWidth(0.6)
             canvas.line(margin_lr, header_y_line, page_w - margin_lr, header_y_line)
             canvas.setFillColor(_SITE_PRIMARY_DARK)
             canvas.setFont("Helvetica-Bold", 9)
-            canvas.drawString(margin_lr, header_y_text, "Syntexa")
+            canvas.drawString(margin_lr, header_y_text, title_clean[:60])
             canvas.setFillColor(_SITE_MUTED)
             canvas.setFont("Helvetica", 8)
             canvas.drawRightString(
                 page_w - margin_lr,
                 header_y_text,
-                strip_llm_markdown_artifacts(title_clean)[:72],
+                f"Página {p}",
             )
-        canvas.setStrokeColor(_SITE_BORDER)
-        canvas.line(margin_lr, footer_y_line, page_w - margin_lr, footer_y_line)
-        canvas.setFont("Helvetica", 8)
-        canvas.setFillColor(_SITE_MUTED)
-        # Rodapé simples: apenas página e data (sem branding Syntexa)
-        canvas.drawCentredString(page_w / 2, footer_y_text, f"Página {p}")
-        canvas.drawRightString(
-            page_w - margin_lr,
-            footer_y_text,
-            datetime.utcnow().strftime("%d/%m/%Y"),
-        )
+        if include_footer:
+            canvas.setStrokeColor(_SITE_BORDER)
+            canvas.line(margin_lr, footer_y_line, page_w - margin_lr, footer_y_line)
+            canvas.setFont("Helvetica", 8)
+            canvas.setFillColor(_SITE_MUTED)
+            canvas.drawCentredString(page_w / 2, footer_y_text, f"Página {p}")
+            canvas.drawRightString(
+                page_w - margin_lr,
+                footer_y_text,
+                datetime.utcnow().strftime("%d/%m/%Y"),
+            )
         canvas.restoreState()
 
     doc.build(story, onFirstPage=_draw_page, onLaterPages=_draw_page)

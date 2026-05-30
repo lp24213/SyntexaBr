@@ -24,18 +24,27 @@ def queue_enabled() -> bool:
     return bool((getattr(settings, "redis_url", None) or "").strip())
 
 
-async def enqueue_pdf_export(title: str, sections: List[Dict[str, Any]], subtitle: Optional[str]) -> bytes:
+async def enqueue_pdf_export(
+    title: str, sections: List[Dict[str, Any]], subtitle: Optional[str],
+    *, styled: bool = True, include_footer: bool = False,
+) -> bytes:
     pool = await _pool()
-    job = await pool.enqueue_job("arq_build_pdf", title, sections, subtitle)
+    job = await pool.enqueue_job(
+        "arq_build_pdf", title, sections, subtitle,
+        styled=styled, include_footer=include_footer,
+    )
     return await job.result(timeout=120)
 
 
-def run_pdf_export_sync(title: str, sections: List[Dict[str, Any]], subtitle: Optional[str]) -> bytes:
+def run_pdf_export_sync(
+    title: str, sections: List[Dict[str, Any]], subtitle: Optional[str],
+    *, styled: bool = True, include_footer: bool = False,
+) -> bytes:
     from vereda_backend.docs.pdf_builder import build_pdf_bytes
 
     if not queue_enabled():
-        return build_pdf_bytes(title, sections, subtitle)
-    return asyncio.run(enqueue_pdf_export(title, sections, subtitle))
+        return build_pdf_bytes(title, sections, subtitle, styled=styled, include_footer=include_footer)
+    return asyncio.run(enqueue_pdf_export(title, sections, subtitle, styled=styled, include_footer=include_footer))
 
 
 async def enqueue_xlsx_export(

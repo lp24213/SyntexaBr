@@ -8,6 +8,7 @@ const nextConfig = {
   turbopack: {},
   env: {
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADXPQoicsnfeZhcl",
+    NEXT_PUBLIC_WHATSAPP_API: "https://api-whatsapp.syntexabr.com.br",
   },
   async redirects() {
     return [{ source: "/favicon.ico", destination: "/icon.svg", permanent: false }];

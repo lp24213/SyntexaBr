@@ -168,6 +168,15 @@ function IconExit() {
   );
 }
 
+function IconWhatsApp() {
+  return React.createElement(
+    "svg",
+    { className: "h-[15px] w-[15px] text-[#5a5c5e]", viewBox: "0 0 24 24", fill: "none" },
+    React.createElement("path", { d: "M3 21l1.65-3.8a9 9 0 1115.35-8.5 9 9 0 01-15.35 8.5L3 21z", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }),
+    React.createElement("path", { d: "M9.5 9.5c.5-.5 1.2-.8 2-.8 1.5 0 2.5 1 2.5 2.5M9.5 13.5c.5.5 1.2.8 2 .8 1.5 0 2.5-1 2.5-2.5", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+  );
+}
+
 const ICON_MAP = {
   chat: IconChat,
   book: IconBook,
@@ -178,6 +187,7 @@ const ICON_MAP = {
   gear: IconGear,
   download: IconDownload,
   exit: IconExit,
+  whatsapp: IconWhatsApp,
 };
 
 function IconMenu() {
@@ -250,6 +260,7 @@ export function AppShell(props) {
     { path: "/", label: "Início", icon: IconGlobe },
     { path: "/plans", label: "Planos", icon: IconChart },
     { path: "/chat", label: "Console", icon: IconChat },
+    { path: "/whatsapp", label: "WhatsApp", icon: IconWhatsApp },
   ];
 
   return React.createElement(

@@ -418,7 +418,7 @@ export default {
       
       // 3. Fallback com documentação clara
       console.warn("[Gateway] Using fallback Pages deployment URL. Set FRONTEND_PAGES_URL in env.");
-      return "https://954f6265.syntexa-frontend.pages.dev";
+      return "https://4611dec3.syntexa-frontend.pages.dev";
     }
     
     const pagesDeployment = getPagesDeploymentUrl(env, request);

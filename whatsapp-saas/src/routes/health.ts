@@ -5,7 +5,7 @@ import { logger } from '../lib/logger.js';
 export async function healthRouter(app: FastifyInstance) {
   app.get('/', async (request, reply) => {
     try {
-      const result = await pgPool.query('SELECT NOW()');
+      await pgPool.query('SELECT NOW()');
       return {
         status: 'ok',
         timestamp: new Date().toISOString(),

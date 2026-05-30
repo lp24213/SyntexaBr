@@ -524,7 +524,8 @@ function splitChatBlocks(rawText) {
  * ═════════════════════════════════════════════════════════════════════════ */
 
 /** Gera ficheiro. `kind`: pdf | xlsx | docx | csv | txt | html */
-export async function downloadStructuredExport(kind, rawText, token) {
+export async function downloadStructuredExport(kind, rawText, token, options) {
+  options = options || {};
   // Validação
   if (!rawText || String(rawText).trim().length === 0) {
     alert("Nenhum conteúdo para exportar. Envie uma mensagem primeiro.");
@@ -619,9 +620,15 @@ export async function downloadStructuredExport(kind, rawText, token) {
   }
 
   // PDF via backend
-  if (kind === "pdf") {
+  if (kind === "pdf" || kind === "pdf-styled" || kind === "pdf-simple") {
+    const styled = kind === "pdf-styled" || (kind === "pdf" ? true : false);
+    const includeFooter = options.includeFooter || false;
     const url = API_BASE + "/v1/multimodal/export/pdf";
-    const body = JSON.stringify({ title, subtitle, sections });
+    const body = JSON.stringify({
+      title, subtitle, sections,
+      styled: styled,
+      include_footer: includeFooter
+    });
     const headers = { "Content-Type": "application/json" };
     if (token) headers["Authorization"] = "Bearer " + token;
     
@@ -629,7 +636,8 @@ export async function downloadStructuredExport(kind, rawText, token) {
       const resp = await fetch(url, { method: "POST", headers, body });
       if (!resp.ok) throw new Error("Status " + resp.status);
       const blob = await resp.blob();
-      downloadBlob(blob, "documento.pdf");
+      const suffix = styled ? "visual" : "simples";
+      downloadBlob(blob, `documento-${suffix}.pdf`);
       console.log("[EXPORT SUCCESS] PDF gerado via backend");
     } catch (err) {
       console.error("[EXPORT ERROR] PDF:", err);
@@ -755,8 +763,10 @@ export function FileExportMenu({
 }) {
   const [busy, setBusy] = useState(false);
   const [exportError, setExportError] = useState("");
+  const [pdfOpen, setPdfOpen] = useState(false);
 
   async function run(kind) {
+    setPdfOpen(false);
     setBusy(true);
     setExportError("");
     try {
@@ -781,10 +791,44 @@ export function FileExportMenu({
       )}
       <div className="flex min-h-[2.25rem] w-full min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none]">
         {busy && <span className="syntexa-spinner shrink-0" aria-hidden="true" />}
-        <button type="button" disabled={busy} className={btn} onClick={() => void run("pdf")}>
-          <ToolbarIcon path="M7 3h7l5 5v13H7zM14 3v5h5M9 15h8M9 18h6" />
-          PDF
-        </button>
+        <div className="relative inline-flex items-center">
+          <button type="button" disabled={busy} className={btn + " rounded-r-none border-r-0"} onClick={() => void run("pdf-styled")}>
+            <ToolbarIcon path="M7 3h7l5 5v13H7zM14 3v5h5M9 15h8M9 18h6" />
+            PDF
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            className={btn + " rounded-l-none px-2"}
+            onClick={() => setPdfOpen((v) => !v)}
+            aria-haspopup="true"
+            aria-expanded={pdfOpen}
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          {pdfOpen && (
+            <div className="absolute left-0 top-[calc(100%+4px)] z-30 min-w-[10rem] rounded-lg border border-[#e2e8f0] bg-white shadow-lg overflow-hidden">
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-[#475569] hover:bg-[#f1f5f9]"
+                onClick={() => { setPdfOpen(false); run("pdf-styled"); }}
+              >
+                <span className="inline-block h-2 w-2 rounded-full bg-[#3b82f6]" />
+                Com visual (estilizado)
+              </button>
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-[#475569] hover:bg-[#f1f5f9]"
+                onClick={() => { setPdfOpen(false); run("pdf-simple"); }}
+              >
+                <span className="inline-block h-2 w-2 rounded-full bg-[#94a3b8]" />
+                Simples (limpo)
+              </button>
+            </div>
+          )}
+        </div>
         <button type="button" disabled={busy} className={btn} onClick={() => void run("xlsx")}>
           <ToolbarIcon path="M4 5h16v14H4zM4 10h16M9 5v14" />
           Excel

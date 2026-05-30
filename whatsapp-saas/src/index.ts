@@ -18,6 +18,8 @@ import { Pool } from 'pg';
 import { createClient } from 'redis';
 import dotenv from 'dotenv';
 import { logger } from './lib/logger.js';
+import { rateLimitMiddleware } from './middleware/rate-limit.js';
+import { authenticateJWT } from './middleware/auth.js';
 import { webhookRouter } from './routes/webhook.js';
 import { messagesRouter } from './routes/messages.js';
 import { companiesRouter } from './routes/companies.js';
@@ -25,6 +27,7 @@ import { configRouter } from './routes/config.js';
 import { toolsRouter } from './routes/tools.js';
 import { memoryRouter } from './routes/memory.js';
 import { healthRouter } from './routes/health.js';
+import { authRouter } from './routes/auth.js';
 
 dotenv.config();
 
@@ -45,7 +48,7 @@ const app = Fastify({
 });
 
 // ─────────────────────────────────────────────────────────
-// PLUGINS
+// PLUGINS DE SEGURANÇA
 // ─────────────────────────────────────────────────────────
 
 await app.register(helmet);
@@ -57,10 +60,13 @@ await app.register(cors, {
 
 await app.register(jwt, {
   secret: process.env.JWT_SECRET || 'your-secret-key',
+  sign: {
+    expiresIn: '24h'
+  }
 });
 
 // ─────────────────────────────────────────────────────────
-// DATABASE CONNECTIONS
+// CONEXÕES DE BANCO DE DADOS
 // ─────────────────────────────────────────────────────────
 
 export const pgPool = new Pool({
@@ -86,28 +92,31 @@ await pgPool.query('SELECT NOW()').then(() => {
 });
 
 // ─────────────────────────────────────────────────────────
-// DECORATORS & HOOKS
+// MIDDLEWARE GLOBAL
 // ─────────────────────────────────────────────────────────
 
-// Rate limiting simples em memória
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
-
+// Rate limiting distribuído (após autenticação)
 app.addHook('onRequest', async (request, reply) => {
-  const ip = request.headers['cf-connecting-ip'] || request.socket.remoteAddress;
-  const now = Date.now();
-  const key = `${ip}`;
-
-  let bucket = rateLimitStore.get(key);
-  if (!bucket || bucket.resetAt < now) {
-    bucket = { count: 0, resetAt: now + 60000 };
-    rateLimitStore.set(key, bucket);
+  // Webhook do Meta não precisa de auth
+  if (request.url.includes('/webhook/whatsapp')) {
+    return;
   }
-
-  bucket.count++;
-  if (bucket.count > 1000) {
-    reply.statusCode = 429;
-    return reply.send({ error: 'Too many requests' });
+  
+  // Health check não precisa de auth
+  if (request.url.includes('/health')) {
+    return;
   }
+  
+  // Autenticar
+  try {
+    await authenticateJWT(request, reply);
+  } catch (err) {
+    // Middleware de auth retorna error
+    return;
+  }
+  
+  // Rate limit após autenticar
+  await rateLimitMiddleware(request, reply);
 });
 
 // ─────────────────────────────────────────────────────────
@@ -116,6 +125,7 @@ app.addHook('onRequest', async (request, reply) => {
 
 app.register(healthRouter, { prefix: '/health' });
 app.register(webhookRouter, { prefix: '/webhook' });
+app.register(authRouter, { prefix: '/auth' });
 app.register(messagesRouter, { prefix: '/messages' });
 app.register(companiesRouter, { prefix: '/companies' });
 app.register(configRouter, { prefix: '/config' });
@@ -123,19 +133,23 @@ app.register(toolsRouter, { prefix: '/tools' });
 app.register(memoryRouter, { prefix: '/memory' });
 
 // ─────────────────────────────────────────────────────────
-// ERROR HANDLING
+// TRATAMENTO DE ERROS
 // ─────────────────────────────────────────────────────────
 
-app.setErrorHandler(async (error, request, reply) => {
+app.setErrorHandler(async (err: any, request, reply) => {
   logger.error({
-    error: error.message,
-    stack: error.stack,
+    error: err.message,
+    stack: err.stack,
     path: request.url,
     method: request.method,
+    statusCode: err.statusCode,
   });
 
-  if (error.statusCode) {
-    return reply.code(error.statusCode).send({ error: error.message });
+  if (err.statusCode) {
+    return reply.code(err.statusCode).send({ 
+      error: err.message,
+      statusCode: err.statusCode
+    });
   }
 
   reply.code(500).send({
@@ -145,8 +159,47 @@ app.setErrorHandler(async (error, request, reply) => {
 });
 
 // ─────────────────────────────────────────────────────────
-// SHUTDOWN GRACEFULLY
+// SHUTDOWN GRACIOSO
 // ─────────────────────────────────────────────────────────
+
+process.on('SIGTERM', async () => {
+  logger.info('🛑 SIGTERM received, shutting down gracefully...');
+  
+  app.server.close();
+  await new Promise(resolve => setTimeout(resolve, 30000));
+  
+  await pgPool.end();
+  await redis.quit();
+  
+  logger.info('✅ Shutdown complete');
+  process.exit(0);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('💥 Uncaught exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('💥 Unhandled rejection:', { reason, promise });
+  process.exit(1);
+});
+
+// ─────────────────────────────────────────────────────────
+// START SERVER
+// ─────────────────────────────────────────────────────────
+
+const start = async () => {
+  try {
+    await app.listen({ port: 3001, host: '0.0.0.0' });
+    logger.info('🚀 Server running on http://0.0.0.0:3001');
+  } catch (err) {
+    logger.error('Failed to start server:', err);
+    process.exit(1);
+  }
+};
+
+start();
 
 const gracefulShutdown = async () => {
   logger.info('🛑 Shutting down gracefully...');
@@ -158,19 +211,3 @@ const gracefulShutdown = async () => {
 
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
-
-// ─────────────────────────────────────────────────────────
-// START SERVER
-// ─────────────────────────────────────────────────────────
-
-const start = async () => {
-  try {
-    await app.listen({ port: 3001, host: '0.0.0.0' });
-    logger.info('🚀 Server running on http://localhost:3001');
-  } catch (err) {
-    logger.error(err);
-    process.exit(1);
-  }
-};
-
-start();

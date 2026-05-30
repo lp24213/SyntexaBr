@@ -1,0 +1,14 @@
+src/index.ts(190,7): error TS2451: Cannot redeclare block-scoped variable 'start'.
+src/index.ts(217,7): error TS2451: Cannot redeclare block-scoped variable 'start'.
+src/middleware/auth.ts(1,10): error TS6133: 'FastifyInstance' is declared but its value is never read.
+src/middleware/auth.ts(27,37): error TS2339: Property 'companyId' does not exist on type '{}'.
+src/routes/companies.ts(36,33): error TS2339: Property 'errors' does not exist on type 'ZodError<{ name: string; email: string; plan: "free" | "pro" | "enterprise"; }>'.
+src/routes/companies.ts(72,33): error TS2339: Property 'errors' does not exist on type 'ZodError<{ phone_number_id: string; waba_id: string; access_token: string; display_number?: string | undefined; }>'.
+src/routes/config.ts(39,33): error TS2339: Property 'errors' does not exist on type 'ZodError<{ system_prompt?: string | undefined; max_tokens_per_message?: number | undefined; temperature?: number | undefined; welcome_message?: string | undefined; auto_reply_enabled?: boolean | undefined; }>'.
+src/routes/messages.ts(3,27): error TS6133: 'validateCompanyOwnership' is declared but its value is never read.
+src/routes/messages.ts(51,33): error TS2339: Property 'errors' does not exist on type 'ZodError<{ conversationId: string; content: string; }>'.
+src/routes/webhook.ts(78,27): error TS2551: Property 'lpush' does not exist on type 'RedisClientType<{}, {}, {}, 3, {}>'. Did you mean 'lPush'?
+src/worker/queue-worker-new.ts(89,23): error TS2551: Property 'lpush' does not exist on type 'RedisClientType<{}, {}, {}, 3, {}>'. Did you mean 'lPush'?
+src/worker/queue-worker-new.ts(104,23): error TS2551: Property 'lpush' does not exist on type 'RedisClientType<{}, {}, {}, 3, {}>'. Did you mean 'lPush'?
+src/worker/queue-worker-new.ts(128,35): error TS2551: Property 'llen' does not exist on type 'RedisClientType<{}, {}, {}, 3, {}>'. Did you mean 'lLen'?
+src/worker/queue-worker-new.ts(133,35): error TS2551: Property 'lrange' does not exist on type 'RedisClientType<{}, {}, {}, 3, {}>'. Did you mean 'lRange'?

@@ -22,7 +22,7 @@ def build_xlsx_bytes(
     ws = wb.active
     ws.title = (sheet_title or "Dados")[:31]
 
-    thin = Side(style="thin", color="99F6E4")
+    thin = Side(style="thin", color="CBD5E1")
     border_all = Border(left=thin, right=thin, top=thin, bottom=thin)
 
     if not rows:
@@ -40,14 +40,14 @@ def build_xlsx_bytes(
         ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=mc)
         c = ws.cell(row=1, column=1, value=doc_title)
         c.font = Font(bold=True, size=14, color="FFFFFF")
-        c.fill = PatternFill("solid", fgColor="0D9488")
+        c.fill = PatternFill("solid", fgColor="2563EB")
         c.alignment = Alignment(vertical="center", horizontal="center", wrap_text=True)
         for col in range(1, max_cols + 1):
             ws.cell(row=1, column=col).border = border_all
         ws.row_dimensions[1].height = 36
 
     bold = Font(bold=True, color="FFFFFF")
-    fill = PatternFill("solid", fgColor="0F172A")
+    fill = PatternFill("solid", fgColor="1E293B")
     align = Alignment(vertical="center", wrap_text=True)
 
     r0 = list(rows[0]) if rows else []
@@ -65,13 +65,16 @@ def build_xlsx_bytes(
     body_rows: List[Sequence[Any]] = list(rows[1:]) if header else list(rows)
     offset = header_row_idx + 1 if header else header_row_idx
     
+    num_align = Alignment(vertical="top", horizontal="right", wrap_text=True)
+    txt_align = Alignment(vertical="top", wrap_text=True)
     for i, row in enumerate(body_rows):
         for j, val in enumerate(row):
             c = ws.cell(row=i + offset, column=j + 1, value=val)
-            c.alignment = Alignment(vertical="top", wrap_text=True)
+            is_num = isinstance(val, (int, float)) and not isinstance(val, bool)
+            c.alignment = num_align if is_num else txt_align
             c.border = border_all
             if i % 2 == 1:
-                c.fill = PatternFill("solid", fgColor="F0FDFA")
+                c.fill = PatternFill("solid", fgColor="F1F5F9")
 
     for col in range(1, max_cols + 1):
         letter = get_column_letter(col)
@@ -80,23 +83,10 @@ def build_xlsx_bytes(
             v = ws.cell(row=r, column=col).value
             if v is not None:
                 max_len = max(max_len, len(str(v)))
-        # Aumentar largura máxima para 100 caracteres (antes era 52)
-        ws.column_dimensions[letter].width = min(100, max(20, max_len + 3))
+        # Limitar largura para não estourar visualmente no Excel
+        ws.column_dimensions[letter].width = min(55, max(12, max_len + 2))
 
     ws.freeze_panes = ws.cell(row=header_row_idx + 1, column=1)
-
-    # Ajustar altura das linhas automaticamente baseado no conteúdo
-    for r in range(1, ws.max_row + 1):
-        max_content_len = 0
-        for c in range(1, max_cols + 1):
-            v = ws.cell(row=r, column=c).value
-            if v is not None:
-                max_content_len = max(max_content_len, len(str(v)))
-        
-        # Calcular altura: a cada ~100 caracteres, 1 linha (aproximadamente)
-        if max_content_len > 0:
-            estimated_lines = max(1, (max_content_len // 100) + 1)
-            ws.row_dimensions[r].height = min(400, 20 + (estimated_lines * 15))
 
     if header and r0 and ws.max_row >= header_row_idx:
         end_col = get_column_letter(max_cols)
