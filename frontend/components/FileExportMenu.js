@@ -528,8 +528,16 @@ export async function downloadStructuredExport(kind, rawText, token, options) {
   options = options || {};
   // Validação
   if (!rawText || String(rawText).trim().length === 0) {
-    alert("Nenhum conteúdo para exportar. Envie uma mensagem primeiro.");
-    return;
+    throw new Error("Nenhum conteúdo para exportar. Envie uma mensagem primeiro.");
+  }
+  
+  if (!kind || typeof kind !== "string") {
+    throw new Error("Tipo de exportação inválido.");
+  }
+  
+  const rawStr = String(rawText).trim();
+  if (rawStr.length > 500000) {
+    throw new Error("Conteúdo muito grande para exportar (máx. 500KB). Divida em partes menores.");
   }
 
   const title = "Syntexa — Documento";

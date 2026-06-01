@@ -160,6 +160,65 @@ function IconGear() {
   );
 }
 
+function IconLanguage() {
+  return React.createElement(
+    "svg",
+    { className: "h-[15px] w-[15px] text-[#5a5c5e]", viewBox: "0 0 24 24", fill: "none" },
+    React.createElement("circle", { cx: "12", cy: "12", r: "10", stroke: "currentColor", strokeWidth: "1.5" }),
+    React.createElement("path", { d: "M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z", stroke: "currentColor", strokeWidth: "1.5" })
+  );
+}
+
+function FlagBR() {
+  return React.createElement(
+    "svg",
+    { className: "h-4 w-6 rounded-sm", viewBox: "0 0 900 600", fill: "none" },
+    React.createElement("rect", { width: "900", height: "600", fill: "#002776" }),
+    React.createElement("polygon", { points: "450,0 900,300 450,600 0,300", fill: "#FECB2F" }),
+    React.createElement("ellipse", { cx: "450", cy: "300", rx: "150", ry: "100", fill: "#002776" }),
+    React.createElement("text", { x: "450", y: "320", fontSize: "80", fill: "#FECB2F", textAnchor: "middle", fontWeight: "bold" }, "BRASIL")
+  );
+}
+
+function FlagUS() {
+  return React.createElement(
+    "svg",
+    { className: "h-4 w-6 rounded-sm", viewBox: "0 0 900 600", fill: "none" },
+    React.createElement("rect", { width: "900", height: "600", fill: "#B22234" }),
+    React.createElement("rect", { y: "0", width: "900", height: "46", fill: "#FFFFFF" }),
+    React.createElement("rect", { y: "92", width: "900", height: "46", fill: "#FFFFFF" }),
+    React.createElement("rect", { y: "184", width: "900", height: "46", fill: "#FFFFFF" }),
+    React.createElement("rect", { y: "276", width: "900", height: "46", fill: "#FFFFFF" }),
+    React.createElement("rect", { y: "368", width: "900", height: "46", fill: "#FFFFFF" }),
+    React.createElement("rect", { y: "460", width: "900", height: "46", fill: "#FFFFFF" }),
+    React.createElement("rect", { y: "552", width: "900", height: "46", fill: "#FFFFFF" }),
+    React.createElement("rect", { x: "0", y: "0", width: "360", height: "280", fill: "#3C3B6B" })
+  );
+}
+
+function FlagES() {
+  return React.createElement(
+    "svg",
+    { className: "h-4 w-6 rounded-sm", viewBox: "0 0 900 600", fill: "none" },
+    React.createElement("rect", { y: "0", width: "900", height: "150", fill: "#FFC400" }),
+    React.createElement("rect", { y: "150", width: "900", height: "300", fill: "#C60B1E" }),
+    React.createElement("rect", { y: "450", width: "900", height: "150", fill: "#FFC400" })
+  );
+}
+
+function FlagCN() {
+  return React.createElement(
+    "svg",
+    { className: "h-4 w-6 rounded-sm", viewBox: "0 0 900 600", fill: "none" },
+    React.createElement("rect", { width: "900", height: "600", fill: "#DE2910" }),
+    React.createElement("polygon", { points: "200,100 250,150 210,160 240,190 200,190", fill: "#FFDE00" }),
+    React.createElement("polygon", { points: "310,120 350,160 315,170 345,195 310,195", fill: "#FFDE00" }),
+    React.createElement("polygon", { points: "380,140 410,170 375,175 405,200 375,200", fill: "#FFDE00" }),
+    React.createElement("polygon", { points: "330,220 360,250 330,255 360,280 330,280", fill: "#FFDE00" }),
+    React.createElement("polygon", { points: "240,250 270,280 240,285 270,310 240,310", fill: "#FFDE00" })
+  );
+}
+
 function IconExit() {
   return React.createElement(
     "svg",
@@ -174,6 +233,14 @@ function IconWhatsApp() {
     { className: "h-[15px] w-[15px] text-[#5a5c5e]", viewBox: "0 0 24 24", fill: "none" },
     React.createElement("path", { d: "M3 21l1.65-3.8a9 9 0 1115.35-8.5 9 9 0 01-15.35 8.5L3 21z", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }),
     React.createElement("path", { d: "M9.5 9.5c.5-.5 1.2-.8 2-.8 1.5 0 2.5 1 2.5 2.5M9.5 13.5c.5.5 1.2.8 2 .8 1.5 0 2.5-1 2.5-2.5", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+  );
+}
+
+function IconTikTok() {
+  return React.createElement(
+    "svg",
+    { className: "h-[15px] w-[15px] text-[#5a5c5e]", viewBox: "0 0 24 24", fill: "currentColor" },
+    React.createElement("path", { d: "M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.1 1.82 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-.95-.1z" })
   );
 }
 
@@ -256,11 +323,12 @@ export function AppShell(props) {
     };
   }, [menuOpen]);
 
+  const currentLocale = getClientLocale();
   var navItems = [
-    { path: "/", label: "Início", icon: IconGlobe },
-    { path: "/plans", label: "Planos", icon: IconChart },
-    { path: "/chat", label: "Console", icon: IconChat },
-    { path: "/whatsapp", label: "WhatsApp", icon: IconWhatsApp },
+    { path: `/i18n/${currentLocale}/`, labelKey: "navHome", icon: IconGlobe },
+    { path: `/i18n/${currentLocale}/plans`, labelKey: "plans", icon: IconChart },
+    { path: `/i18n/${currentLocale}/chat`, labelKey: "chat", icon: IconChat },
+    { path: `/i18n/${currentLocale}/integrations`, labelKey: "integrations", icon: IconWhatsApp },
   ];
 
   return React.createElement(
@@ -306,19 +374,82 @@ export function AppShell(props) {
             navItems.map(function (item) {
               const Icon = item.icon;
               const href = encryptedPath(item.path);
+              const label = t(item.labelKey, currentLocale);
               return React.createElement(
                 "a",
                 {
-                  key: href + "-" + item.label,
+                  key: href + "-" + item.labelKey,
                   href: href,
                   className:
                     "rounded-lg px-3 py-1.5 text-[13px] text-[#64748b] transition-colors duration-200 hover:bg-[rgba(15,23,42,0.04)] hover:text-[#0f172a]",
                 },
-                item.label
+                label
               );
             })
           ),
           React.createElement("div", { className: "flex items-center gap-3 min-w-0 flex-1 justify-end" },
+            React.createElement("div", { className: "relative group" },
+              React.createElement("button", {
+                className: "flex items-center gap-1.5 rounded-lg border border-[rgba(15,23,42,0.08)] px-2 py-1.5 hover:bg-[rgba(20,24,30,0.04)] transition-colors",
+                title: "Mudar idioma",
+              },
+                React.createElement(IconLanguage, null)
+              ),
+              React.createElement("div", { className: "absolute right-0 mt-1 hidden group-hover:flex flex-col bg-white border border-[rgba(15,23,42,0.08)] rounded-lg shadow-lg z-50 min-w-[120px]" },
+                React.createElement("button", {
+                  onClick: function() {
+                    const newLocale = "pt-BR";
+                    window.localStorage.setItem("syntexa_locale", newLocale);
+                    var currentPath = window.location.pathname;
+                    var newPath = currentPath.replace(/^\/i18n\/[^\/]+/, "/i18n/" + newLocale);
+                    window.location.pathname = newPath;
+                  },
+                  className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)] border-b border-[rgba(15,23,42,0.04)]",
+                },
+                  React.createElement(FlagBR, null),
+                  React.createElement("span", {}, "Português")
+                ),
+                React.createElement("button", {
+                  onClick: function() {
+                    const newLocale = "en-US";
+                    window.localStorage.setItem("syntexa_locale", newLocale);
+                    var currentPath = window.location.pathname;
+                    var newPath = currentPath.replace(/^\/i18n\/[^\/]+/, "/i18n/" + newLocale);
+                    window.location.pathname = newPath;
+                  },
+                  className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)] border-b border-[rgba(15,23,42,0.04)]",
+                },
+                  React.createElement(FlagUS, null),
+                  React.createElement("span", {}, "English")
+                ),
+                React.createElement("button", {
+                  onClick: function() {
+                    const newLocale = "es-ES";
+                    window.localStorage.setItem("syntexa_locale", newLocale);
+                    var currentPath = window.location.pathname;
+                    var newPath = currentPath.replace(/^\/i18n\/[^\/]+/, "/i18n/" + newLocale);
+                    window.location.pathname = newPath;
+                  },
+                  className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)] border-b border-[rgba(15,23,42,0.04)]",
+                },
+                  React.createElement(FlagES, null),
+                  React.createElement("span", {}, "Español")
+                ),
+                React.createElement("button", {
+                  onClick: function() {
+                    const newLocale = "zh-CN";
+                    window.localStorage.setItem("syntexa_locale", newLocale);
+                    var currentPath = window.location.pathname;
+                    var newPath = currentPath.replace(/^\/i18n\/[^\/]+/, "/i18n/" + newLocale);
+                    window.location.pathname = newPath;
+                  },
+                  className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)]",
+                },
+                  React.createElement(FlagCN, null),
+                  React.createElement("span", {}, "中文")
+                )
+              )
+            ),
             React.createElement(PwaInstallButton, { className: "hidden sm:inline-flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] border border-[rgba(15,23,42,0.08)] hover:bg-[rgba(20,24,30,0.04)] transition-colors duration-150" }),
             authed
               ? React.createElement(
@@ -349,24 +480,25 @@ export function AppShell(props) {
         React.createElement("nav", { className: "flex flex-col gap-0.5" },
           navItems.map(function (item) {
             const Icon = item.icon;
+            const label = t(item.labelKey, currentLocale);
             return React.createElement("a", {
-              key: item.path + "-" + item.label,
+              key: item.path + "-" + item.labelKey,
               href: encryptedPath(item.path),
               onClick: function () { setMenuOpen(false); },
               className: "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#5a5c5e] transition-colors hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e]"
-            }, React.createElement(Icon, null), React.createElement("span", null, item.label));
+            }, React.createElement(Icon, null), React.createElement("span", null, label));
           }),
           authed
             ? React.createElement("button", {
                 type: "button",
                 onClick: function () { setMenuOpen(false); logout(); },
                 className: "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#5a5c5e] transition-colors hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e] mt-2 border-t border-[rgba(20,24,30,0.06)] pt-2"
-              }, React.createElement(IconExit, null), t("logout", locale))
+              }, React.createElement(IconExit, null), t("logout", currentLocale))
             : React.createElement("a", {
                 href: encryptedPath("login"),
                 onClick: function () { setMenuOpen(false); },
                 className: "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#5a5c5e] transition-colors hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e] mt-2 border-t border-[rgba(20,24,30,0.06)] pt-2"
-              }, React.createElement(IconLogin, null), t("login", locale))
+              }, React.createElement(IconLogin, null), t("login", currentLocale))
         )
       ),
       React.createElement(

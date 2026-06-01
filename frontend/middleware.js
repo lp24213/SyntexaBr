@@ -11,8 +11,24 @@ export const config = {
   ],
 };
 
+const SUPPORTED_LOCALES = ["pt-BR", "en-US", "es-ES", "zh-CN"];
+const DEFAULT_LOCALE = "pt-BR";
+
 export function middleware(request) {
   const { pathname, search } = request.nextUrl;
+  
+  // ── i18n routing: /i18n/locale/page ───────────────────────
+  const pathnameWithoutLocale = pathname.replace(/^\/i18n\/[^\/]+/, "") || "/";
+  const localeMatch = pathname.match(/^\/i18n\/([^\/]+)/);
+  const locale = localeMatch ? localeMatch[1] : null;
+  
+  // Se não tem /i18n/locale, redirecionar para /i18n/pt-BR
+  if (!locale && pathname !== "/" && !pathname.startsWith("/_next") && !pathname.startsWith("/api")) {
+    const newUrl = new URL(request.url);
+    newUrl.pathname = `/i18n/${DEFAULT_LOCALE}${pathname}`;
+    return NextResponse.redirect(newUrl);
+  }
+  
   const response = NextResponse.next();
 
   // ── Security headers ───────────────────────────────

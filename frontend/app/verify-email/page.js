@@ -8,10 +8,12 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { getApiBase } from "../../lib/api";
 import { encryptedPath } from "../../lib/routes";
+import { getClientLocale, t } from "../../lib/i18n";
 
 var API_BASE = getApiBase();
 
 export default function VerifyEmailPage() {
+  const locale = getClientLocale();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,12 +33,12 @@ export default function VerifyEmailPage() {
       });
       if (!resp.ok) {
         const txt = await resp.text();
-        throw new Error(txt || "Falha ao verificar e-mail.");
+        throw new Error(txt || t("emailVerificationFailed", locale));
       }
-      setSuccess("E-mail verificado com sucesso. Você já pode fazer login.");
+      setSuccess(t("emailVerificationSuccess", locale));
       setTimeout(function () { window.location.href = encryptedPath("login"); }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro inesperado ao verificar e-mail.");
+      setError(err instanceof Error ? err.message : t("unexpectedVerificationError", locale));
     } finally {
       setLoading(false);
     }
@@ -59,14 +61,14 @@ export default function VerifyEmailPage() {
         React.createElement(
           Card,
           {
-            title: "Verificar e-mail",
-            description: "Informe seu e-mail e o código que recebeu para ativar sua conta.",
+            title: t("verifyEmailTitle", locale),
+            description: t("verifyEmailDescription", locale),
           },
           React.createElement(
             "form",
             { onSubmit: handleSubmit, className: "space-y-5" },
             React.createElement(Input, {
-              label: "E-mail",
+              label: t("emailLabel", locale),
               type: "email",
               autoComplete: "off",
               value: email,
@@ -74,7 +76,7 @@ export default function VerifyEmailPage() {
               required: true,
             }),
             React.createElement(Input, {
-              label: "Código de verificação",
+              label: t("verificationCodeLabel", locale),
               type: "text",
               autoComplete: "off",
               inputMode: "numeric",

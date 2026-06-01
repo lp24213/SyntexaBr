@@ -10,18 +10,18 @@ import { getClientLocale, t } from "../lib/i18n";
 import { encryptedPath } from "../lib/routes";
 
 const MODULES = [
-  { title: "Chat Inteligente", desc: "Converse sobre qualquer assunto. A Syntexa entende contexto, memória e pode pesquisar na web em tempo real.", status: "active" },
-  { title: "Respostas na Velocidade da Luz", desc: "Processamento distribuído em servidores de alta performance para que você não espere por nada.", status: "active" },
-  { title: "Agentes Inteligentes", desc: "Crie assistentes especializados que executam tarefas complexas sozinhos, do planejamento à execução.", status: "active" },
-  { title: "Crie com IA", desc: "Gere imagens, vídeos, músicas e áudio com descrições em português. Sua criatividade é o limite.", status: "active" },
-  { title: "Memória e Contexto", desc: "A Syntexa lembra das conversas, entende nuances e mantém o fio da meada em diálogos longos.", status: "active" },
-  { title: "Fale com Ela", desc: "Dite suas perguntas e ouça as respostas. Reconhecimento e síntese de voz em português brasileiro.", status: "active" },
-  { title: "Leitura de Documentos", desc: "Envie PDFs, planilhas e textos. A Syntexa resume, extrai informações e responde sobre o conteúdo.", status: "active" },
-  { title: "Potência Real", desc: "Infraestrutura de última geração com GPUs dedicadas para processar bilhões de parâmetros em segundos.", status: "active" },
-  { title: "Segurança & Privacidade", desc: "Seus dados ficam com você. Criptografia completa e nada enviado para empresas estrangeiras.", status: "active" },
-  { title: "Pesquisa Avançada", desc: "Ferramentas de pesquisa científica e otimização para projetos complexos e inovação.", status: "standby" },
-  { title: "Execução Rápida", desc: "Respostas instantâneas onde você estiver, com tecnologia de ponta em servidores distribuídos.", status: "standby" },
-  { title: "Para Empresas", desc: "Contratos com garantia de funcionamento, relatórios completos e conformidade com a LGPD.", status: "standby" },
+  { titleKey: "moduleChatTitle", descKey: "moduleChatDesc", status: "active" },
+  { titleKey: "moduleSpeedTitle", descKey: "moduleSpeedDesc", status: "active" },
+  { titleKey: "moduleAgentsTitle", descKey: "moduleAgentsDesc", status: "active" },
+  { titleKey: "moduleCreateTitle", descKey: "moduleCreateDesc", status: "active" },
+  { titleKey: "moduleMemoryTitle", descKey: "moduleMemoryDesc", status: "active" },
+  { titleKey: "moduleSpeechTitle", descKey: "moduleSpeechDesc", status: "active" },
+  { titleKey: "moduleDocumentsTitle", descKey: "moduleDocumentsDesc", status: "active" },
+  { titleKey: "modulePowerTitle", descKey: "modulePowerDesc", status: "active" },
+  { titleKey: "moduleSecurityTitle", descKey: "moduleSecurityDesc", status: "active" },
+  { titleKey: "moduleResearchTitle", descKey: "moduleResearchDesc", status: "standby" },
+  { titleKey: "moduleExecutionTitle", descKey: "moduleExecutionDesc", status: "standby" },
+  { titleKey: "moduleBusinessTitle", descKey: "moduleBusinessDesc", status: "standby" },
 ];
 
 const PLANS = [
@@ -53,7 +53,7 @@ export default function HomePage() {
             >
               <span className="h-[5px] w-[5px] rounded-full bg-[#059669]" />
               <span className="text-[11px] font-medium tracking-[0.12em] text-[#475569] uppercase">
-                Inteligência Artificial Brasileira
+                {t('aiMadeBrazilBadge', locale)}
               </span>
             </motion.div>
 
@@ -63,7 +63,7 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
               className="max-w-4xl text-[2.5rem] font-medium leading-[1.12] tracking-[-0.03em] text-[#0f172a] md:text-[3.5rem] lg:text-[4rem]"
             >
-              Sua Assistente de IA, Feita no Brasil
+              {t('mainHeading', locale)}
             </motion.h1>
 
             <motion.p
@@ -72,8 +72,7 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.25 }}
               className="mt-6 max-w-2xl text-[16px] leading-relaxed text-[#64748b] md:text-[18px]"
             >
-              Uma assistente que entende português de verdade. Pode pesquisar na internet,
-              gerar imagens, escrever códigos e ajudar em qualquer área — tudo de forma segura.
+              {t('mainDescription', locale)}
             </motion.p>
 
             <motion.div
@@ -86,13 +85,13 @@ export default function HomePage() {
                 href={encryptedPath("/chat")}
                 className="syntexa-btn-primary rounded-full px-7 py-3 text-[13px] font-medium"
               >
-                Acessar Console
+                {t('accessConsole', locale)}
               </Link>
               <Link
                 href="#infraestrutura"
                 className="syntexa-btn-outline rounded-full px-7 py-3 text-[13px] font-medium"
               >
-                Explorar Arquitetura
+                {t('exploreArchitecture', locale)}
               </Link>
             </motion.div>
           </div>
@@ -118,21 +117,20 @@ export default function HomePage() {
         >
           <div className="mb-2 flex items-center gap-2">
             <span className="h-[1px] w-8 bg-[rgba(15,23,42,0.15)]" />
-            <span className="text-[11px] font-medium tracking-[0.12em] text-[#475569] uppercase">Arquitetura</span>
+            <span className="text-[11px] font-medium tracking-[0.12em] text-[#475569] uppercase">{t('architectureLabel', locale)}</span>
           </div>
           <h2 className="text-[2rem] font-medium tracking-[-0.02em] text-[#0f172a] md:text-[2.5rem]">
-            Módulos da Plataforma
+            {t('platformModules', locale)}
           </h2>
           <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-[#64748b]">
-            Tudo o que você precisa em um só lugar: chat inteligente, criação de conteúdo,
-            análise de documentos e assistência técnica — sempre em português.
+            {t('platformModulesDescription', locale)}
           </p>
         </motion.div>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {MODULES.map((mod, i) => (
             <motion.div
-              key={mod.title}
+              key={mod.titleKey}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -146,11 +144,11 @@ export default function HomePage() {
                   }`} />
                 </div>
                 <span className="text-[10px] font-medium tracking-[0.1em] text-[#94a3b8] uppercase">
-                  {mod.status === "active" ? "Operacional" : "Standby"}
+                  {mod.status === "active" ? t('statusOperational', locale) : t('statusStandby', locale)}
                 </span>
               </div>
-              <h3 className="text-[15px] font-medium text-[#0f172a]">{mod.title}</h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#64748b]">{mod.desc}</p>
+              <h3 className="text-[15px] font-medium text-[#0f172a]">{t(mod.titleKey, locale)}</h3>
+              <p className="mt-2 text-[13px] leading-relaxed text-[#64748b]">{t(mod.descKey, locale)}</p>
             </motion.div>
           ))}
         </div>

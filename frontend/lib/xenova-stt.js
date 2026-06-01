@@ -87,33 +87,50 @@ async function getTranscriber() {
 /**
  * Transcreve Blob/File de áudio gravado pelo MediaRecorder.
  * @param {Blob} blob
- * @param {{ language?: string }} [opts]
+ * @param {{ language?: string, maxRetries?: number }} [opts]
  * @returns {Promise<string>}
  */
 export async function transcribeWithXenova(blob, opts) {
   if (!blob || blob.size < 256) {
     throw new Error("Gravação muito curta. Fale por mais tempo e tente de novo.");
   }
-  const transcriber = await getTranscriber();
-  const url = URL.createObjectURL(blob);
-  try {
-    emitProgress("Transcrevendo áudio…");
-    const language = (opts && opts.language) || "portuguese";
-    const out = await transcriber(url, {
-      language: language,
-      task: "transcribe",
-      chunk_length_s: 30,
-      stride_length_s: 5,
-    });
-    const text = extractText(out);
-    emitProgress("");
-    if (!text) {
-      throw new Error("Transcrição vazia. Fale mais perto do microfone e tente de novo.");
+  
+  const maxRetries = (opts && opts.maxRetries) || 2;
+  let lastError = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const transcriber = await getTranscriber();
+      const url = URL.createObjectURL(blob);
+      try {
+        emitProgress(attempt > 0 ? `Tentativa ${attempt + 1}…` : "Transcrevendo áudio…");
+        const language = (opts && opts.language) || "portuguese";
+        const out = await transcriber(url, {
+          language: language,
+          task: "transcribe",
+          chunk_length_s: 30,
+          stride_length_s: 5,
+        });
+        const text = extractText(out);
+        emitProgress("");
+        if (!text) {
+          throw new Error("Transcrição vazia. Fale mais perto do microfone e tente de novo.");
+        }
+        return text;
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxRetries) {
+        emitProgress(`Erro na tentativa ${attempt + 1}. Tentando novamente…`);
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
     }
-    return text;
-  } finally {
-    URL.revokeObjectURL(url);
   }
+  
+  throw lastError || new Error("Falha ao transcrever. Tente de novo.");
 }
 
 export function getXenovaModelId() {

@@ -24,7 +24,7 @@ export async function validateCompanyOwnership(
   }
 
   // Extract company_id from params or body
-  const companyId = (request.params as any)?.companyId || 
+  const companyId: string | undefined = (request.params as any)?.companyId || 
                    (request.body as any)?.company_id ||
                    (request.query as any)?.company_id;
 

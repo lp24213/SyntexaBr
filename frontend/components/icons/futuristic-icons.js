@@ -412,4 +412,11 @@ var ICON_MAP = {
       React.createElement("path", { d: "M13 6l5 5" })
     );
   },
+  language: function (p) {
+    return S(
+      { ...p },
+      React.createElement("circle", { cx: "12", cy: "12", r: "9" }),
+      React.createElement("path", { d: "M12 3a9 9 0 010 18M3 12h18M8 7c1.5-1.5 3-2 4-2s2.5.5 4 2M8 17c1.5 1.5 3 2 4 2s2.5-.5 4-2" })
+    );
+  },
 };

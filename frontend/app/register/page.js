@@ -9,10 +9,12 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 
 import { getApiBase } from "../../lib/api";
+import { getClientLocale, t } from "../../lib/i18n";
 
 var API_BASE = getApiBase();
 
 export default function RegisterPage() {
+  const locale = getClientLocale();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,11 +36,11 @@ export default function RegisterPage() {
     setError(null);
     setSuccess(null);
     if (password !== confirmPassword) {
-      setError("As senhas não coincidem.");
+      setError(t("passwordsMismatch", locale));
       return;
     }
     if (!acceptedTerms) {
-      setError("Você precisa aceitar os Termos e Condições para continuar.");
+      setError(t("termsNotAccepted", locale));
       return;
     }
     setLoading(true);
@@ -61,13 +63,13 @@ export default function RegisterPage() {
       });
       if (!resp.ok) {
         const txt = await resp.text();
-        throw new Error(txt || "Falha ao criar conta.");
+        throw new Error(txt || t("accountCreationFailed", locale));
       }
       try { window.localStorage.setItem("syntexa_pending_email", email); } catch {}
-      setSuccess("Conta criada. Enviamos um código de verificação para seu e-mail.");
+      setSuccess(t("accountCreatedVerificationSent", locale));
       setTimeout(function () { window.location.href = encryptedPath("activate-signup"); }, 1200);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro inesperado ao criar conta.");
+      setError(err instanceof Error ? err.message : t("unexpectedAccountError", locale));
     } finally {
       setLoading(false);
     }
@@ -89,20 +91,20 @@ export default function RegisterPage() {
         animate: { opacity: 1, y: 0 },
         transition: { duration: 0.25 },
       },
-        React.createElement(Card, { title: "Criar conta", description: "Comece a usar a plataforma de IA Syntexa em poucos segundos." },
+        React.createElement(Card, { title: t("createAccountTitle", locale), description: t("createAccountDescription", locale) },
           React.createElement("form", { onSubmit: handleSubmit, className: "space-y-5" },
             React.createElement("div", { className: "space-y-3" },
-              React.createElement(Input, { label: "Nome completo", value: name, onChange: onName, required: true }),
-              React.createElement(Input, { label: "E-mail", type: "email", autoComplete: "email", value: email, onChange: onEmail, required: true }),
-              React.createElement(Input, { label: "CPF/CNPJ", value: documentId, onChange: function (e) { setDocumentId(e.target.value); }, required: true }),
-              React.createElement(Input, { label: "CEP", value: cep, onChange: function (e) { setCep(e.target.value); }, required: true }),
-              React.createElement(Input, { label: "Estado (UF)", value: state, onChange: function (e) { setState(e.target.value); }, required: true }),
-              React.createElement(Input, { label: "Cidade", value: city, onChange: function (e) { setCity(e.target.value); }, required: true }),
-              React.createElement(Input, { label: "Endereço (rua/avenida)", value: addressLine, onChange: function (e) { setAddressLine(e.target.value); }, required: true }),
-              React.createElement(Input, { label: "Número", value: addressNumber, onChange: function (e) { setAddressNumber(e.target.value); }, required: true }),
-              React.createElement(Input, { label: "Complemento", value: addressComplement, onChange: function (e) { setAddressComplement(e.target.value); } }),
-              React.createElement(Input, { label: "Senha", type: "password", autoComplete: "new-password", value: password, onChange: onPassword, required: true }),
-              React.createElement(Input, { label: "Confirmar senha", type: "password", autoComplete: "new-password", value: confirmPassword, onChange: onConfirm, required: true })),
+              React.createElement(Input, { label: t("fullNameLabel", locale), value: name, onChange: onName, required: true }),
+              React.createElement(Input, { label: t("emailLabel", locale), type: "email", autoComplete: "email", value: email, onChange: onEmail, required: true }),
+              React.createElement(Input, { label: t("documentLabel", locale), value: documentId, onChange: function (e) { setDocumentId(e.target.value); }, required: true }),
+              React.createElement(Input, { label: t("cepLabel", locale), value: cep, onChange: function (e) { setCep(e.target.value); }, required: true }),
+              React.createElement(Input, { label: t("stateLabel", locale), value: state, onChange: function (e) { setState(e.target.value); }, required: true }),
+              React.createElement(Input, { label: t("cityLabel", locale), value: city, onChange: function (e) { setCity(e.target.value); }, required: true }),
+              React.createElement(Input, { label: t("addressLabel", locale), value: addressLine, onChange: function (e) { setAddressLine(e.target.value); }, required: true }),
+              React.createElement(Input, { label: t("numberLabel", locale), value: addressNumber, onChange: function (e) { setAddressNumber(e.target.value); }, required: true }),
+              React.createElement(Input, { label: t("complementLabel", locale), value: addressComplement, onChange: function (e) { setAddressComplement(e.target.value); } }),
+              React.createElement(Input, { label: t("passwordLabel", locale), type: "password", autoComplete: "new-password", value: password, onChange: onPassword, required: true }),
+              React.createElement(Input, { label: t("confirmPasswordLabel", locale), type: "password", autoComplete: "new-password", value: confirmPassword, onChange: onConfirm, required: true })),
             React.createElement("label", { className: "flex items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700" },
               React.createElement("input", {
                 type: "checkbox",
@@ -112,16 +114,14 @@ export default function RegisterPage() {
                 className: "mt-0.5 h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500",
               }),
               React.createElement("span", null,
-                "Li e aceito os ",
-                React.createElement("a", { href: "/termos", target: "_blank", rel: "noreferrer", className: "underline hover:text-zinc-900" }, "Termos e Condições"),
-                " e a ",
-                React.createElement("a", { href: "/privacidade", target: "_blank", rel: "noreferrer", className: "underline hover:text-zinc-900" }, "Política de Privacidade"),
-                ".")
+                t("termsAcceptanceText", locale),
+                " ")
             ),
             error ? React.createElement("p", { className: "text-sm text-rose-400" }, error) : null,
             success ? React.createElement("p", { className: "text-sm text-emerald-400" }, success) : null,
-            React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? "Criando conta..." : "Criar conta"),
+            React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? t("creatingAccount", locale) : t("registerButton", locale)),
             React.createElement("div", { className: "mt-2 text-center text-xs text-zinc-500" },
-              "Já tem conta? ",
-              React.createElement("button", { type: "button", onClick: goLogin, className: "text-zinc-200 underline-offset-2 hover:underline" }, "Voltar para login")))))));
+              t("alreadyHaveAccount", locale),
+              " ",
+              React.createElement("button", { type: "button", onClick: goLogin, className: "text-zinc-200 underline-offset-2 hover:underline" }, t("backToLogin", locale))))))));
 }

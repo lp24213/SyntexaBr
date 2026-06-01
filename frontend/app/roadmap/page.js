@@ -2,47 +2,52 @@
 
 import React from "react";
 import { AppShell } from "../../components/shell";
+import { getClientLocale, t } from "../../lib/i18n";
 
-const PHASES = [
-  {
-    window: "0-30 dias",
-    focus: "Lançamento e conversão inicial",
-    deliverables: [
-      "Refino de onboarding e redução de abandono no primeiro uso",
-      "CTAs comerciais em páginas estratégicas para acelerar upgrade",
-      "Ajustes de SEO técnico (metadata, sitemap, docs e rota roadmap)",
-    ],
-  },
-  {
-    window: "31-60 dias",
-    focus: "Monetização e retenção",
-    deliverables: [
-      "Aumento da conversão de usuário ativo para pagante",
-      "Aprimoramento dos planos e proposta de valor por perfil",
-      "Instrumentação de coortes de retenção semanal/mensal",
-    ],
-  },
-  {
-    window: "61-90 dias",
-    focus: "Escala com previsibilidade",
-    deliverables: [
-      "Repetição de canal de aquisição vencedor com CAC controlado",
-      "Hardening operacional e monitorização contínua de estabilidade",
-      "Evidência de tração para expansão comercial e institucional",
-    ],
-  },
-  {
-    window: "4-12 meses",
-    focus: "Expansão orientada a dados",
-    deliverables: [
-      "Evolução gradual da capacidade até referência de 100 mil simultâneos",
-      "Contratação por marcos de receita, retenção e confiabilidade",
-      "Escala nacional mantendo custo operacional previsível",
-    ],
-  },
-];
+function getPHASES(locale) {
+  return [
+    {
+      window: t("roadmapPhase1Window", locale),
+      focus: t("roadmapPhase1Focus", locale),
+      deliverables: [
+        t("roadmapPhase1Item1", locale),
+        t("roadmapPhase1Item2", locale),
+        t("roadmapPhase1Item3", locale),
+      ],
+    },
+    {
+      window: t("roadmapPhase2Window", locale),
+      focus: t("roadmapPhase2Focus", locale),
+      deliverables: [
+        t("roadmapPhase2Item1", locale),
+        t("roadmapPhase2Item2", locale),
+        t("roadmapPhase2Item3", locale),
+      ],
+    },
+    {
+      window: t("roadmapPhase3Window", locale),
+      focus: t("roadmapPhase3Focus", locale),
+      deliverables: [
+        t("roadmapPhase3Item1", locale),
+        t("roadmapPhase3Item2", locale),
+        t("roadmapPhase3Item3", locale),
+      ],
+    },
+    {
+      window: t("roadmapPhase4Window", locale),
+      focus: t("roadmapPhase4Focus", locale),
+      deliverables: [
+        t("roadmapPhase4Item1", locale),
+        t("roadmapPhase4Item2", locale),
+        t("roadmapPhase4Item3", locale),
+      ],
+    },
+  ];
+}
 
 export default function RoadmapPage() {
+  const locale = getClientLocale();
+  const PHASES = getPHASES(locale);
   return (
     <AppShell>
     <main className="py-10">

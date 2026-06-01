@@ -51,14 +51,6 @@ def build_docx_bytes(title: str, sections: Sequence[Dict[str, Any]]) -> bytes:
                 except Exception:
                     pass
 
-    try:
-        footer = doc.sections[-1].footer
-        fp = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
-        fp.text = "© Syntexa — Todos os direitos reservados"
-        if fp.runs:
-            fp.runs[0].font.size = Pt(9)
-    except Exception:
-        pass
 
     buf = io.BytesIO()
     doc.save(buf)

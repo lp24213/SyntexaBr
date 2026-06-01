@@ -5,8 +5,10 @@ import { motion } from "framer-motion";
 import { AppShell } from "../../components/shell";
 import { WhatsAppConnect } from "../../components/whatsapp-connect";
 import { WhatsAppDashboard } from "../../components/whatsapp-dashboard";
+import { getClientLocale, t } from "../../lib/i18n";
 
 export default function WhatsAppPage() {
+  const locale = getClientLocale();
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -51,10 +53,10 @@ export default function WhatsAppPage() {
         >
           <div className="mb-8">
             <h1 className="text-2xl font-semibold text-[#1a1c1e] mb-2">
-              WhatsApp Business
+              {t("whatsappPageTitle", locale)}
             </h1>
             <p className="text-[#64748b] text-sm">
-              Conecte seu WhatsApp Business e gerencie conversas com IA
+              {t("whatsappPageDescription", locale)}
             </p>
           </div>
 

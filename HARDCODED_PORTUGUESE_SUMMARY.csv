@@ -1,0 +1,19 @@
+File Path,Page Name,Priority,Hardcoded Strings Count,Key Sections,Status
+frontend/app/download/page.js,Download/PWA Installation,🔴 HIGH,18,"PWA features, platform support, installation instructions, iOS/Android steps",User-facing
+frontend/app/whatsapp/callback/page.js,WhatsApp OAuth Callback,🔴 HIGH,9,"OAuth errors, connection status messages, success/failure states",User-facing
+frontend/app/cookies/page.js,Cookies Policy,🟡 MEDIUM,3,"Policy header, policy content sections",Legal/Info
+frontend/app/config/page.js,Admin Configuration,🔴 HIGH,14,"2FA setup, IP whitelist, error messages, status messages",Admin/Settings
+frontend/app/register/page.js,User Registration,🔴 HIGH,27,"Form labels, validation errors, success messages, checkbox text, buttons",User-facing
+frontend/app/recuperar-senha/page.js,Password Recovery,🔴 HIGH,16,"Form labels, error/success messages, button states, page headings",User-facing
+frontend/app/page.js,Homepage,🔴 HIGH,80+,"Hero section, modules list, pricing plans, descriptions, feature bullets",User-facing
+frontend/app/login/page.js,Login/Authentication,🔴 HIGH,20,"Form labels, error messages, buttons, OAuth text, 2FA prompts",User-facing
+frontend/app/planos/page.js,Subscription Plans,🔴 HIGH,40+,"Plan names, prices, descriptions, features lists, page header",User-facing
+frontend/app/perfil/page.js,User Profile,🔴 HIGH,23,"Form labels, placeholders, error messages, success messages, headings",User-facing
+frontend/app/termos/page.js,Terms & Conditions,🟡 MEDIUM,3,"Page title, policy content",Legal/Info
+frontend/app/verify-email/page.js,Email Verification,🔴 HIGH,9,"Form labels, error/success messages, buttons, page description",User-facing
+frontend/app/privacidade/page.js,Privacy Policy,🟡 MEDIUM,3,"Page title, policy content",Legal/Info
+frontend/app/whatsapp/page.js,WhatsApp Integration,🔴 HIGH,2,"Page heading, description",User-facing
+frontend/app/roadmap/page.js,Product Roadmap,🔴 HIGH,18,"Phase windows, focus areas, deliverable items",User-facing
+frontend/app/forgot-password/page.js,Forgot Password,🟢 DUPLICATE,16,"Same as recuperar-senha - duplicate implementation",Redirect/Same
+frontend/app/plans/page.js,Plans Redirect,🟢 REDIRECT,0,"Redirects to planos/page.js",Alias
+frontend/app/profile/page.js,Profile Redirect,🟢 REDIRECT,0,"Redirects to perfil/page.js",Alias

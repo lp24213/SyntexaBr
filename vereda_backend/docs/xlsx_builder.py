@@ -75,6 +75,7 @@ def build_xlsx_bytes(
             c.border = border_all
             if i % 2 == 1:
                 c.fill = PatternFill("solid", fgColor="F1F5F9")
+            ws.row_dimensions[i + offset].height = None
 
     for col in range(1, max_cols + 1):
         letter = get_column_letter(col)

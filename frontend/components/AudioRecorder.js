@@ -113,8 +113,8 @@ export function AudioRecorder({
             setPhase("stt");
             let t = "";
             try {
-              // Tentar Xenova primeiro
-              t = await transcribeWithXenova(file, { language: "portuguese" });
+              // Tentar Xenova primeiro com retry
+              t = await transcribeWithXenova(file, { language: "portuguese", maxRetries: 2 });
             } catch (xenovaErr) {
               console.warn("[AudioRecorder] Xenova falhou, usando fallback Web Speech", xenovaErr);
               // Fallback para Web Speech API
@@ -159,8 +159,8 @@ export function AudioRecorder({
           setPhase("stt");
           let t = "";
           try {
-            // Tentar Xenova primeiro
-            t = await transcribeWithXenova(file, { language: "portuguese" });
+            // Tentar Xenova primeiro com retry
+            t = await transcribeWithXenova(file, { language: "portuguese", maxRetries: 2 });
           } catch (xenovaErr) {
             console.warn("[AudioRecorder] Xenova falhou, usando fallback Web Speech", xenovaErr);
             // Fallback para Web Speech API

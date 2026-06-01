@@ -317,16 +317,6 @@ export function ChatLayout(props) {
           "aria-hidden": true,
         }),
         React.createElement("div", { className: "content-layer relative z-10 w-full h-full flex flex-col justify-between min-h-0" }, children)
-      ),
-      React.createElement(
-        "footer",
-        {
-          className: "hidden sm:block border-t border-[rgba(20,24,30,0.06)] px-3 py-2 sm:px-5 sm:py-3 text-center text-[11px] text-[#8e9094] shrink-0 bg-white/70",
-          suppressHydrationWarning: true,
-        },
-        "© ",
-        React.createElement("span", { suppressHydrationWarning: true }, String(new Date().getFullYear())),
-        " SyntexaBR. " + t("rightsReserved", locale)
       )
     )
   );

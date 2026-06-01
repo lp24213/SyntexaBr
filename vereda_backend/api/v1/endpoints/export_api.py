@@ -58,13 +58,18 @@ class SmartExportBody(BaseModel):
 @router.post("/export/pdf")
 def multimodal_export_pdf(body: PdfExportBody) -> Response:
     try:
+        if not body.sections:
+            raise ValueError("Nenhuma seção fornecida para exportação.")
         raw = run_pdf_export_sync(
             body.title, body.sections, body.subtitle,
             styled=body.styled, include_footer=body.include_footer
         )
+    except ValueError as ve:
+        _log.warning("pdf export validation: %s", ve)
+        raise HTTPException(status_code=400, detail=str(ve)) from ve
     except Exception as exc:
         _log.exception("pdf export")
-        raise HTTPException(status_code=503, detail="Falha ao gerar PDF.") from exc
+        raise HTTPException(status_code=503, detail="Falha ao gerar PDF. Tente novamente.") from exc
     fn = "".join(c for c in body.title[:60] if c.isalnum() or c in (" ", "-", "_")).strip() or "documento"
     return Response(
         content=raw,
@@ -76,15 +81,20 @@ def multimodal_export_pdf(body: PdfExportBody) -> Response:
 @router.post("/export/xlsx")
 def multimodal_export_xlsx(body: XlsxExportBody) -> Response:
     try:
+        if not body.rows:
+            raise ValueError("Nenhuma linha fornecida para exportação.")
         raw = run_xlsx_export_sync(
             body.sheet_title,
             body.rows,
             body.header,
             document_title=body.document_title,
         )
+    except ValueError as ve:
+        _log.warning("xlsx export validation: %s", ve)
+        raise HTTPException(status_code=400, detail=str(ve)) from ve
     except Exception as exc:
         _log.exception("xlsx export")
-        raise HTTPException(status_code=503, detail="Falha ao gerar planilha.") from exc
+        raise HTTPException(status_code=503, detail="Falha ao gerar planilha. Tente novamente.") from exc
     st = "".join(c for c in body.sheet_title[:40] if c.isalnum() or c in (" ", "-", "_")) or "dados"
     return Response(
         content=raw,
@@ -96,10 +106,15 @@ def multimodal_export_xlsx(body: XlsxExportBody) -> Response:
 @router.post("/export/docx")
 def multimodal_export_docx(body: DocxExportBody) -> Response:
     try:
+        if not body.sections:
+            raise ValueError("Nenhuma seção fornecida para exportação.")
         raw = build_docx_bytes(body.title, body.sections)
+    except ValueError as ve:
+        _log.warning("docx export validation: %s", ve)
+        raise HTTPException(status_code=400, detail=str(ve)) from ve
     except Exception as exc:
         _log.exception("docx export")
-        raise HTTPException(status_code=503, detail="Falha ao gerar DOCX.") from exc
+        raise HTTPException(status_code=503, detail="Falha ao gerar DOCX. Tente novamente.") from exc
     fn = "".join(c for c in body.title[:60] if c.isalnum() or c in (" ", "-", "_")).strip() or "documento"
     return Response(
         content=raw,

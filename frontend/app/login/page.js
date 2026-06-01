@@ -10,10 +10,12 @@ import { Button } from "../../components/ui/button";
 import { TurnstileWidget } from "../../components/TurnstileWidget";
 import { login, getMe, verifyTwoFactor, githubLoginUrl } from "../../lib/api";
 import { encryptedPath } from "../../lib/routes";
+import { getClientLocale, t } from "../../lib/i18n";
 
 const TURNSTILE_SITE_KEY = "0x4AAAAAADXPQoicsnfeZhcl";
 
 export default function LoginPage() {
+  const locale = getClientLocale();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,9 +55,9 @@ export default function LoginPage() {
       const twoToken = (url.searchParams.get("two_factor_token") || "").trim();
       const ghError = (url.searchParams.get("gh_error") || "").trim();
       if (ghError === "no_email") {
-        setError("Entre com e-mail e senha ou deixe um e-mail visível na sua conta do GitHub.");
+        setError(t("githubNoEmailError", locale));
       } else if (ghError === "oauth" || ghError) {
-        setError("GitHub não respondeu de primeira — tente de novo.");
+        setError(t("githubOAuthError", locale));
       }
       if (ghError) {
         try {
@@ -77,7 +79,7 @@ export default function LoginPage() {
     ev.preventDefault();
     setError(null);
     if (TURNSTILE_SITE_KEY && !turnstileToken) {
-      setError("Aguarde a verificação de segurança carregar.");
+      setError(t("turnstileWaitMessage", locale));
       return;
     }
     setLoading(true);
@@ -92,9 +94,9 @@ export default function LoginPage() {
         await finishLogin(data.access_token, email, data.refresh_token);
         return;
       }
-      throw new Error("Resposta de login inválida.");
+      throw new Error(t("invalidLoginResponse", locale));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao entrar. Tente novamente.");
+      setError(err instanceof Error ? err.message : t("loginFailed", locale));
     } finally {
       setLoading(false);
     }
@@ -111,9 +113,9 @@ export default function LoginPage() {
         await finishLogin(data.access_token, email, data.refresh_token);
         return;
       }
-      throw new Error("Não foi possível validar o código 2FA.");
+      throw new Error(t("twoFaValidationFailed", locale));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Código 2FA inválido.");
+      setError(err instanceof Error ? err.message : t("invalidTwoFaCode", locale));
     } finally {
       setLoading(false);
     }
@@ -127,39 +129,39 @@ export default function LoginPage() {
   const goGithub = () => { window.location.href = githubLoginUrl(); };
 
   var linksDiv = React.createElement("div", { className: "mt-2 flex items-center justify-between text-xs text-zinc-500" },
-    React.createElement("button", { type: "button", onClick: goRegister, className: "text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline" }, "Criar conta"),
-    React.createElement("button", { type: "button", onClick: goForgot, className: "text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline" }, "Esqueci minha senha"));
+    React.createElement("button", { type: "button", onClick: goRegister, className: "text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline" }, t("createAccountLink", locale)),
+    React.createElement("button", { type: "button", onClick: goForgot, className: "text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline" }, t("forgotPassword", locale)));
   var formContent = twoFactorToken
     ? React.createElement("form", { onSubmit: handleTwoFactorSubmit, className: "space-y-5" },
-      React.createElement("p", { className: "text-xs text-zinc-500" }, "Digite o código do autenticador (2FA) para concluir o login."),
-      React.createElement(Input, { label: "Código 2FA", type: "text", autoComplete: "one-time-code", value: twoFactorCode, onChange: setTwoFactorCodeFromEvent, required: true }),
+      React.createElement("p", { className: "text-xs text-zinc-500" }, t("twoFaPrompt", locale)),
+      React.createElement(Input, { label: t("twoFaCodeLabel", locale), type: "text", autoComplete: "one-time-code", value: twoFactorCode, onChange: setTwoFactorCodeFromEvent, required: true }),
       error ? React.createElement("p", { className: "text-sm text-red-400" }, error) : null,
-      React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? "Validando..." : "Validar 2FA"),
+      React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? t("validatingTwoFa", locale) : t("validateTwoFaButton", locale)),
       React.createElement("button", {
         type: "button",
         onClick: function () { setTwoFactorToken(""); setTwoFactorCode(""); setError(null); },
         className: "w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-      }, "Voltar para login"))
+      }, t("backToLogin", locale)))
     : React.createElement("form", { onSubmit: handleSubmit, className: "space-y-5" },
       React.createElement("div", { className: "space-y-3" },
-        React.createElement(Input, { label: "E-mail", type: "email", autoComplete: "email", value: email, onChange: setEmailFromEvent, required: true }),
-        React.createElement(Input, { label: "Senha", type: "password", autoComplete: "current-password", value: password, onChange: setPasswordFromEvent, required: true })),
+        React.createElement(Input, { label: t("emailLabel", locale), type: "email", autoComplete: "email", value: email, onChange: setEmailFromEvent, required: true }),
+        React.createElement(Input, { label: t("passwordLabel", locale), type: "password", autoComplete: "current-password", value: password, onChange: setPasswordFromEvent, required: true })),
       TURNSTILE_SITE_KEY ? React.createElement(TurnstileWidget, { 
         siteKey: TURNSTILE_SITE_KEY,
         onTokenReceived: setTurnstileToken,
-        onError: (err) => setError(`Erro de segurança: ${err}`),
+        onError: (err) => setError(`${t("securityErrorPrefix", locale)} ${err}`),
         theme: "light",
         className: "my-3"
       }) : null,
       error ? React.createElement("p", { className: "text-sm text-red-400" }, error) : null,
-      React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? "Entrando..." : "Entrar"),
+      React.createElement(Button, { type: "submit", className: "w-full justify-center", disabled: loading }, loading ? t("enteringStatus", locale) : t("loginButton", locale)),
       React.createElement("button", {
         type: "button",
         onClick: goGithub,
         className: "w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-      }, "Entrar com GitHub"),
+      }, t("loginWithGithub", locale)),
       linksDiv);
-  var cardContent = React.createElement(Card, { title: "Entrar", description: "Acesse sua conta para o chat e as ferramentas." }, formContent);
+  var cardContent = React.createElement(Card, { title: t("loginTitle", locale), description: t("loginDescription", locale) }, formContent);
   var brandSpan = React.createElement("span", { className: "flex h-16 min-h-[64px] w-[240px] items-center justify-center" }, React.createElement(Brand, { className: "h-14 w-full max-w-[220px] object-contain" }));
   var innerMotion = React.createElement(motion.div, { className: "mb-10 flex justify-center", initial: { opacity: 0, scale: 0.96 }, animate: { opacity: 1, scale: 1 }, transition: { duration: 0.35, delay: 0.1 } }, brandSpan);
   var outerMotion = React.createElement(motion.div, { className: "w-full max-w-md", initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: "easeOut" } }, innerMotion, cardContent);

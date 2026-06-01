@@ -1,19 +1,4 @@
 {
   "name": "syntexa-frontend",
-  "type": "javascript",
-  "account_id": "",
-  "workers_dev": true,
-  "routes": [
-    {
-      "pattern": "frontend.syntexa-frontend.pages.dev",
-      "zone_name": ""
-    }
-  ],
-  "build": {
-    "command": "npm run build",
-    "cwd": "./frontend"
-  },
-  "observability": {
-    "enabled": false
-  }
+  "pages_build_output_dir": "out"
 }

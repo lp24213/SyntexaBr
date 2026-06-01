@@ -8,10 +8,12 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { encryptedPath } from "../../lib/routes";
 import { getApiBase } from "../../lib/api";
+import { getClientLocale, t } from "../../lib/i18n";
 
 var API_BASE = getApiBase();
 
 export default function RecuperarSenhaPage() {
+  const locale = getClientLocale();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -32,7 +34,7 @@ export default function RecuperarSenhaPage() {
         body: JSON.stringify({ email }),
       });
       try { window.localStorage.setItem("syntexa_pending_email", email); } catch {}
-      setSuccess("Se o e-mail existir, um código de redefinição será enviado.");
+      setSuccess(t("passwordResetEmailSent", locale));
       setTimeout(function () { window.location.href = encryptedPath("activate-reset"); }, 1200);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao solicitar redefinição.");
@@ -76,7 +78,7 @@ export default function RecuperarSenhaPage() {
         { className: "w-full max-w-md", initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.25 } },
         React.createElement(
           Card,
-          { title: "Recuperar senha", description: "Use seu e-mail e o código recebido para redefinir sua senha." },
+          { title: t("recoveryTitle", locale), description: t("recoveryDescription", locale) },
           step === 1
             ? React.createElement(
                 "form",

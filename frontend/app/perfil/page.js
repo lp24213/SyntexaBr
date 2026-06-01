@@ -6,8 +6,10 @@ import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { encryptedPath } from "../../lib/routes";
 import { getMe, updateMe } from "../../lib/api";
+import { getClientLocale, t } from "../../lib/i18n";
 
 export default function PerfilPage() {
+  const locale = getClientLocale();
   const [token, setToken] = useState(null);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -61,7 +63,7 @@ export default function PerfilPage() {
     const file = ev.target.files && ev.target.files[0];
     if (!file) return;
     if (!/^image\//i.test(file.type)) {
-      setStatus("Selecione um ficheiro de imagem.");
+      setStatus(t("selectImageError", locale));
       return;
     }
     const reader = new FileReader();
@@ -98,9 +100,9 @@ export default function PerfilPage() {
       setAddressLine(String(out.address_line || ""));
       setAddressNumber(String(out.address_number || ""));
       setAddressComplement(String(out.address_complement || ""));
-      setStatus("Perfil atualizado com sucesso.");
+      setStatus(t("profileUpdatedSuccess", locale));
     } catch (e) {
-      setStatus((e && e.message) || "Não foi possível salvar perfil.");
+      setStatus((e && e.message) || t("profileSaveError", locale));
     } finally {
       setSaving(false);
     }
@@ -115,11 +117,11 @@ export default function PerfilPage() {
       React.createElement(
         Card,
         {
-          title: "Perfil do usuário",
-          description: "Edite seus dados de conta e personalize sua identificação na Syntexa.",
+          title: t("profileTitle", locale),
+          description: t("profileDescription", locale),
         },
         loading
-          ? React.createElement("p", { className: "text-sm text-zinc-500" }, "Carregando perfil...")
+          ? React.createElement("p", { className: "text-sm text-zinc-500" }, t("loadingProfile", locale))
           : React.createElement(
               "div",
               { className: "space-y-4" },
@@ -133,7 +135,7 @@ export default function PerfilPage() {
                       alt: "Avatar",
                       className: "h-16 w-16 rounded-full border border-zinc-200 object-cover",
                     })
-                  : React.createElement("div", { className: "flex h-16 w-16 items-center justify-center rounded-full border border-zinc-200 bg-zinc-100 text-xs text-zinc-500" }, "Sem foto"),
+                  : React.createElement("div", { className: "flex h-16 w-16 items-center justify-center rounded-full border border-zinc-200 bg-zinc-100 text-xs text-zinc-500" }, t("noPhoto", locale)),
                 React.createElement("input", {
                   type: "file",
                   accept: "image/*",
@@ -141,21 +143,21 @@ export default function PerfilPage() {
                   className: "text-xs",
                 })
               ),
-              React.createElement("label", { className: "block text-xs font-medium text-zinc-600" }, "Nome"),
+              React.createElement("label", { className: "block text-xs font-medium text-zinc-600" }, t("nameLabel", locale)),
               React.createElement("input", {
                 value: fullName,
                 onChange: function (e) { setFullName(e.target.value); },
                 className: "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800",
-                placeholder: "Seu nome",
+                placeholder: t("namePlaceholder", locale),
               }),
-              React.createElement("label", { className: "block text-xs font-medium text-zinc-600" }, "Username"),
+              React.createElement("label", { className: "block text-xs font-medium text-zinc-600" }, t("usernameLabel", locale)),
               React.createElement("input", {
                 value: username,
                 onChange: function (e) { setUsername(e.target.value); },
                 className: "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800",
-                placeholder: "usuario.exemplo",
+                placeholder: t("usernamePlaceholder", locale),
               }),
-              React.createElement("label", { className: "block text-xs font-medium text-zinc-600" }, "CPF/CNPJ"),
+              React.createElement("label", { className: "block text-xs font-medium text-zinc-600" }, t("documentLabel", locale)),
               React.createElement("input", {
                 value: documentId,
                 onChange: function (e) { setDocumentId(e.target.value); },
@@ -164,43 +166,43 @@ export default function PerfilPage() {
               }),
               React.createElement("div", { className: "grid grid-cols-1 gap-3 sm:grid-cols-3" },
                 React.createElement("div", null,
-                  React.createElement("label", { className: "mb-1 block text-xs font-medium text-zinc-600" }, "CEP"),
+                  React.createElement("label", { className: "mb-1 block text-xs font-medium text-zinc-600" }, t("cepLabel", locale)),
                   React.createElement("input", {
                     value: cep,
                     onChange: function (e) { setCep(e.target.value); },
                     className: "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800",
-                    placeholder: "00000-000",
+                    placeholder: t("cepPlaceholder", locale),
                   })
                 ),
                 React.createElement("div", null,
-                  React.createElement("label", { className: "mb-1 block text-xs font-medium text-zinc-600" }, "Estado"),
+                  React.createElement("label", { className: "mb-1 block text-xs font-medium text-zinc-600" }, t("stateLabel", locale)),
                   React.createElement("input", {
                     value: stateUf,
                     onChange: function (e) { setStateUf(e.target.value); },
                     className: "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800",
-                    placeholder: "SP",
+                    placeholder: t("statePlaceholder", locale),
                   })
                 ),
                 React.createElement("div", null,
-                  React.createElement("label", { className: "mb-1 block text-xs font-medium text-zinc-600" }, "Cidade"),
+                  React.createElement("label", { className: "mb-1 block text-xs font-medium text-zinc-600" }, t("cityLabel", locale)),
                   React.createElement("input", {
                     value: city,
                     onChange: function (e) { setCity(e.target.value); },
                     className: "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800",
-                    placeholder: "São Paulo",
+                    placeholder: t("cityPlaceholder", locale),
                   })
                 )
               ),
-              React.createElement("label", { className: "block text-xs font-medium text-zinc-600" }, "Endereço"),
+              React.createElement("label", { className: "block text-xs font-medium text-zinc-600" }, t("addressLabel", locale)),
               React.createElement("input", {
                 value: addressLine,
                 onChange: function (e) { setAddressLine(e.target.value); },
                 className: "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800",
-                placeholder: "Rua / Avenida",
+                placeholder: t("addressPlaceholder", locale),
               }),
               React.createElement("div", { className: "grid grid-cols-1 gap-3 sm:grid-cols-2" },
                 React.createElement("div", null,
-                  React.createElement("label", { className: "mb-1 block text-xs font-medium text-zinc-600" }, "Número"),
+                  React.createElement("label", { className: "mb-1 block text-xs font-medium text-zinc-600" }, t("numberLabel", locale)),
                   React.createElement("input", {
                     value: addressNumber,
                     onChange: function (e) { setAddressNumber(e.target.value); },
@@ -209,7 +211,7 @@ export default function PerfilPage() {
                   })
                 ),
                 React.createElement("div", null,
-                  React.createElement("label", { className: "mb-1 block text-xs font-medium text-zinc-600" }, "Complemento"),
+                  React.createElement("label", { className: "mb-1 block text-xs font-medium text-zinc-600" }, t("complementLabel", locale)),
                   React.createElement("input", {
                     value: addressComplement,
                     onChange: function (e) { setAddressComplement(e.target.value); },
@@ -219,22 +221,22 @@ export default function PerfilPage() {
                 )
               ),
               status ? React.createElement("p", { className: "text-xs text-zinc-600" }, status) : null,
-              React.createElement(Button, { type: "button", onClick: saveProfile, disabled: saving || loading }, saving ? "Salvando..." : "Salvar perfil")
+              React.createElement(Button, { type: "button", onClick: saveProfile, disabled: saving || loading }, saving ? t("loadingProfile", locale) : t("saveProfileButton", locale))
             )
       ),
       React.createElement(
         Card,
         {
-          title: "Conta e configurações",
-          description: "Acessos centralizados do seu painel de conta.",
+          title: t("accountSettingsTitle", locale),
+          description: t("accountSettingsDescription", locale),
         },
         React.createElement(
           "div",
           { className: "flex flex-wrap gap-2" },
-          React.createElement("a", { href: encryptedPath("config"), className: "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50" }, "Configurações"),
-          React.createElement("a", { href: encryptedPath("plans"), className: "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50" }, "Planos"),
-          isAdmin ? React.createElement("a", { href: encryptedPath("download"), className: "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50" }, "Sistema Offline") : null,
-          isAdmin ? React.createElement("a", { href: encryptedPath("admin-integrations"), className: "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50" }, "API Tokens") : null
+          React.createElement("a", { href: encryptedPath("config"), className: "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50" }, t("settings", locale)),
+          React.createElement("a", { href: encryptedPath("plans"), className: "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50" }, t("plans", locale)),
+          isAdmin ? React.createElement("a", { href: encryptedPath("download"), className: "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50" }, t("offlineSystem", locale)) : null,
+          isAdmin ? React.createElement("a", { href: encryptedPath("admin-integrations"), className: "rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50" }, t("apiTokens", locale)) : null
         )
       )
     )

@@ -189,7 +189,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // START SERVER
 // ─────────────────────────────────────────────────────────
 
-const start = async () => {
+const startServer = async () => {
   try {
     await app.listen({ port: 3001, host: '0.0.0.0' });
     logger.info('🚀 Server running on http://0.0.0.0:3001');
@@ -199,7 +199,7 @@ const start = async () => {
   }
 };
 
-start();
+startServer();
 
 const gracefulShutdown = async () => {
   logger.info('🛑 Shutting down gracefully...');
