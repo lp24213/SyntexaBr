@@ -11,11 +11,11 @@ import { TurnstileWidget } from "../../components/TurnstileWidget";
 import { login, getMe, verifyTwoFactor, githubLoginUrl } from "../../lib/api";
 import { encryptedPath } from "../../lib/routes";
 import { t } from "../../lib/i18n";
-import { useLanguage, LanguageProvider } from "../../components/language-provider";
+import { useLanguage } from "../../components/language-provider";
 
 const TURNSTILE_SITE_KEY = "0x4AAAAAADXPQoicsnfeZhcl";
 
-function LoginPageContent() {
+export default function LoginPage() {
   const { locale } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -170,10 +170,3 @@ function LoginPageContent() {
   return React.createElement(AppShell, null, wrap);
 }
 
-export default function LoginPage() {
-  return React.createElement(
-    LanguageProvider,
-    { initialLocale: "pt-BR" },
-    React.createElement(LoginPageContent)
-  );
-}

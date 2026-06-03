@@ -10,11 +10,11 @@ import { Button } from "../../components/ui/button";
 
 import { getApiBase } from "../../lib/api";
 import { t } from "../../lib/i18n";
-import { useLanguage, LanguageProvider } from "../../components/language-provider";
+import { useLanguage } from "../../components/language-provider";
 
 var API_BASE = getApiBase();
 
-function RegisterPageContent() {
+export default function RegisterPage() {
   const { locale } = useLanguage();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -127,10 +127,3 @@ function RegisterPageContent() {
               React.createElement("button", { type: "button", onClick: goLogin, className: "text-zinc-200 underline-offset-2 hover:underline" }, t("backToLogin", locale))))))));
 }
 
-export default function RegisterPage() {
-  return React.createElement(
-    LanguageProvider,
-    { initialLocale: "pt-BR" },
-    React.createElement(RegisterPageContent)
-  );
-}

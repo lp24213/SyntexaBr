@@ -7,9 +7,9 @@ import { Button } from "../../components/ui/button";
 import { encryptedPath } from "../../lib/routes";
 import { getMe, updateMe } from "../../lib/api";
 import { t } from "../../lib/i18n";
-import { useLanguage, LanguageProvider } from "../../components/language-provider";
+import { useLanguage } from "../../components/language-provider";
 
-function PerfilPageContent() {
+export default function PerfilPage() {
   const { locale } = useLanguage();
   const [token, setToken] = useState(null);
   const [email, setEmail] = useState("");
@@ -244,10 +244,3 @@ function PerfilPageContent() {
   );
 }
 
-export default function PerfilPage() {
-  return React.createElement(
-    LanguageProvider,
-    { initialLocale: "pt-BR" },
-    React.createElement(PerfilPageContent)
-  );
-}

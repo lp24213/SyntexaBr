@@ -25,7 +25,7 @@ import {
   desktopBootDiagnostic,
 } from "../../lib/desktop-api";
 import { t } from "../../lib/i18n";
-import { useLanguage, LanguageProvider } from "../../components/language-provider";
+import { useLanguage } from "../../components/language-provider";
 import { sanitizeOutput, sanitizeStreamChunk } from "../../lib/sanitizeOutput";
 import { setXenovaSttProgressCallback } from "../../lib/xenova-stt";
 import { MarkdownMessage } from "../../components/MarkdownMessage";
@@ -232,7 +232,7 @@ function IconSend() {
   );
 }
 
-function ChatPageContent() {
+export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1476,10 +1476,3 @@ function ChatPageContent() {
   );
 }
 
-export default function ChatPage() {
-  return React.createElement(
-    LanguageProvider,
-    { initialLocale: "pt-BR" },
-    React.createElement(ChatPageContent)
-  );
-}

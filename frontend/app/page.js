@@ -7,7 +7,7 @@ import { AppShell } from "../components/shell";
 import { InfrastructureVisual } from "../components/infrastructure-visual";
 import { DownloadSection } from "../components/download-section";
 import { t } from "../lib/i18n";
-import { useLanguage, LanguageProvider } from "../components/language-provider";
+import { useLanguage } from "../components/language-provider";
 import { encryptedPath } from "../lib/routes";
 
 const MODULES = [
@@ -32,7 +32,7 @@ const PLANS = [
   { nameKey: "planMasterName", priceKey: "planMasterPrice", descKey: "planMasterDesc" },
 ];
 
-function HomePageContent() {
+export default function HomePage() {
   const { locale } = useLanguage();
   return (
     <AppShell fullWidth={true}>
@@ -315,13 +315,5 @@ function HomePageContent() {
 
     </main>
     </AppShell>
-  );
-}
-
-export default function HomePage() {
-  return React.createElement(
-    LanguageProvider,
-    { initialLocale: "pt-BR" },
-    React.createElement(HomePageContent)
   );
 }

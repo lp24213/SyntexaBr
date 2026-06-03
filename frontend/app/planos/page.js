@@ -5,7 +5,7 @@ import { AppShell } from "../../components/shell";
 import { createStripeCheckout, getSubscriptionStatus } from "../../lib/api";
 import { PlanCard } from "../../components/business-plan-page";
 import { t } from "../../lib/i18n";
-import { useLanguage, LanguageProvider } from "../../components/language-provider";
+import { useLanguage } from "../../components/language-provider";
 
 // Icones SVG
 const CheckIcon = () => React.createElement("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", xmlns: "http://www.w3.org/2000/svg" },
@@ -104,7 +104,7 @@ function getPlanData(locale) {
   ];
 }
 
-function PlanosContent() {
+export default function PlanosPage() {
   const { locale } = useLanguage();
   const plans = getPlanData(locale);
   const [subscription, setSubscription] = useState(null);
@@ -265,14 +265,3 @@ function PlanosContent() {
 }
 
 
-export default function PlanosPage() {
-  return React.createElement(
-    LanguageProvider,
-    { initialLocale: "pt-BR" },
-    React.createElement(
-      AppShell,
-      null,
-      React.createElement(PlanosContent)
-    )
-  );
-}

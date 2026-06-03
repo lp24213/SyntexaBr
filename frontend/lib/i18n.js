@@ -37,6 +37,8 @@ const DICT = {
     integrations: "Integrações",
     offlineSystem: "Sistema Offline",
     apiTokens: "API Tokens",
+
+    // Navigation Links
     navHome: "Início",
     navQuantumCore: "Núcleo quântico",
     navAiInfrastructure: "Infraestrutura IA",
@@ -45,7 +47,7 @@ const DICT = {
     navResearch: "Pesquisa",
     navDownloads: "Downloads",
 
-    // Home Page
+    // Homepage
     homeOpenConsole: "Abrir console",
     homeBadge: "SO — IA soberana",
     homeTitle: "Infraestrutura de inteligência artificial soberana",
@@ -83,16 +85,18 @@ const DICT = {
     homeRoad9: "Sistemas de pesquisa autônomos",
     homeWinSub: "Windows 10/11 · 64-bit",
     homeLinuxSub: "Linux · x64 · AppImage",
+
+    // Homepage - Marketing Section
     aiMadeBrazilBadge: "Inteligência Artificial Brasileira",
-    mainHeading: "Sua Assistente de IA, Feita no Brasil",
+    mainHeading: "Sua Assistante de IA, Feita no Brasil",
     mainDescription: "Uma assistente que entende português de verdade. Pode pesquisar na internet, gerar imagens, escrever códigos e ajudar em qualquer área — tudo de forma segura.",
     accessConsole: "Acessar Console",
     exploreArchitecture: "Explorar Arquitetura",
     architectureLabel: "Arquitetura",
     platformModules: "Módulos da Plataforma",
     platformModulesDescription: "Tudo o que você precisa em um só lugar: chat inteligente, criação de conteúdo, análise de documentos e assistência técnica — sempre em português.",
-    
-    // Platform Modules
+
+    // Product Features
     moduleChatTitle: "Chat Inteligente",
     moduleChatDesc: "Converse sobre qualquer assunto. A Syntexa entende contexto, memória e pode pesquisar na web em tempo real.",
     moduleSpeedTitle: "Respostas na Velocidade da Luz",
@@ -120,7 +124,7 @@ const DICT = {
     statusOperational: "Operacional",
     statusStandby: "Standby",
 
-    // Chat
+    // Chat Interface
     you: "Você",
     syntexa: "Syntexa",
     processingResponse: "Um momento, estou pensando...",
@@ -136,7 +140,7 @@ const DICT = {
     stop: "Parar",
     askAnything: "Como posso te ajudar hoje?",
 
-    // LLM Display
+    // LLM Core
     llmBadge: "Núcleo neural quântico",
     llmTitle: "Quantum LLM Core",
     llmLead: "Visualização da cadeia de inferência híbrida com orquestração neural e otimização quântica.",
@@ -151,7 +155,7 @@ const DICT = {
     llmStep5: "Decodificação soberana",
     llmStep5Desc: "Saída final com controle de temperatura e sampling top-p.",
 
-    // Authentication
+    // Authentication & Login
     loginTitle: "Entrar",
     loginDescription: "Acesse sua conta para o chat e as ferramentas.",
     loginButton: "Entrar",
@@ -160,6 +164,7 @@ const DICT = {
     invalidLoginResponse: "Resposta de login inválida.",
     emailLabel: "E-mail",
     passwordLabel: "Senha",
+    createAccount: "Criar conta",
     createAccountLink: "Criar conta",
     forgotPassword: "Esqueci minha senha",
     loginWithGithub: "Entrar com GitHub",
@@ -168,7 +173,7 @@ const DICT = {
     turnstileWaitMessage: "Aguarde a verificação de segurança carregar.",
     securityErrorPrefix: "Erro de segurança:",
 
-    // Registration
+    // Registration & Account Creation
     createAccountTitle: "Criar conta",
     createAccountDescription: "Comece a usar a plataforma de IA Syntexa em poucos segundos.",
     registerButton: "Criar conta",
@@ -191,7 +196,7 @@ const DICT = {
     alreadyHaveAccount: "Já tem conta?",
     backToLogin: "Voltar para login",
 
-    // Password Recovery
+    // Password Recovery & Reset
     recoveryTitle: "Recuperar senha",
     recoveryDescription: "Use seu e-mail e o código recebido para redefinir sua senha.",
     sendResetCode: "Enviar código de redefinição",
@@ -217,7 +222,7 @@ const DICT = {
     emailVerificationFailed: "Falha ao verificar e-mail.",
     unexpectedVerificationError: "Erro inesperado ao verificar e-mail.",
 
-    // Profile
+    // User Profile & Settings
     profileTitle: "Perfil do usuário",
     profileDescription: "Edite seus dados de conta e personalize sua identificação na Syntexa.",
     loadingProfile: "Carregando perfil...",
@@ -236,7 +241,7 @@ const DICT = {
     profileSaveError: "Não foi possível salvar perfil.",
     saveProfileButton: "Salvar perfil",
 
-    // 2FA
+    // Two-Factor Authentication (2FA)
     securityTitle: "Segurança de conta (2FA)",
     securityDescription: "Ative autenticação em dois fatores (TOTP) para reforçar o acesso. Use apps como Google Authenticator, Authy ou Microsoft Authenticator.",
     twoFaAvailabilityNote: "Para sua conta, a disponibilidade do 2FA depende da política do backend (admin/governo). Se não estiver habilitado, a API retorna mensagem de permissão.",
@@ -253,7 +258,7 @@ const DICT = {
     twoFaValidationFailed: "Não foi possível validar o código 2FA.",
     invalidTwoFaCode: "Código 2FA inválido.",
 
-    // Admin & Config
+    // Admin & Configuration
     accountSettingsTitle: "Configurações da conta",
     accountSettingsDescription: "Preferências e dados da sua conta Syntexa.",
     accountSettingsHelpText: "Use Planos para assinatura e Perfil para dados pessoais e segurança.",
@@ -261,7 +266,7 @@ const DICT = {
     ipSavedSuccess: "Salvo. {count} IP(s).",
     errorSaving: "Erro ao salvar.",
 
-    // Pricing
+    // Pricing & Subscriptions
     plansPageTitle: "Planos Syntexa",
     plansPageDescription: "Escolha o plano que faz sentido para você. Estudante com e-mail .edu paga metade em qualquer plano pago.",
     planFreeTitle: "Gratuito",
@@ -283,9 +288,8 @@ const DICT = {
     planMasterTag: "Empresas",
     planMasterPrice: "R$ 199",
     planMasterDescription: "Tudo ilimitado + agentes avançados, suporte prioritário, múltiplos usuários e ferramentas empresariais.",
-    checkoutError: "Erro ao iniciar pagamento: ",
 
-    // WhatsApp
+    // WhatsApp Integration
     whatsappPageTitle: "WhatsApp Business",
     whatsappPageDescription: "Conecte seu WhatsApp Business e gerencie conversas com IA",
     oauthAuthorizationDenied: "Autorização negada ou cancelada.",
@@ -298,7 +302,7 @@ const DICT = {
     connectionFailed: "Falha na conexão",
     backToWhatsApp: "Voltar para WhatsApp",
 
-    // PWA & Download
+    // PWA & Installation
     downloadPageTitle: "Instalar Syntexa AI",
     downloadPageDescription: "App completo com atalho no desktop, menu Iniciar e abertura directa no chat.",
     installPwaOption: "Instalar como app (PWA)",
@@ -318,7 +322,7 @@ const DICT = {
     androidInstructions: "Android (Chrome)",
     androidInstallSteps: "Toque no menu ⋮ → «Adicionar à tela inicial» ou aguarde o banner automático de instalação.",
 
-    // Roadmap
+    // Product Roadmap
     roadmapPhase1Window: "0-30 dias",
     roadmapPhase1Focus: "Lançamento e conversão inicial",
     roadmapPhase1Item1: "Refino de onboarding e redução de abandono no primeiro uso",
@@ -340,7 +344,7 @@ const DICT = {
     roadmapPhase4Item2: "Contratação por marcos de receita, retenção e confiabilidade",
     roadmapPhase4Item3: "Escala nacional mantendo custo operacional previsível",
 
-    // Legal & Policies
+    // Policies & Legal
     termsPageTitle: "Termos e Condições",
     termsContent1: "Ao utilizar a Syntexa, você concorda em usar a plataforma conforme a legislação brasileira e as políticas de segurança. É proibido uso abusivo, fraudulento ou que viole direitos de terceiros.",
     termsContent2: "A conta e as credenciais são de responsabilidade do usuário. Podemos atualizar estes termos para adequação legal e operacional.",
@@ -351,17 +355,85 @@ const DICT = {
     privacyContent1: "Tratamos dados pessoais conforme a LGPD, com finalidade de autenticação, segurança, prestação do serviço e melhoria contínua da plataforma.",
     privacyContent2: "Você pode solicitar atualização ou exclusão de dados nos canais oficiais de suporte, observadas obrigações legais de retenção.",
 
-    // WhatsApp
-    whatsappCompanies: "Empresas",
-    whatsappActiveNumbers: "Números Ativos",
-    whatsappConversations: "Conversas",
-    whatsappMessages: "Mensagens",
-    whatsappRecentConversations: "Conversas Recentes",
-    whatsappNoConversations: "Nenhuma conversa ainda",
-    whatsappConversationsAppear: "As conversas aparecerão quando mensagens forem recebidas",
-    whatsappContact: "Contato",
-    whatsappNoMessage: "Nenhuma mensagem",
+    // Integrations Page
+    integrationsDescription: "Conecte suas plataformas favoritas e gerencie tudo em um só lugar.",
+    whatsappPageTitle: "WhatsApp Business",
+    instagramPageTitle: "Instagram",
+    facebookPageTitle: "Facebook",
+    tiktokPageTitle: "TikTok Business",
+    whatsappDescription: "Conecte seu WhatsApp Business para gerenciar conversas com IA e automações.",
+    instagramDescription: "Integre seu Instagram para respostas automáticas e análise de mensagens.",
+    facebookDescription: "Conecte seu Facebook para gerenciar comentários e mensagens com IA.",
+    tiktokDescription: "Integre seu TikTok Business para análise e automação de conteúdo.",
+    connectWhatsApp: "Conectar WhatsApp",
+    connectInstagram: "Conectar Instagram",
+    connectFacebook: "Conectar Facebook",
+    connectTikTok: "Conectar TikTok",
+    oauthRedirectUrl: "URL de Redirecionamento OAuth",
+    supportedLocales: "Locales Suportados",
+
+    // Home Page - WhatsApp Section
+    whatsappTitle: "WhatsApp Business",
+    whatsappSubtitle: "Automação e Inteligência Artificial",
+    whatsappChatbot: "Chatbot IA",
+    whatsappChatbotDesc: "Respostas automáticas com inteligência artificial",
+    whatsappAttendants: "Atendentes",
+    whatsappAttendantsDesc: "Gerenciamento de múltiplos atendentes",
+    whatsappNumbers: "Números",
+    whatsappNumbersDesc: "Suporte para múltiplos números",
+    whatsappAutomations: "Automações",
+    whatsappAutomationsDesc: "Fluxos automáticos personalizados",
+    whatsappMemory: "Memória",
+    whatsappMemoryDesc: "Contexto persistente de conversas",
+    whatsappAnalytics: "Análise",
+    whatsappAnalyticsDesc: "Relatórios e métricas detalhadas",
+
+    // Home Page - Document Engine
+    documentEngine: "Document Engine",
+    documentEngineTitle: "Processamento de Documentos",
+    documentEngineDesc: "Análise inteligente de arquivos",
+    docPdf: "PDF",
+    docPdfDesc: "Processamento de arquivos PDF",
+    docExcel: "Excel",
+    docExcelDesc: "Análise de planilhas",
+    docWord: "Word",
+    docWordDesc: "Processamento de documentos Word",
+    docCsv: "CSV",
+    docCsvDesc: "Importação de dados CSV",
+
+    // Home Page - Specs
+    specModelParams: "Parâmetros do Modelo",
+    specTransformer: "Transformer",
+    specVoice: "Voz",
+    specVoiceDesc: "Processamento de áudio",
+    specProcessing: "Processamento",
+    specProcessingDesc: "GPU acelerada",
+    specData: "Dados",
+    specDataDesc: "Privacidade garantida",
+    infrastructureLabel: "Infraestrutura",
+    accessLayers: "Camadas de Acesso",
+    accessLayersDesc: "Múltiplas camadas de segurança",
+
+    // Home Page - Plans
+    planFreeName: "Grátis",
+    planFreePrice: "$0",
+    planFreeDesc: "Para começar",
+    planBasicName: "Básico",
+    planBasicPrice: "R$ 39",
+    planBasicDesc: "Para estudantes e freelancers",
+    planMidName: "Profissional",
+    planMidPrice: "R$ 99",
+    planMidDesc: "Para profissionais",
+    planMasterName: "Empresarial",
+    planMasterPrice: "R$ 199",
+    planMasterDesc: "Para empresas",
+
+    // Cookies & Legal
+    acceptCookies: "Aceitar Cookies",
+    rejectCookies: "Rejeitar",
+    cookieConsent: "Usamos cookies para melhorar sua experiência",
   },
+
   "en-US": {
     // Navigation & Layout
     chat: "Chat",
@@ -398,6 +470,8 @@ const DICT = {
     integrations: "Integrations",
     offlineSystem: "Offline System",
     apiTokens: "API Tokens",
+
+    // Navigation Links
     navHome: "Home",
     navQuantumCore: "Quantum core",
     navAiInfrastructure: "AI infrastructure",
@@ -406,7 +480,7 @@ const DICT = {
     navResearch: "Research",
     navDownloads: "Downloads",
 
-    // Home Page
+    // Homepage
     homeOpenConsole: "Open console",
     homeBadge: "SOVEREIGN AI OS",
     homeTitle: "Sovereign artificial intelligence infrastructure",
@@ -444,6 +518,8 @@ const DICT = {
     homeRoad9: "Autonomous research systems",
     homeWinSub: "Windows 10/11 · 64-bit",
     homeLinuxSub: "Linux · x64 · AppImage",
+
+    // Homepage - Marketing Section
     aiMadeBrazilBadge: "Brazilian Artificial Intelligence",
     mainHeading: "Your AI Assistant, Made in Brazil",
     mainDescription: "An assistant that truly understands Portuguese. Can search the web, generate images, write code, and help in any area—all securely.",
@@ -453,7 +529,7 @@ const DICT = {
     platformModules: "Platform Modules",
     platformModulesDescription: "Everything you need in one place: smart chat, content creation, document analysis, and technical assistance—always in Portuguese.",
 
-    // Platform Modules
+    // Product Features
     moduleChatTitle: "Smart Chat",
     moduleChatDesc: "Chat about anything. Syntexa understands context, memory, and can search the web in real time.",
     moduleSpeedTitle: "Lightning-Fast Responses",
@@ -481,7 +557,7 @@ const DICT = {
     statusOperational: "Operational",
     statusStandby: "Standby",
 
-    // Chat
+    // Chat Interface
     you: "You",
     syntexa: "Syntexa",
     processingResponse: "Processing response...",
@@ -497,7 +573,7 @@ const DICT = {
     stop: "Stop",
     askAnything: "Ask anything about studies, work, or business and let Syntexa unlock the next step with you.",
 
-    // LLM Display
+    // LLM Core
     llmBadge: "Quantum neural core",
     llmTitle: "Quantum LLM Core",
     llmLead: "Hybrid inference chain visualization with neural orchestration and quantum optimization.",
@@ -512,7 +588,7 @@ const DICT = {
     llmStep5: "Sovereign decoding",
     llmStep5Desc: "Final output with temperature control and top-p sampling.",
 
-    // Authentication
+    // Authentication & Login
     loginTitle: "Sign In",
     loginDescription: "Access your account for chat and tools.",
     loginButton: "Sign In",
@@ -521,15 +597,16 @@ const DICT = {
     invalidLoginResponse: "Invalid login response.",
     emailLabel: "Email",
     passwordLabel: "Password",
-    createAccountLink: "Create account",
-    forgotPassword: "Forgot password",
+    createAccount: "Create Account",
+    createAccountLink: "Create Account",
+    forgotPassword: "Forgot Password",
     loginWithGithub: "Sign in with GitHub",
     githubNoEmailError: "Sign in with email/password or make your GitHub email public.",
     githubOAuthError: "GitHub didn't respond. Please try again.",
     turnstileWaitMessage: "Please wait for security verification to load.",
     securityErrorPrefix: "Security Error:",
 
-    // Registration
+    // Registration & Account Creation
     createAccountTitle: "Create Account",
     createAccountDescription: "Start using Syntexa AI platform in seconds.",
     registerButton: "Register",
@@ -552,7 +629,7 @@ const DICT = {
     alreadyHaveAccount: "Already have an account?",
     backToLogin: "Back to Login",
 
-    // Password Recovery
+    // Password Recovery & Reset
     recoveryTitle: "Recover Password",
     recoveryDescription: "Use your email and the received code to reset your password.",
     sendResetCode: "Send Reset Code",
@@ -578,7 +655,7 @@ const DICT = {
     emailVerificationFailed: "Email verification failed.",
     unexpectedVerificationError: "Unexpected error verifying email.",
 
-    // Profile
+    // User Profile & Settings
     profileTitle: "User Profile",
     profileDescription: "Edit your account data and customize your Syntexa profile.",
     loadingProfile: "Loading profile...",
@@ -597,7 +674,7 @@ const DICT = {
     profileSaveError: "Could not save profile.",
     saveProfileButton: "Save Profile",
 
-    // 2FA
+    // Two-Factor Authentication (2FA)
     securityTitle: "Account Security (2FA)",
     securityDescription: "Enable two-factor authentication (TOTP) to strengthen access. Use apps like Google Authenticator, Authy, or Microsoft Authenticator.",
     twoFaAvailabilityNote: "For your account, 2FA availability depends on backend policy (admin/government). If not enabled, the API returns a permission message.",
@@ -614,7 +691,7 @@ const DICT = {
     twoFaValidationFailed: "Could not validate 2FA code.",
     invalidTwoFaCode: "Invalid 2FA code.",
 
-    // Admin & Config
+    // Admin & Configuration
     accountSettingsTitle: "Account Settings",
     accountSettingsDescription: "Your Syntexa account preferences and data.",
     accountSettingsHelpText: "Use Plans for subscription and Profile for personal data and security.",
@@ -622,7 +699,7 @@ const DICT = {
     ipSavedSuccess: "Saved. {count} IP(s).",
     errorSaving: "Error saving.",
 
-    // Pricing
+    // Pricing & Subscriptions
     plansPageTitle: "Syntexa Plans",
     plansPageDescription: "Choose the plan that makes sense for you. Students with .edu email get 50% off any paid plan.",
     planFreeTitle: "Free",
@@ -644,9 +721,8 @@ const DICT = {
     planMasterTag: "Enterprise",
     planMasterPrice: "$199",
     planMasterDescription: "Everything unlimited + advanced agents, priority support, multiple users, enterprise tools.",
-    checkoutError: "Error starting payment: ",
 
-    // WhatsApp
+    // WhatsApp Integration
     whatsappPageTitle: "WhatsApp Business",
     whatsappPageDescription: "Connect your WhatsApp Business and manage conversations with AI",
     oauthAuthorizationDenied: "Authorization denied or canceled.",
@@ -659,7 +735,7 @@ const DICT = {
     connectionFailed: "Connection Failed",
     backToWhatsApp: "Back to WhatsApp",
 
-    // PWA & Download
+    // PWA & Installation
     downloadPageTitle: "Install Syntexa AI",
     downloadPageDescription: "Full app with desktop shortcut, Start menu entry, and direct chat opening.",
     installPwaOption: "Install as App (PWA)",
@@ -671,15 +747,15 @@ const DICT = {
     pwaInstalledSuccess: "✓ App installed successfully!",
     installAppNow: "Install App Now",
     installApp: "Install App",
-    installAppFallbackInstructions: "If button doesn't work: click ⋮ or ⊕ icon in Chrome/Edge address bar and choose 'Install Syntexa AI'.",
+    installAppFallbackInstructions: "If button doesn't work: click ⋮ or ⊕ icon in Chrome/Edge address bar and choose \"Install Syntexa AI\".",
     orSeparator: "or",
     openInBrowserButton: "Open in Browser Without Installing",
     iosInstructions: "iPhone / iPad (Safari)",
-    iosInstallSteps: "Tap Share → 'Add to Home Screen'. App appears on home screen like any other.",
+    iosInstallSteps: "Tap Share → \"Add to Home Screen\". App appears on home screen like any other.",
     androidInstructions: "Android (Chrome)",
-    androidInstallSteps: "Tap ⋮ menu → 'Add to Home Screen' or wait for auto install banner.",
+    androidInstallSteps: "Tap ⋮ menu → \"Add to Home Screen\" or wait for auto install banner.",
 
-    // Roadmap
+    // Product Roadmap
     roadmapPhase1Window: "0-30 days",
     roadmapPhase1Focus: "Launch and Initial Conversion",
     roadmapPhase1Item1: "Refine onboarding and reduce first-use abandonment",
@@ -701,7 +777,7 @@ const DICT = {
     roadmapPhase4Item2: "Contracting by revenue, retention, and reliability milestones",
     roadmapPhase4Item3: "National scale while maintaining predictable operational cost",
 
-    // Legal & Policies
+    // Policies & Legal
     termsPageTitle: "Terms and Conditions",
     termsContent1: "By using Syntexa, you agree to use the platform in accordance with Brazilian law and security policies. Abusive, fraudulent, or rights-infringing use is prohibited.",
     termsContent2: "Account and credentials are user responsibility. We may update these terms for legal and operational compliance.",
@@ -712,17 +788,85 @@ const DICT = {
     privacyContent1: "We handle personal data per LGPD for authentication, security, service provision, and continuous platform improvement.",
     privacyContent2: "You can request data updates or deletion through official support channels, subject to legal retention obligations.",
 
-    // WhatsApp
-    whatsappCompanies: "Companies",
-    whatsappActiveNumbers: "Active Numbers",
-    whatsappConversations: "Conversations",
-    whatsappMessages: "Messages",
-    whatsappRecentConversations: "Recent Conversations",
-    whatsappNoConversations: "No conversations yet",
-    whatsappConversationsAppear: "Conversations will appear when messages are received",
-    whatsappContact: "Contact",
-    whatsappNoMessage: "No message",
+    // Integrations Page
+    integrationsDescription: "Connect your favorite platforms and manage everything in one place.",
+    whatsappPageTitle: "WhatsApp Business",
+    instagramPageTitle: "Instagram",
+    facebookPageTitle: "Facebook",
+    tiktokPageTitle: "TikTok Business",
+    whatsappDescription: "Connect your WhatsApp Business to manage conversations with AI and automations.",
+    instagramDescription: "Integrate your Instagram for automatic responses and message analysis.",
+    facebookDescription: "Connect your Facebook to manage comments and messages with AI.",
+    tiktokDescription: "Integrate your TikTok Business for content analysis and automation.",
+    connectWhatsApp: "Connect WhatsApp",
+    connectInstagram: "Connect Instagram",
+    connectFacebook: "Connect Facebook",
+    connectTikTok: "Connect TikTok",
+    oauthRedirectUrl: "OAuth Redirect URL",
+    supportedLocales: "Supported Locales",
+
+    // Home Page - WhatsApp Section
+    whatsappTitle: "WhatsApp Business",
+    whatsappSubtitle: "Automation and Artificial Intelligence",
+    whatsappChatbot: "AI Chatbot",
+    whatsappChatbotDesc: "Automatic responses with artificial intelligence",
+    whatsappAttendants: "Attendants",
+    whatsappAttendantsDesc: "Management of multiple attendants",
+    whatsappNumbers: "Numbers",
+    whatsappNumbersDesc: "Support for multiple numbers",
+    whatsappAutomations: "Automations",
+    whatsappAutomationsDesc: "Custom automatic flows",
+    whatsappMemory: "Memory",
+    whatsappMemoryDesc: "Persistent conversation context",
+    whatsappAnalytics: "Analytics",
+    whatsappAnalyticsDesc: "Detailed reports and metrics",
+
+    // Home Page - Document Engine
+    documentEngine: "Document Engine",
+    documentEngineTitle: "Document Processing",
+    documentEngineDesc: "Intelligent file analysis",
+    docPdf: "PDF",
+    docPdfDesc: "PDF file processing",
+    docExcel: "Excel",
+    docExcelDesc: "Spreadsheet analysis",
+    docWord: "Word",
+    docWordDesc: "Word document processing",
+    docCsv: "CSV",
+    docCsvDesc: "CSV data import",
+
+    // Home Page - Specs
+    specModelParams: "Model Parameters",
+    specTransformer: "Transformer",
+    specVoice: "Voice",
+    specVoiceDesc: "Audio processing",
+    specProcessing: "Processing",
+    specProcessingDesc: "GPU accelerated",
+    specData: "Data",
+    specDataDesc: "Privacy guaranteed",
+    infrastructureLabel: "Infrastructure",
+    accessLayers: "Access Layers",
+    accessLayersDesc: "Multiple security layers",
+
+    // Home Page - Plans
+    planFreeName: "Free",
+    planFreePrice: "$0",
+    planFreeDesc: "To get started",
+    planBasicName: "Basic",
+    planBasicPrice: "$39",
+    planBasicDesc: "For students and freelancers",
+    planMidName: "Professional",
+    planMidPrice: "$99",
+    planMidDesc: "For professionals",
+    planMasterName: "Enterprise",
+    planMasterPrice: "$199",
+    planMasterDesc: "For companies",
+
+    // Cookies & Legal
+    acceptCookies: "Accept Cookies",
+    rejectCookies: "Reject",
+    cookieConsent: "We use cookies to improve your experience",
   },
+
   "es-ES": {
     // Navigation & Layout
     chat: "Chat",
@@ -759,6 +903,8 @@ const DICT = {
     integrations: "Integraciones",
     offlineSystem: "Sistema Offline",
     apiTokens: "Tokens de API",
+
+    // Navigation Links
     navHome: "Inicio",
     navQuantumCore: "Núcleo cuántico",
     navAiInfrastructure: "Infraestructura IA",
@@ -767,7 +913,7 @@ const DICT = {
     navResearch: "Investigación",
     navDownloads: "Descargas",
 
-    // Home Page
+    // Homepage
     homeOpenConsole: "Abrir consola",
     homeBadge: "SO — IA soberana",
     homeTitle: "Infraestructura de inteligencia artificial soberana",
@@ -800,49 +946,51 @@ const DICT = {
     homeRoad4: "Agentes IA autónomos",
     homeRoad5: "Programación cuántica",
     homeRoad6: "Inferencia híbrida cuántica",
-    homeRoad7: "Orquestación de clúster GPU",
+    homeRoad7: "Orquestración de clúster GPU",
     homeRoad8: "SO de IA soberana",
     homeRoad9: "Sistemas de investigación autónomos",
     homeWinSub: "Windows 10/11 · 64-bit",
     homeLinuxSub: "Linux · x64 · AppImage",
+
+    // Homepage - Marketing Section
     aiMadeBrazilBadge: "Inteligencia Artificial Brasileña",
-    mainHeading: "Tu Asistente de IA, Hecho en Brasil",
-    mainDescription: "Una asistente que entiende portugués de verdad. Puede buscar en Internet, generar imágenes, escribir código y ayudarte en cualquier área — todo de forma segura.",
-    accessConsole: "Acceder a Consola",
+    mainHeading: "Tu Asistente de IA, Hecha en Brasil",
+    mainDescription: "Una asistente que entiende verdaderamente el portugués. Puede buscar en la web, generar imágenes, escribir código y ayudar en cualquier área—todo de forma segura.",
+    accessConsole: "Acceder a la Consola",
     exploreArchitecture: "Explorar Arquitectura",
     architectureLabel: "Arquitectura",
-    platformModules: "Módulos de la Plataforma",
-    platformModulesDescription: "Todo lo que necesitas en un solo lugar: chat inteligente, creación de contenido, análisis de documentos y asistencia técnica — siempre en portugués.",
+    platformModules: "Módulos de Plataforma",
+    platformModulesDescription: "Todo lo que necesitas en un solo lugar: chat inteligente, creación de contenido, análisis de documentos y asistencia técnica—siempre en portugués.",
 
-    // Platform Modules
+    // Product Features
     moduleChatTitle: "Chat Inteligente",
-    moduleChatDesc: "Conversa sobre cualquier tema. Syntexa entiende contexto, memoria y puede buscar la web en tiempo real.",
-    moduleSpeedTitle: "Respuestas a la Velocidad de la Luz",
+    moduleChatDesc: "Chatea sobre cualquier tema. Syntexa entiende contexto, memoria, y puede buscar en la web en tiempo real.",
+    moduleSpeedTitle: "Respuestas a Velocidad de Luz",
     moduleSpeedDesc: "Procesamiento distribuido en servidores de alto rendimiento para que nunca esperes.",
     moduleAgentsTitle: "Agentes Inteligentes",
-    moduleAgentsDesc: "Crea asistentes especializados que ejecutan tareas complejas de forma independiente, del planning a la ejecución.",
+    moduleAgentsDesc: "Crea asistentes especializados que ejecutan tareas complejas independientemente, desde la planificación hasta la ejecución.",
     moduleCreateTitle: "Crea con IA",
     moduleCreateDesc: "Genera imágenes, vídeos, música y audio con descripciones en portugués. Tu creatividad es el límite.",
     moduleMemoryTitle: "Memoria y Contexto",
-    moduleMemoryDesc: "Syntexa recuerda conversaciones, entiende matices y mantiene el hilo en diálogos largos.",
+    moduleMemoryDesc: "Syntexa recuerda conversaciones, entiende matices, y mantiene contexto en diálogos largos.",
     moduleSpeechTitle: "Habla con Ella",
     moduleSpeechDesc: "Dicta tus preguntas y escucha las respuestas. Reconocimiento y síntesis de voz en portugués brasileño.",
     moduleDocumentsTitle: "Lectura de Documentos",
-    moduleDocumentsDesc: "Carga PDFs, hojas de cálculo y texto. Syntexa resume, extrae información y responde sobre el contenido.",
+    moduleDocumentsDesc: "Carga PDFs, hojas de cálculo y texto. Syntexa resume, extrae info, y responde sobre el contenido.",
     modulePowerTitle: "Potencia Real",
-    modulePowerDesc: "Infraestructura de última generación con GPUs dedicadas para procesar miles de millones de parámetros en segundos.",
+    modulePowerDesc: "Infraestructura de nueva generación con GPUs dedicadas para procesar miles de millones de parámetros en segundos.",
     moduleSecurityTitle: "Seguridad y Privacidad",
-    moduleSecurityDesc: "Tus datos se quedan contigo. Cifrado completo y nada enviado a empresas extranjeras.",
+    moduleSecurityDesc: "Tus datos se quedan contigo. Encriptación completa y nada enviado a empresas extranjeras.",
     moduleResearchTitle: "Investigación Avanzada",
     moduleResearchDesc: "Herramientas de investigación científica y optimización para proyectos complejos e innovación.",
     moduleExecutionTitle: "Ejecución Rápida",
-    moduleExecutionDesc: "Respuestas instantáneas donde quiera que estés, con tecnología de vanguardia en servidores distribuidos.",
+    moduleExecutionDesc: "Respuestas instantáneas dondequiera que estés, con tecnología de punta en servidores distribuidos.",
     moduleBusinessTitle: "Para Empresas",
-    moduleBusinessDesc: "Contratos con garantía de funcionamiento, reportes completos y cumplimiento de LGPD.",
+    moduleBusinessDesc: "Contratos con garantías de disponibilidad, informes completos y cumplimiento de LGPD.",
     statusOperational: "Operacional",
     statusStandby: "Standby",
 
-    // Chat
+    // Chat Interface
     you: "Tú",
     syntexa: "Syntexa",
     processingResponse: "Procesando respuesta...",
@@ -858,7 +1006,7 @@ const DICT = {
     stop: "Detener",
     askAnything: "Pregunta lo que sea sobre estudios, trabajo o negocios y deja que Syntexa desbloquee el siguiente paso contigo.",
 
-    // LLM Display
+    // LLM Core
     llmBadge: "Núcleo neural cuántico",
     llmTitle: "Quantum LLM Core",
     llmLead: "Visualización de cadena de inferencia híbrida con orquestación neural y optimización cuántica.",
@@ -873,30 +1021,31 @@ const DICT = {
     llmStep5: "Decodificación soberana",
     llmStep5Desc: "Salida final con control de temperatura y sampling top-p.",
 
-    // Authentication
+    // Authentication & Login
     loginTitle: "Iniciar Sesión",
     loginDescription: "Accede a tu cuenta para chat y herramientas.",
     loginButton: "Iniciar Sesión",
     enteringStatus: "Iniciando sesión...",
-    loginFailed: "Falló al iniciar sesión. Intenta de nuevo.",
+    loginFailed: "Falló iniciar sesión. Intenta de nuevo.",
     invalidLoginResponse: "Respuesta de inicio de sesión inválida.",
     emailLabel: "Correo Electrónico",
     passwordLabel: "Contraseña",
-    createAccountLink: "Crear cuenta",
-    forgotPassword: "Olvidé mi contraseña",
+    createAccount: "Crear Cuenta",
+    createAccountLink: "Crear Cuenta",
+    forgotPassword: "Olvidé mi Contraseña",
     loginWithGithub: "Iniciar sesión con GitHub",
-    githubNoEmailError: "Inicia sesión con correo/contraseña u haz tu email de GitHub público.",
+    githubNoEmailError: "Inicia sesión con correo/contraseña o haz público tu correo de GitHub.",
     githubOAuthError: "GitHub no respondió. Por favor intenta de nuevo.",
-    turnstileWaitMessage: "Por favor espera que se cargue la verificación de seguridad.",
+    turnstileWaitMessage: "Por favor espera a que se cargue la verificación de seguridad.",
     securityErrorPrefix: "Error de Seguridad:",
 
-    // Registration
+    // Registration & Account Creation
     createAccountTitle: "Crear Cuenta",
     createAccountDescription: "Comienza a usar la plataforma Syntexa AI en segundos.",
     registerButton: "Registrarse",
     creatingAccount: "Creando cuenta...",
     fullNameLabel: "Nombre Completo",
-    documentLabel: "ID de Documento",
+    documentLabel: "Documento de Identidad",
     cepLabel: "Código Postal",
     stateLabel: "Estado",
     cityLabel: "Ciudad",
@@ -907,26 +1056,26 @@ const DICT = {
     passwordsMismatch: "Las contraseñas no coinciden.",
     termsNotAccepted: "Debes aceptar los Términos y Condiciones para continuar.",
     termsAcceptanceText: "Acepto los Términos y Condiciones y la Política de Privacidad.",
-    accountCreationFailed: "Falló la creación de cuenta.",
+    accountCreationFailed: "La creación de cuenta falló.",
     accountCreatedVerificationSent: "Cuenta creada. Enviamos un código de verificación a tu correo.",
-    unexpectedAccountError: "Error inesperado al crear cuenta.",
+    unexpectedAccountError: "Error inesperado creando cuenta.",
     alreadyHaveAccount: "¿Ya tienes cuenta?",
-    backToLogin: "Volver a Inicio de Sesión",
+    backToLogin: "Volver al Inicio de Sesión",
 
-    // Password Recovery
+    // Password Recovery & Reset
     recoveryTitle: "Recuperar Contraseña",
-    recoveryDescription: "Usa tu correo y el código recibido para resetear tu contraseña.",
-    sendResetCode: "Enviar Código de Reset",
+    recoveryDescription: "Usa tu correo y el código recibido para restablecer tu contraseña.",
+    sendResetCode: "Enviar Código de Restablecimiento",
     sendingEmail: "Enviando...",
-    passwordResetEmailSent: "Si el correo existe, se enviará un código de reset.",
+    passwordResetEmailSent: "Si el correo existe, se enviará un código de restablecimiento.",
     recoveryCodeLabel: "Código de Recuperación",
     newPasswordLabel: "Nueva Contraseña",
-    resetButton: "Resetear Contraseña",
-    resettingPassword: "Reseteando...",
-    passwordResetSuccess: "Contraseña reseteada exitosamente. Ya puedes iniciar sesión.",
-    passwordResetFailed: "Falló al resetear contraseña.",
-    passwordResetError: "Error al resetear contraseña.",
-    passwordResetRequestError: "Error al solicitar reset.",
+    resetButton: "Restablecer Contraseña",
+    resettingPassword: "Restableciendo...",
+    passwordResetSuccess: "Contraseña restablecida exitosamente. Ahora puedes iniciar sesión.",
+    passwordResetFailed: "Falló el restablecimiento de contraseña.",
+    passwordResetError: "Error al restablecer la contraseña.",
+    passwordResetRequestError: "Error al solicitar el restablecimiento.",
     rememberPassword: "¿Recuerdas tu contraseña?",
 
     // Email Verification
@@ -935,11 +1084,11 @@ const DICT = {
     verificationCodeLabel: "Código de Verificación",
     verifyButton: "Verificar",
     verifyingEmail: "Verificando...",
-    emailVerificationSuccess: "Correo verificado exitosamente. Ya puedes iniciar sesión.",
-    emailVerificationFailed: "Falló la verificación del correo.",
-    unexpectedVerificationError: "Error inesperado al verificar correo.",
+    emailVerificationSuccess: "Correo verificado exitosamente. Ahora puedes iniciar sesión.",
+    emailVerificationFailed: "Falló la verificación de correo.",
+    unexpectedVerificationError: "Error inesperado verificando correo.",
 
-    // Profile
+    // User Profile & Settings
     profileTitle: "Perfil de Usuario",
     profileDescription: "Edita tus datos de cuenta y personaliza tu perfil Syntexa.",
     loadingProfile: "Cargando perfil...",
@@ -958,55 +1107,55 @@ const DICT = {
     profileSaveError: "No se pudo guardar el perfil.",
     saveProfileButton: "Guardar Perfil",
 
-    // 2FA
+    // Two-Factor Authentication (2FA)
     securityTitle: "Seguridad de Cuenta (2FA)",
-    securityDescription: "Activa autenticación de dos factores (TOTP) para reforzar el acceso. Usa apps como Google Authenticator, Authy o Microsoft Authenticator.",
-    twoFaAvailabilityNote: "Para tu cuenta, la disponibilidad del 2FA depende de la política del backend (admin/gobierno). Si no está habilitado, la API retorna mensaje de permiso.",
-    generateTwoFaButton: "Generar Setup 2FA",
+    securityDescription: "Habilita autenticación de dos factores (TOTP) para fortalecer el acceso. Usa apps como Google Authenticator, Authy o Microsoft Authenticator.",
+    twoFaAvailabilityNote: "Para tu cuenta, la disponibilidad de 2FA depende de la política del backend (admin/gobierno). Si no está habilitada, la API devuelve un mensaje de permiso.",
+    generateTwoFaButton: "Generar Configuración 2FA",
     generatingStatus: "Generando...",
     twoFaCodeLabel: "Código 2FA",
-    twoFaPrompt: "Ingresa tu código de autenticador (2FA) para completar el inicio de sesión.",
+    twoFaPrompt: "Ingresa tu código autenticador (2FA) para completar el inicio de sesión.",
     validateTwoFaButton: "Validar 2FA",
     validatingTwoFa: "Validando...",
-    twoFaSetupGenerated: "Setup 2FA generado. Registra en tu app autenticador y confirma el código abajo.",
-    twoFaSetupError: "No se pudo iniciar el setup 2FA.",
-    twoFaEnabled: "2FA activado exitosamente.",
-    twoFaActivationFailed: "Falló al activar 2FA.",
+    twoFaSetupGenerated: "Configuración 2FA generada. Regístrate en la app autenticadora y confirma el código abajo.",
+    twoFaSetupError: "No se pudo iniciar la configuración 2FA.",
+    twoFaEnabled: "2FA habilitado exitosamente.",
+    twoFaActivationFailed: "Falló la activación de 2FA.",
     twoFaValidationFailed: "No se pudo validar el código 2FA.",
     invalidTwoFaCode: "Código 2FA inválido.",
 
-    // Admin & Config
+    // Admin & Configuration
     accountSettingsTitle: "Configuración de Cuenta",
-    accountSettingsDescription: "Preferencias y datos de tu cuenta Syntexa.",
+    accountSettingsDescription: "Tus preferencias y datos de cuenta Syntexa.",
     accountSettingsHelpText: "Usa Planes para suscripción y Perfil para datos personales y seguridad.",
-    ipListLoadError: "No se pudo cargar la lista (verifica inicio de sesión admin y API).",
+    ipListLoadError: "No se pudo cargar la lista (verifica login admin y API).",
     ipSavedSuccess: "Guardado. {count} IP(s).",
     errorSaving: "Error al guardar.",
 
-    // Pricing
+    // Pricing & Subscriptions
     plansPageTitle: "Planes Syntexa",
-    plansPageDescription: "Elige el plan que tiene sentido para ti. Estudiantes con email .edu obtienen 50% de descuento en cualquier plan pago.",
+    plansPageDescription: "Elige el plan que tiene sentido para ti. Estudiantes con correo .edu obtienen 50% de descuento en cualquier plan pagado.",
     planFreeTitle: "Gratuito",
-    planFreeTag: "Sin Tarjeta Requerida",
+    planFreeTag: "Sin Tarjeta",
     planFreePrice: "$0",
     perMonth: "/mes",
-    forEver: "para siempre",
-    planFreeDescription: "120 mensajes por día para probar. Chat, búsqueda web y respuestas inteligentes — sin tarjeta.",
+    forEver: "Para Siempre",
+    planFreeDescription: "120 mensajes por día para probar. Chat, búsqueda web y respuestas inteligentes—sin tarjeta.",
     planBasicTitle: "Básico",
-    planBasicTag: "Para Empezar",
+    planBasicTag: "Para Comenzar",
     planBasicPrice: "$39",
     perStudentMonth: "estudiante/mes",
-    planBasicDescription: "500 mensajes/mes, carga de archivos y respuestas más completas. Ideal para estudiantes y freelancers.",
+    planBasicDescription: "500 mensajes/mes, carga de archivos y respuestas completas. Perfecto para estudiantes y freelancers.",
     planMediumTitle: "Medio",
     planMediumTag: "Más Popular",
     planMediumPrice: "$99",
-    planMediumDescription: "Mensajes ilimitados, generación de imagen/vídeo/audio, código y contexto extendido. Para profesionales.",
+    planMediumDescription: "Mensajes ilimitados, generación de imagen/vídeo/audio, código, contexto extendido. Para profesionales.",
     planMasterTitle: "Master",
-    planMasterTag: "Empresa",
+    planMasterTag: "Empresarial",
     planMasterPrice: "$199",
     planMasterDescription: "Todo ilimitado + agentes avanzados, soporte prioritario, múltiples usuarios, herramientas empresariales.",
 
-    // WhatsApp
+    // WhatsApp Integration
     whatsappPageTitle: "WhatsApp Business",
     whatsappPageDescription: "Conecta tu WhatsApp Business y gestiona conversaciones con IA",
     oauthAuthorizationDenied: "Autorización negada o cancelada.",
@@ -1019,70 +1168,138 @@ const DICT = {
     connectionFailed: "Falló la Conexión",
     backToWhatsApp: "Volver a WhatsApp",
 
-    // PWA & Download
+    // PWA & Installation
     downloadPageTitle: "Instalar Syntexa AI",
-    downloadPageDescription: "App completo con acceso directo en desktop, entrada en menú Inicio y apertura directa al chat.",
+    downloadPageDescription: "App completa con acceso directo del escritorio, entrada del menú Inicio, y apertura directa en chat.",
     installPwaOption: "Instalar como App (PWA)",
     platformsSupported: "Windows · macOS · Linux · Android · iOS",
-    pwaFeature1: "Acceso directo en desktop y menú Inicio",
-    pwaFeature2: "Se abre como ventana propia, sin barra del navegador",
-    pwaFeature3: "Funciona offline para páginas ya visitadas",
+    pwaFeature1: "Acceso directo del escritorio y entrada del menú Inicio",
+    pwaFeature2: "Se abre como ventana independiente, sin barra del navegador",
+    pwaFeature3: "Funciona sin conexión para páginas ya visitadas",
     pwaFeature4: "Se abre directamente en el chat de IA",
-    pwaInstalledSuccess: "✓ ¡App instalado exitosamente!",
+    pwaInstalledSuccess: "✓ ¡App instalada exitosamente!",
     installAppNow: "Instalar App Ahora",
     installApp: "Instalar App",
-    installAppFallbackInstructions: "Si el botón no funciona: haz clic en el icono ⋮ o ⊕ en la barra de direcciones de Chrome/Edge y elige 'Instalar Syntexa AI'.",
+    installAppFallbackInstructions: "Si el botón no funciona: haz clic en el icono ⋮ o ⊕ en la barra de direcciones de Chrome/Edge y elige \"Instalar Syntexa AI\".",
     orSeparator: "o",
-    openInBrowserButton: "Abrir en Navegador sin Instalar",
+    openInBrowserButton: "Abrir en Navegador Sin Instalar",
     iosInstructions: "iPhone / iPad (Safari)",
-    iosInstallSteps: "Toca Compartir → 'Añadir a Pantalla de Inicio'. La app aparece en la pantalla de inicio como cualquier otra.",
+    iosInstallSteps: "Toca Compartir → \"Añadir a Pantalla de Inicio\". La app aparece en la pantalla de inicio como cualquier otra.",
     androidInstructions: "Android (Chrome)",
-    androidInstallSteps: "Toca el menú ⋮ → 'Añadir a pantalla de inicio' o espera el banner automático de instalación.",
+    androidInstallSteps: "Toca el menú ⋮ → \"Añadir a pantalla de inicio\" o espera el banner de instalación automática.",
 
-    // Roadmap
+    // Product Roadmap
     roadmapPhase1Window: "0-30 días",
     roadmapPhase1Focus: "Lanzamiento y Conversión Inicial",
-    roadmapPhase1Item1: "Refina onboarding y reduce abandono de primer uso",
-    roadmapPhase1Item2: "CTAs comerciales en páginas estratégicas para acelerar upgrades",
-    roadmapPhase1Item3: "Ajustes de SEO técnico (metadata, sitemap, docs y ruta roadmap)",
+    roadmapPhase1Item1: "Refinar incorporación y reducir abandono en primer uso",
+    roadmapPhase1Item2: "CTAs comerciales en páginas estratégicas para acelerar actualizaciones",
+    roadmapPhase1Item3: "Ajustes técnicos de SEO (metadata, sitemap, docs y ruta roadmap)",
     roadmapPhase2Window: "31-60 días",
     roadmapPhase2Focus: "Monetización y Retención",
-    roadmapPhase2Item1: "Aumenta conversión de usuario activo a cliente pagador",
-    roadmapPhase2Item2: "Mejora planes y propuesta de valor por perfil",
-    roadmapPhase2Item3: "Implementa tracking de cohortes de retención semanal/mensual",
+    roadmapPhase2Item1: "Aumentar conversión de usuario activo a cliente pagador",
+    roadmapPhase2Item2: "Mejorar planes y propuesta de valor por perfil",
+    roadmapPhase2Item3: "Implementar seguimiento de cohortes de retención semanal/mensual",
     roadmapPhase3Window: "61-90 días",
-    roadmapPhase3Focus: "Escalado con Predictabilidad",
-    roadmapPhase3Item1: "Repite canal ganador de adquisición con CAC controlado",
-    roadmapPhase3Item2: "Hardening operacional y monitoreo continuo de estabilidad",
+    roadmapPhase3Focus: "Escalado con Previsibilidad",
+    roadmapPhase3Item1: "Repetir canal de adquisición ganador con CAC controlado",
+    roadmapPhase3Item2: "Endurecimiento operacional y monitoreo continuo de estabilidad",
     roadmapPhase3Item3: "Evidencia de tracción para expansión comercial e institucional",
     roadmapPhase4Window: "4-12 meses",
-    roadmapPhase4Focus: "Expansión Guiada por Datos",
+    roadmapPhase4Focus: "Expansión Impulsada por Datos",
     roadmapPhase4Item1: "Evolución gradual de capacidad hasta referencia de 100k concurrentes",
     roadmapPhase4Item2: "Contratación por hitos de ingresos, retención y confiabilidad",
-    roadmapPhase4Item3: "Escalado nacional manteniendo costo operacional predecible",
+    roadmapPhase4Item3: "Escala nacional manteniendo costo operacional predecible",
 
-    // Legal & Policies
+    // Policies & Legal
     termsPageTitle: "Términos y Condiciones",
-    termsContent1: "Al usar Syntexa, aceptas usar la plataforma de acuerdo con la ley brasileña y políticas de seguridad. El uso abusivo, fraudulento o que viole derechos de terceros está prohibido.",
-    termsContent2: "La cuenta y credenciales son responsabilidad del usuario. Podemos actualizar estos términos para adecuación legal y operacional.",
+    termsContent1: "Al usar Syntexa, aceptas usar la plataforma de conformidad con la ley brasileña y políticas de seguridad. El uso abusivo, fraudulento o que infrinja derechos está prohibido.",
+    termsContent2: "La cuenta y las credenciales son responsabilidad del usuario. Podemos actualizar estos términos para cumplimiento legal y operacional.",
     cookiesPolicyTitle: "Política de Cookies",
-    cookiesPolicyContent1: "Usamos cookies esenciales para login, seguridad de sesión y funcionamiento de la aplicación. Las cookies de medición pueden usarse para mejorar desempeño y experiencia.",
+    cookiesPolicyContent1: "Usamos cookies esenciales para inicio de sesión, seguridad de sesión y funcionalidad de la aplicación. Las cookies de medición pueden usarse para mejorar el rendimiento y la experiencia.",
     cookiesPolicyContent2: "En el banner de consentimiento, puedes elegir aceptar todas las cookies o mantener solo las esenciales.",
     privacyPageTitle: "Política de Privacidad",
-    privacyContent1: "Manejamos datos personales según LGPD para autenticación, seguridad, provisión del servicio y mejora continua de la plataforma.",
-    privacyContent2: "Puedes solicitar actualización o eliminación de datos a través de canales oficiales de soporte, sujeto a obligaciones legales de retención.",
+    privacyContent1: "Manejamos datos personales según LGPD para autenticación, seguridad, prestación de servicio y mejora continua de la plataforma.",
+    privacyContent2: "Puedes solicitar actualizaciones o eliminación de datos a través de canales de soporte oficial, sujeto a obligaciones legales de retención.",
 
-    // WhatsApp
-    whatsappCompanies: "Empresas",
-    whatsappActiveNumbers: "Números Activos",
-    whatsappConversations: "Conversaciones",
-    whatsappMessages: "Mensajes",
-    whatsappRecentConversations: "Conversaciones Recientes",
-    whatsappNoConversations: "Aún no hay conversaciones",
-    whatsappConversationsAppear: "Las conversaciones aparecerán cuando se reciban mensajes",
-    whatsappContact: "Contacto",
-    whatsappNoMessage: "Ningún mensaje",
+    // Integrations Page
+    integrationsDescription: "Conecta tus plataformas favoritas y gestiona todo en un solo lugar.",
+    whatsappPageTitle: "WhatsApp Business",
+    instagramPageTitle: "Instagram",
+    facebookPageTitle: "Facebook",
+    tiktokPageTitle: "TikTok Business",
+    whatsappDescription: "Conecta tu WhatsApp Business para gestionar conversaciones con IA y automaciones.",
+    instagramDescription: "Integra tu Instagram para respuestas automáticas y análisis de mensajes.",
+    facebookDescription: "Conecta tu Facebook para gestionar comentarios y mensajes con IA.",
+    tiktokDescription: "Integra tu TikTok Business para análisis y automatización de contenido.",
+    connectWhatsApp: "Conectar WhatsApp",
+    connectInstagram: "Conectar Instagram",
+    connectFacebook: "Conectar Facebook",
+    connectTikTok: "Conectar TikTok",
+    oauthRedirectUrl: "URL de Redirección OAuth",
+    supportedLocales: "Locales Soportados",
+
+    // Home Page - WhatsApp Section
+    whatsappTitle: "WhatsApp Business",
+    whatsappSubtitle: "Automatización e Inteligencia Artificial",
+    whatsappChatbot: "Chatbot IA",
+    whatsappChatbotDesc: "Respuestas automáticas con inteligencia artificial",
+    whatsappAttendants: "Asistentes",
+    whatsappAttendantsDesc: "Gestión de múltiples asistentes",
+    whatsappNumbers: "Números",
+    whatsappNumbersDesc: "Soporte para múltiples números",
+    whatsappAutomations: "Automatizaciones",
+    whatsappAutomationsDesc: "Flujos automáticos personalizados",
+    whatsappMemory: "Memoria",
+    whatsappMemoryDesc: "Contexto persistente de conversaciones",
+    whatsappAnalytics: "Análisis",
+    whatsappAnalyticsDesc: "Reportes y métricas detalladas",
+
+    // Home Page - Document Engine
+    documentEngine: "Document Engine",
+    documentEngineTitle: "Procesamiento de Documentos",
+    documentEngineDesc: "Análisis inteligente de archivos",
+    docPdf: "PDF",
+    docPdfDesc: "Procesamiento de archivos PDF",
+    docExcel: "Excel",
+    docExcelDesc: "Análisis de hojas de cálculo",
+    docWord: "Word",
+    docWordDesc: "Procesamiento de documentos Word",
+    docCsv: "CSV",
+    docCsvDesc: "Importación de datos CSV",
+
+    // Home Page - Specs
+    specModelParams: "Parámetros del Modelo",
+    specTransformer: "Transformer",
+    specVoice: "Voz",
+    specVoiceDesc: "Procesamiento de audio",
+    specProcessing: "Procesamiento",
+    specProcessingDesc: "Acelerado por GPU",
+    specData: "Datos",
+    specDataDesc: "Privacidad garantizada",
+    infrastructureLabel: "Infraestructura",
+    accessLayers: "Capas de Acceso",
+    accessLayersDesc: "Múltiples capas de seguridad",
+
+    // Home Page - Plans
+    planFreeName: "Gratis",
+    planFreePrice: "$0",
+    planFreeDesc: "Para comenzar",
+    planBasicName: "Básico",
+    planBasicPrice: "$39",
+    planBasicDesc: "Para estudiantes y freelancers",
+    planMidName: "Profesional",
+    planMidPrice: "$99",
+    planMidDesc: "Para profesionales",
+    planMasterName: "Empresarial",
+    planMasterPrice: "$199",
+    planMasterDesc: "Para empresas",
+
+    // Cookies & Legal
+    acceptCookies: "Aceptar Cookies",
+    rejectCookies: "Rechazar",
+    cookieConsent: "Usamos cookies para mejorar tu experiencia",
   },
+
   "zh-CN": {
     // Navigation & Layout
     chat: "聊天",
@@ -1094,49 +1311,51 @@ const DICT = {
     login: "登录",
     conversations: "对话",
     new: "新建",
-    general: "通用",
+    general: "常规",
     specializations: "专业化",
     tools: "工具",
     account: "账户",
-    authenticatedAccount: "已认证的Syntexa账户",
-    publicMode: "免费公共模式",
+    authenticatedAccount: "Syntexa 认证账户",
+    publicMode: "免费公开模式",
     historyHint: "使用认证聊天后，历史记录将出现在此处。",
     newConversation: "新对话",
     rightsReserved: "版权所有。",
     educationResearch: "教育与研究",
     labs: "实验室",
-    scienceTech: "科技",
+    scienceTech: "科学与技术",
     competitions: "竞赛",
     aluno: "学生",
     government: "政府",
     download: "下载",
     teacherArea: "教师区域",
-    fullAi: "完整人工智能",
-    bankFinance: "银行和金融",
+    fullAi: "完整 AI",
+    bankFinance: "银行与金融",
     agro: "农业",
-    taxes: "税收",
-    whatsappSales: "WhatsApp销售",
+    taxes: "税收/收入",
+    whatsappSales: "WhatsApp 销售",
     integrations: "集成",
     offlineSystem: "离线系统",
-    apiTokens: "API令牌",
+    apiTokens: "API 令牌",
+
+    // Navigation Links
     navHome: "首页",
     navQuantumCore: "量子核心",
-    navAiInfrastructure: "人工智能基础设施",
+    navAiInfrastructure: "AI 基础设施",
     navNeuralSystems: "神经系统",
-    navSovereignLlm: "主权LLM",
+    navSovereignLlm: "主权 LLM",
     navResearch: "研究",
     navDownloads: "下载",
 
-    // Home Page
+    // Homepage
     homeOpenConsole: "打开控制台",
-    homeBadge: "主权人工智能操作系统",
+    homeBadge: "主权 AI 操作系统",
     homeTitle: "主权人工智能基础设施",
-    homeSubtitle: "为下一代自主系统而生的量子原生认知架构。",
+    homeSubtitle: "用于下一代自主系统的量子原生认知架构。",
     homeCtaPrimary: "进入神经核心",
     homeCtaSecondary: "探索量子系统",
     homeCapabilitiesTitle: "能力矩阵",
     homeCapabilitiesLead: "轻量级空间布局中的平台能力。",
-    homeRoadmapTitle: "时间表",
+    homeRoadmapTitle: "时间线",
     homeDownloadsTitle: "运行时下载",
     homeDownloadsLead: "用于生产部署的官方构建。",
     homeWinBuild: "Windows",
@@ -1150,328 +1369,377 @@ const DICT = {
     homeCapSheet: "电子表格生成",
     homeCapQuantum: "量子优化",
     homeCapRouting: "概率路由",
-    homeCapMultiAgent: "多代理执行",
+    homeCapMultiAgent: "多智能体执行",
     homeCapInference: "分布式推理",
     homeCapCrypto: "密码学安全",
-    homeCapRuntime: "主权AI运行时",
-    homeRoad1: "量子LLM核心",
-    homeRoad2: "分布式AI网格",
-    homeRoad3: "神经边界运行时",
-    homeRoad4: "自主AI代理",
+    homeCapRuntime: "主权 AI 运行时",
+    homeRoad1: "量子 LLM 核心",
+    homeRoad2: "分布式 AI 网格",
+    homeRoad3: "神经边缘运行时",
+    homeRoad4: "自主 AI 代理",
     homeRoad5: "量子调度",
     homeRoad6: "混合量子推理",
-    homeRoad7: "GPU集群编排",
-    homeRoad8: "主权AI操作系统",
+    homeRoad7: "GPU 集群编排",
+    homeRoad8: "主权 AI 操作系统",
     homeRoad9: "自主研究系统",
-    homeWinSub: "Windows 10/11 · 64位",
+    homeWinSub: "Windows 10/11 · 64 位",
     homeLinuxSub: "Linux · x64 · AppImage",
+
+    // Homepage - Marketing Section
     aiMadeBrazilBadge: "巴西人工智能",
-    mainHeading: "您的人工智能助手，巴西制造",
-    mainDescription: "一个真正理解葡萄牙语的助手。可以搜索网络、生成图像、编写代码并在任何领域提供帮助——一切都很安全。",
+    mainHeading: "你的 AI 助手，巴西制造",
+    mainDescription: "一个真正理解葡萄牙语的助手。可以搜索网络、生成图像、编写代码，并在任何领域提供帮助——全部安全进行。",
     accessConsole: "访问控制台",
     exploreArchitecture: "探索架构",
     architectureLabel: "架构",
     platformModules: "平台模块",
-    platformModulesDescription: "您需要的一切：智能聊天、内容创建、文档分析和技术支持——始终采用葡萄牙语。",
+    platformModulesDescription: "你需要的一切都在一个地方：智能聊天、内容创建、文档分析和技术支持——始终使用葡萄牙语。",
 
-    // Platform Modules
+    // Product Features
     moduleChatTitle: "智能聊天",
-    moduleChatDesc: "讨论任何话题。Syntexa理解背景、记忆并可以实时搜索网络。",
-    moduleSpeedTitle: "闪电般的快速回复",
-    moduleSpeedDesc: "高性能服务器上的分布式处理，让您无需等待。",
+    moduleChatDesc: "讨论任何话题。Syntexa 理解上下文、记忆，可以实时搜索网络。",
+    moduleSpeedTitle: "光速响应",
+    moduleSpeedDesc: "高性能服务器上的分布式处理，让你永不等待。",
     moduleAgentsTitle: "智能代理",
-    moduleAgentsDesc: "创建专业的助手，独立执行复杂任务，从规划到执行。",
-    moduleCreateTitle: "用人工智能创建",
-    moduleCreateDesc: "用葡萄牙语描述生成图像、视频、音乐和音频。您的创意是极限。",
-    moduleMemoryTitle: "记忆和背景",
-    moduleMemoryDesc: "Syntexa记住对话、理解细节并在长对话中保持话题。",
+    moduleAgentsDesc: "创建专门的助手，独立执行复杂任务，从规划到执行。",
+    moduleCreateTitle: "用 AI 创造",
+    moduleCreateDesc: "通过葡萄牙语描述生成图像、视频、音乐和音频。你的创意是极限。",
+    moduleMemoryTitle: "记忆与上下文",
+    moduleMemoryDesc: "Syntexa 记住对话、理解细微差别，在长对话中保持连贯性。",
     moduleSpeechTitle: "与她交谈",
-    moduleSpeechDesc: "口述您的问题并听取答案。巴西葡萄牙语的语音识别和合成。",
+    moduleSpeechDesc: "口述问题并听取答案。巴西葡萄牙语的语音识别和合成。",
     moduleDocumentsTitle: "文档阅读",
-    moduleDocumentsDesc: "上传PDF、电子表格和文本。Syntexa总结、提取信息并回答内容问题。",
-    modulePowerTitle: "真正的力量",
-    modulePowerDesc: "最先进的基础设施，配备专用GPU，可在数秒内处理数十亿个参数。",
-    moduleSecurityTitle: "安全和隐私",
-    moduleSecurityDesc: "您的数据由您保管。完全加密，不发送给外国公司。",
+    moduleDocumentsDesc: "上传 PDF、电子表格和文本。Syntexa 汇总、提取信息并回答内容相关问题。",
+    modulePowerTitle: "真实力量",
+    modulePowerDesc: "下一代基础设施，配备专用 GPU，在几秒内处理数十亿个参数。",
+    moduleSecurityTitle: "安全与隐私",
+    moduleSecurityDesc: "你的数据由你控制。完全加密，不向外国公司发送任何内容。",
     moduleResearchTitle: "高级研究",
-    moduleResearchDesc: "用于复杂项目和创新的科研工具和优化。",
+    moduleResearchDesc: "科学研究工具和优化，用于复杂项目和创新。",
     moduleExecutionTitle: "快速执行",
-    moduleExecutionDesc: "无论您在哪里，都能获得即时答案，采用最先进的分布式服务器技术。",
-    moduleBusinessTitle: "针对企业",
-    moduleBusinessDesc: "具有正常运行时间保证、完整报告和LGPD合规性的合同。",
+    moduleExecutionDesc: "无论你在哪里都能获得即时答案，采用尖端分布式服务器技术。",
+    moduleBusinessTitle: "企业版",
+    moduleBusinessDesc: "包括运行时间保证的合同、完整报告和 LGPD 合规性。",
     statusOperational: "运营中",
-    statusStandby: "待命",
+    statusStandby: "待机",
 
-    // Chat
-    you: "您",
+    // Chat Interface
+    you: "你",
     syntexa: "Syntexa",
     processingResponse: "正在处理响应...",
-    chatPlaceholder: "输入或说出您的消息...",
+    chatPlaceholder: "输入或说出你的消息...",
     copy: "复制",
     listen: "听",
     image: "图像",
     audio: "音频",
     video: "视频",
-    speech: "讲话",
+    speech: "语音",
     sending: "发送中",
     send: "发送",
     stop: "停止",
-    askAnything: "询问关于学习、工作或商业的任何事情，让Syntexa为您打开下一步。",
+    askAnything: "询问关于学习、工作或商业的任何内容，让 Syntexa 为你解锁下一步。",
 
-    // LLM Display
+    // LLM Core
     llmBadge: "量子神经核心",
-    llmTitle: "量子LLM核心",
-    llmLead: "混合推理链可视化，具有神经编排和量子优化。",
+    llmTitle: "量子 LLM 核心",
+    llmLead: "混合推理链的可视化，带有神经编排和量子优化。",
     llmStep1: "量子标记化",
-    llmStep1Desc: "隐空间中的令牌映射，具有量子概率。",
+    llmStep1Desc: "将令牌映射到具有量子概率的潜在空间。",
     llmStep2: "神经路由",
-    llmStep2Desc: "推理节点间的层分布，具有优化的延迟。",
+    llmStep2Desc: "跨推理节点的层分布，具有优化的延迟。",
     llmStep3: "张量执行",
-    llmStep3Desc: "由CUDA和WASM SIMD加速的矩阵运算。",
+    llmStep3Desc: "由 CUDA 和 WASM SIMD 加速的矩阵操作。",
     llmStep4: "量子熵",
     llmStep4Desc: "下一个令牌生成的不确定性计算。",
     llmStep5: "主权解码",
-    llmStep5Desc: "具有温度控制和top-p采样的最终输出。",
+    llmStep5Desc: "具有温度控制和 top-p 采样的最终输出。",
 
-    // Authentication
+    // Authentication & Login
     loginTitle: "登录",
-    loginDescription: "访问您的帐户进行聊天和工具。",
+    loginDescription: "访问你的账户以进行聊天和工具使用。",
     loginButton: "登录",
-    enteringStatus: "登录中...",
+    enteringStatus: "正在登录...",
     loginFailed: "登录失败。请重试。",
     invalidLoginResponse: "无效的登录响应。",
     emailLabel: "电子邮件",
     passwordLabel: "密码",
+    createAccount: "创建账户",
     createAccountLink: "创建账户",
     forgotPassword: "忘记密码",
-    loginWithGithub: "使用GitHub登录",
-    githubNoEmailError: "使用电子邮件/密码登录或使您的GitHub电子邮件公开。",
-    githubOAuthError: "GitHub没有响应。请重试。",
+    loginWithGithub: "使用 GitHub 登录",
+    githubNoEmailError: "使用电子邮件/密码登录或在 GitHub 账户中公开你的电子邮件。",
+    githubOAuthError: "GitHub 没有响应。请重试。",
     turnstileWaitMessage: "请等待安全验证加载。",
-    securityErrorPrefix: "安全错误:",
+    securityErrorPrefix: "安全错误：",
 
-    // Registration
+    // Registration & Account Creation
     createAccountTitle: "创建账户",
-    createAccountDescription: "在几秒钟内开始使用Syntexa AI平台。",
+    createAccountDescription: "在几秒内开始使用 Syntexa AI 平台。",
     registerButton: "注册",
-    creatingAccount: "创建账户中...",
+    creatingAccount: "正在创建账户...",
     fullNameLabel: "全名",
-    documentLabel: "证件ID",
-    cepLabel: "邮编",
-    stateLabel: "州",
+    documentLabel: "身份证件号",
+    cepLabel: "邮政编码",
+    stateLabel: "州/省",
     cityLabel: "城市",
     addressLabel: "地址",
-    numberLabel: "号码",
-    complementLabel: "补充",
+    numberLabel: "门牌号",
+    complementLabel: "补充信息",
     confirmPasswordLabel: "确认密码",
     passwordsMismatch: "密码不匹配。",
-    termsNotAccepted: "您必须接受条款和条件才能继续。",
+    termsNotAccepted: "你必须接受条款和条件才能继续。",
     termsAcceptanceText: "我接受条款和条件以及隐私政策。",
     accountCreationFailed: "账户创建失败。",
-    accountCreatedVerificationSent: "账户已创建。我们向您的电子邮件发送了验证代码。",
+    accountCreatedVerificationSent: "账户已创建。我们已发送验证码到你的电子邮件。",
     unexpectedAccountError: "创建账户时出现意外错误。",
     alreadyHaveAccount: "已有账户？",
     backToLogin: "返回登录",
 
-    // Password Recovery
+    // Password Recovery & Reset
     recoveryTitle: "恢复密码",
-    recoveryDescription: "使用您的电子邮件和收到的代码重置密码。",
+    recoveryDescription: "使用你的电子邮件和收到的代码重置密码。",
     sendResetCode: "发送重置代码",
-    sendingEmail: "发送中...",
+    sendingEmail: "正在发送...",
     passwordResetEmailSent: "如果电子邮件存在，将发送重置代码。",
     recoveryCodeLabel: "恢复代码",
     newPasswordLabel: "新密码",
     resetButton: "重置密码",
-    resettingPassword: "重置中...",
-    passwordResetSuccess: "密码重置成功。您现在可以登录。",
+    resettingPassword: "正在重置...",
+    passwordResetSuccess: "密码重置成功。你现在可以登录。",
     passwordResetFailed: "密码重置失败。",
     passwordResetError: "重置密码时出错。",
-    passwordResetRequestError: "请求重置时出错。",
-    rememberPassword: "记得你的密码了？",
+    passwordResetRequestError: "请求密码重置时出错。",
+    rememberPassword: "记得你的密码？",
 
     // Email Verification
     verifyEmailTitle: "验证电子邮件",
-    verifyEmailDescription: "输入您的电子邮件和验证代码以激活您的账户。",
+    verifyEmailDescription: "输入你的电子邮件和验证代码以激活你的账户。",
     verificationCodeLabel: "验证代码",
     verifyButton: "验证",
-    verifyingEmail: "验证中...",
-    emailVerificationSuccess: "电子邮件验证成功。您现在可以登录。",
+    verifyingEmail: "正在验证...",
+    emailVerificationSuccess: "电子邮件验证成功。你现在可以登录。",
     emailVerificationFailed: "电子邮件验证失败。",
     unexpectedVerificationError: "验证电子邮件时出现意外错误。",
 
-    // Profile
-    profileTitle: "用户个人资料",
-    profileDescription: "编辑您的账户数据并自定义您的Syntexa个人资料。",
-    loadingProfile: "加载个人资料中...",
-    nameLabel: "名字",
-    namePlaceholder: "您的名字",
+    // User Profile & Settings
+    profileTitle: "用户资料",
+    profileDescription: "编辑你的账户数据并自定义你的 Syntexa 资料。",
+    loadingProfile: "正在加载资料...",
+    nameLabel: "名称",
+    namePlaceholder: "你的名字",
     usernameLabel: "用户名",
     usernamePlaceholder: "user.example",
-    cepPlaceholder: "邮编",
-    statePlaceholder: "州",
+    cepPlaceholder: "邮政编码",
+    statePlaceholder: "州/省",
     cityPlaceholder: "城市",
     addressPlaceholder: "街道/大道",
-    addressNumberLabel: "号码",
+    addressNumberLabel: "门牌号",
     noPhoto: "无照片",
-    selectImageError: "选择一个图像文件。",
-    profileUpdatedSuccess: "个人资料更新成功。",
-    profileSaveError: "无法保存个人资料。",
-    saveProfileButton: "保存个人资料",
+    selectImageError: "选择图像文件。",
+    profileUpdatedSuccess: "资料更新成功。",
+    profileSaveError: "无法保存资料。",
+    saveProfileButton: "保存资料",
 
-    // 2FA
-    securityTitle: "账户安全(2FA)",
-    securityDescription: "启用双因素认证(TOTP)来加强访问。使用Google Authenticator、Authy或Microsoft Authenticator等应用。",
-    twoFaAvailabilityNote: "对于您的账户,2FA可用性取决于后端政策(管理员/政府)。如果未启用,API将返回权限消息。",
-    generateTwoFaButton: "生成2FA设置",
-    generatingStatus: "生成中...",
-    twoFaCodeLabel: "2FA代码",
-    twoFaPrompt: "输入您的身份验证器代码(2FA)以完成登录。",
-    validateTwoFaButton: "验证2FA",
-    validatingTwoFa: "验证中...",
-    twoFaSetupGenerated: "2FA设置已生成。在认证器应用中注册并确认下面的代码。",
-    twoFaSetupError: "无法启动2FA设置。",
-    twoFaEnabled: "2FA启用成功。",
-    twoFaActivationFailed: "启用2FA失败。",
-    twoFaValidationFailed: "无法验证2FA代码。",
-    invalidTwoFaCode: "无效的2FA代码。",
+    // Two-Factor Authentication (2FA)
+    securityTitle: "账户安全（2FA）",
+    securityDescription: "启用双因素认证 (TOTP) 以加强访问安全。使用 Google Authenticator、Authy 或 Microsoft Authenticator 等应用。",
+    twoFaAvailabilityNote: "对于你的账户，2FA 的可用性取决于后端策略（管理员/政府）。如果未启用，API 会返回权限消息。",
+    generateTwoFaButton: "生成 2FA 设置",
+    generatingStatus: "正在生成...",
+    twoFaCodeLabel: "2FA 代码",
+    twoFaPrompt: "输入你的认证器代码 (2FA) 以完成登录。",
+    validateTwoFaButton: "验证 2FA",
+    validatingTwoFa: "正在验证...",
+    twoFaSetupGenerated: "2FA 设置已生成。在认证应用中注册并确认下面的代码。",
+    twoFaSetupError: "无法启动 2FA 设置。",
+    twoFaEnabled: "2FA 启用成功。",
+    twoFaActivationFailed: "2FA 激活失败。",
+    twoFaValidationFailed: "无法验证 2FA 代码。",
+    invalidTwoFaCode: "无效的 2FA 代码。",
 
-    // Admin & Config
+    // Admin & Configuration
     accountSettingsTitle: "账户设置",
-    accountSettingsDescription: "您的Syntexa账户偏好和数据。",
-    accountSettingsHelpText: "使用计划进行订阅,使用个人资料进行个人数据和安全。",
-    ipListLoadError: "无法加载列表(验证管理员登录和API)。",
-    ipSavedSuccess: "已保存。{count}个IP。",
-    errorSaving: "保存时出错。",
+    accountSettingsDescription: "你的 Syntexa 账户偏好和数据。",
+    accountSettingsHelpText: "使用计划进行订阅，使用资料获取个人数据和安全设置。",
+    ipListLoadError: "无法加载列表（验证管理员登录和 API）。",
+    ipSavedSuccess: "已保存。{count} 个 IP。",
+    errorSaving: "保存出错。",
 
-    // Pricing
-    plansPageTitle: "Syntexa计划",
-    plansPageDescription: "选择适合您的计划。具有.edu电子邮件的学生可获得任何付费计划的50%折扣。",
+    // Pricing & Subscriptions
+    plansPageTitle: "Syntexa 计划",
+    plansPageDescription: "选择适合你的计划。拥有 .edu 电子邮件的学生可在任何付费计划上获得 50% 折扣。",
     planFreeTitle: "免费",
     planFreeTag: "无需卡",
     planFreePrice: "$0",
     perMonth: "/月",
-    forEver: "永远",
-    planFreeDescription: "每天120条消息以试用。聊天、网络搜索和智能答案——无需卡。",
+    forEver: "永久",
+    planFreeDescription: "每天 120 条消息进行尝试。聊天、网络搜索和智能答案——无需卡。",
     planBasicTitle: "基础",
-    planBasicTag: "开始",
+    planBasicTag: "入门",
     planBasicPrice: "$39",
     perStudentMonth: "学生/月",
-    planBasicDescription: "500条消息/月、文件上传和更完整的答案。适合学生和自由职业者。",
+    planBasicDescription: "每月 500 条消息、文件上传和完整答案。非常适合学生和自由职业者。",
     planMediumTitle: "中级",
     planMediumTag: "最受欢迎",
     planMediumPrice: "$99",
     planMediumDescription: "无限消息、图像/视频/音频生成、代码、扩展上下文。适合专业人士。",
-    planMasterTitle: "主控",
-    planMasterTag: "企业",
+    planMasterTitle: "主版",
+    planMasterTag: "企业版",
     planMasterPrice: "$199",
-    planMasterDescription: "一切无限+高级代理、优先支持、多个用户、企业工具。",
+    planMasterDescription: "一切无限制 + 高级代理、优先支持、多个用户、企业工具。",
 
-    // WhatsApp
-    whatsappPageTitle: "WhatsApp Business",
-    whatsappPageDescription: "连接您的WhatsApp Business并用AI管理对话",
+    // WhatsApp Integration
+    whatsappPageTitle: "WhatsApp 商业版",
+    whatsappPageDescription: "连接你的 WhatsApp 商业版并用 AI 管理对话",
     oauthAuthorizationDenied: "授权被拒绝或取消。",
     oauthCodeNotReceived: "未收到授权代码。",
-    metaConnecting: "连接到Meta...",
+    metaConnecting: "正在连接到 Meta...",
     metaAwaitIntegration: "请等待我们完成集成。",
     connectedSuccess: "连接成功！",
     autoCloseWindow: "此窗口将自动关闭。",
-    redirecting: "重定向中...",
+    redirecting: "正在重定向...",
     connectionFailed: "连接失败",
-    backToWhatsApp: "返回WhatsApp",
+    backToWhatsApp: "返回 WhatsApp",
 
-    // PWA & Download
-    downloadPageTitle: "安装Syntexa AI",
-    downloadPageDescription: "带有桌面快捷方式、开始菜单条目和直接聊天打开的完整应用。",
-    installPwaOption: "安装为应用(PWA)",
+    // PWA & Installation
+    downloadPageTitle: "安装 Syntexa AI",
+    downloadPageDescription: "完整应用，包含桌面快捷方式、开始菜单条目和直接聊天打开。",
+    installPwaOption: "安装为应用 (PWA)",
     platformsSupported: "Windows · macOS · Linux · Android · iOS",
     pwaFeature1: "桌面快捷方式和开始菜单条目",
-    pwaFeature2: "作为独立窗口打开,无浏览器栏",
-    pwaFeature3: "适用于已访问页面的离线工作",
-    pwaFeature4: "直接在AI聊天中打开",
-    pwaInstalledSuccess: "✓应用安装成功！",
+    pwaFeature2: "作为独立窗口打开，无浏览器栏",
+    pwaFeature3: "对已访问页面离线工作",
+    pwaFeature4: "直接在 AI 聊天中打开",
+    pwaInstalledSuccess: "✓ 应用安装成功！",
     installAppNow: "立即安装应用",
     installApp: "安装应用",
-    installAppFallbackInstructions: "如果按钮不起作用：单击Chrome/Edge地址栏中的⋮或⊕图标,选择'安装Syntexa AI'。",
+    installAppFallbackInstructions: "如果按钮不起作用：点击 Chrome/Edge 地址栏中的 ⋮ 或 ⊕ 图标，选择\"安装 Syntexa AI\"。",
     orSeparator: "或",
     openInBrowserButton: "在浏览器中打开而不安装",
     iosInstructions: "iPhone / iPad (Safari)",
-    iosInstallSteps: "点击共享→'添加到主屏幕'。应用像其他应用一样出现在主屏幕上。",
+    iosInstallSteps: "轻按共享 → \"添加到主屏幕\"。应用将像其他任何应用一样出现在主屏幕上。",
     androidInstructions: "Android (Chrome)",
-    androidInstallSteps: "点击⋮菜单→'添加到主屏幕'或等待自动安装横幅。",
+    androidInstallSteps: "轻按 ⋮ 菜单 → \"添加到主屏幕\"或等待自动安装横幅。",
 
-    // Roadmap
-    roadmapPhase1Window: "0-30天",
-    roadmapPhase1Focus: "启动和初始转换",
-    roadmapPhase1Item1: "完善入职并减少首次使用放弃",
-    roadmapPhase1Item2: "战略页面上的商业CTA以加快升级",
-    roadmapPhase1Item3: "技术SEO调整(元数据、网站地图、文档和路线图)",
-    roadmapPhase2Window: "31-60天",
-    roadmapPhase2Focus: "货币化和保留",
-    roadmapPhase2Item1: "增加活跃用户到付费客户的转换",
-    roadmapPhase2Item2: "按个人资料增强计划和价值主张",
-    roadmapPhase2Item3: "实现每周/每月保留队列跟踪",
-    roadmapPhase3Window: "61-90天",
-    roadmapPhase3Focus: "可预测的缩放",
-    roadmapPhase3Item1: "以受控CAC重复获胜的获取渠道",
-    roadmapPhase3Item2: "运营硬化和持续稳定性监控",
+    // Product Roadmap
+    roadmapPhase1Window: "0-30 天",
+    roadmapPhase1Focus: "启动和初始转化",
+    roadmapPhase1Item1: "优化入职并减少首次使用放弃",
+    roadmapPhase1Item2: "战略页面上的商业 CTA 以加快升级",
+    roadmapPhase1Item3: "技术 SEO 调整（元数据、站点地图、文档和路线图）",
+    roadmapPhase2Window: "31-60 天",
+    roadmapPhase2Focus: "货币化和留存",
+    roadmapPhase2Item1: "增加活跃用户向付费客户的转化",
+    roadmapPhase2Item2: "按配置文件增强计划和价值主张",
+    roadmapPhase2Item3: "实施每周/每月留存队列跟踪",
+    roadmapPhase3Window: "61-90 天",
+    roadmapPhase3Focus: "可预测的扩展",
+    roadmapPhase3Item1: "使用受控的 CAC 重复获胜的收购渠道",
+    roadmapPhase3Item2: "运营硬化和持续的稳定性监控",
     roadmapPhase3Item3: "商业和机构扩展的牵引力证据",
-    roadmapPhase4Window: "4-12个月",
+    roadmapPhase4Window: "4-12 个月",
     roadmapPhase4Focus: "数据驱动的扩展",
-    roadmapPhase4Item1: "逐步容量发展至10万并发参考",
-    roadmapPhase4Item2: "按收入、保留和可靠性里程碑签约",
-    roadmapPhase4Item3: "国家规模同时保持可预测的运营成本",
+    roadmapPhase4Item1: "逐步提升容量至 10 万并发参考",
+    roadmapPhase4Item2: "按收入、留存和可靠性里程碑签约",
+    roadmapPhase4Item3: "保持国家规模，同时维持可预测的运营成本",
 
-    // Legal & Policies
+    // Policies & Legal
     termsPageTitle: "条款和条件",
-    termsContent1: "使用Syntexa即表示您同意按照巴西法律和安全政策使用该平台。禁止滥用、欺诈或侵犯第三方权利的使用。",
-    termsContent2: "账户和凭证由用户负责。我们可能会更新这些条款以实现法律和运营合规。",
-    cookiesPolicyTitle: "Cookie政策",
-    cookiesPolicyContent1: "我们使用必要的Cookie进行登录、会话安全和应用程序功能。测量Cookie可用于改进性能和体验。",
-    cookiesPolicyContent2: "在同意横幅中,您可以选择接受所有Cookie或仅保留必要的Cookie。",
+    termsContent1: "使用 Syntexa，你同意按照巴西法律和安全策略使用该平台。禁止滥用、欺诈或侵犯第三方权利的使用。",
+    termsContent2: "账户和凭证由用户负责。我们可能会更新这些条款以确保法律和运营合规性。",
+    cookiesPolicyTitle: "Cookie 政策",
+    cookiesPolicyContent1: "我们使用必要的 Cookie 进行登录、会话安全和应用功能。测量 Cookie 可用于改善性能和体验。",
+    cookiesPolicyContent2: "在同意横幅中，你可以选择接受所有 Cookie 或仅保留必要的 Cookie。",
     privacyPageTitle: "隐私政策",
-    privacyContent1: "我们根据LGPD处理个人数据,用于身份验证、安全、服务提供和持续的平台改进。",
-    privacyContent2: "您可以通过官方支持渠道请求更新或删除数据,受法律保留义务的限制。",
+    privacyContent1: "我们根据 LGPD 处理个人数据，用于认证、安全、服务提供和持续改进平台。",
+    privacyContent2: "你可以通过官方支持渠道请求数据更新或删除，须遵守法律保留义务。",
 
-    // WhatsApp
-    whatsappCompanies: "公司",
-    whatsappActiveNumbers: "活跃号码",
-    whatsappConversations: "对话",
-    whatsappMessages: "消息",
-    whatsappRecentConversations: "最近对话",
-    whatsappNoConversations: "暂无对话",
-    whatsappConversationsAppear: "收到消息时将显示对话",
-    whatsappContact: "联系人",
-    whatsappNoMessage: "无消息",
+    // Integrations Page
+    integrationsDescription: "连接你喜爱的平台，在一个地方管理一切。",
+    whatsappPageTitle: "WhatsApp 商业版",
+    instagramPageTitle: "Instagram",
+    facebookPageTitle: "Facebook",
+    tiktokPageTitle: "TikTok 商业版",
+    whatsappDescription: "连接你的 WhatsApp 商业版以用 AI 管理对话和自动化。",
+    instagramDescription: "集成你的 Instagram 以获得自动回复和消息分析。",
+    facebookDescription: "连接你的 Facebook 以用 AI 管理评论和消息。",
+    tiktokDescription: "集成你的 TikTok 商业版以进行内容分析和自动化。",
+    connectWhatsApp: "连接 WhatsApp",
+    connectInstagram: "连接 Instagram",
+    connectFacebook: "连接 Facebook",
+    connectTikTok: "连接 TikTok",
+    oauthRedirectUrl: "OAuth 重定向 URL",
+    supportedLocales: "支持的语言环境",
+
+    // Home Page - WhatsApp Section
+    whatsappTitle: "WhatsApp 商业版",
+    whatsappSubtitle: "自动化和人工智能",
+    whatsappChatbot: "AI 聊天机器人",
+    whatsappChatbotDesc: "具有人工智能的自动回复",
+    whatsappAttendants: "客服",
+    whatsappAttendantsDesc: "多个客服的管理",
+    whatsappNumbers: "号码",
+    whatsappNumbersDesc: "支持多个号码",
+    whatsappAutomations: "自动化",
+    whatsappAutomationsDesc: "自定义自动流程",
+    whatsappMemory: "记忆",
+    whatsappMemoryDesc: "持久的对话上下文",
+    whatsappAnalytics: "分析",
+    whatsappAnalyticsDesc: "详细的报告和指标",
+
+    // Home Page - Document Engine
+    documentEngine: "文档引擎",
+    documentEngineTitle: "文档处理",
+    documentEngineDesc: "智能文件分析",
+    docPdf: "PDF",
+    docPdfDesc: "PDF 文件处理",
+    docExcel: "Excel",
+    docExcelDesc: "电子表格分析",
+    docWord: "Word",
+    docWordDesc: "Word 文档处理",
+    docCsv: "CSV",
+    docCsvDesc: "CSV 数据导入",
+
+    // Home Page - Specs
+    specModelParams: "模型参数",
+    specTransformer: "Transformer",
+    specVoice: "语音",
+    specVoiceDesc: "音频处理",
+    specProcessing: "处理",
+    specProcessingDesc: "GPU 加速",
+    specData: "数据",
+    specDataDesc: "隐私保证",
+    infrastructureLabel: "基础设施",
+    accessLayers: "访问层",
+    accessLayersDesc: "多层安全",
+
+    // Home Page - Plans
+    planFreeName: "免费",
+    planFreePrice: "$0",
+    planFreeDesc: "开始使用",
+    planBasicName: "基础",
+    planBasicPrice: "$39",
+    planBasicDesc: "适合学生和自由职业者",
+    planMidName: "专业",
+    planMidPrice: "$99",
+    planMidDesc: "适合专业人士",
+    planMasterName: "企业",
+    planMasterPrice: "$199",
+    planMasterDesc: "适合企业",
+
+    // Cookies & Legal
+    acceptCookies: "接受 Cookies",
+    rejectCookies: "拒绝",
+    cookieConsent: "我们使用 cookies 来改善您的体验",
   },
 };
 
 export function getClientLocale() {
   try {
-    // Primeiro: tentar cookie (prioridade máxima - vem do middleware)
-    if (typeof document !== "undefined") {
-      const cookieMatch = document.cookie.match(/syntexa_locale=([^;]+)/);
-      if (cookieMatch) {
-        const cookieLocale = decodeURIComponent(cookieMatch[1]);
-        if (cookieLocale) return cookieLocale;
-      }
-    }
-  } catch {}
-
-  try {
-    // Segundo: tentar localStorage
-    if (typeof window !== "undefined" && window.localStorage) {
-      const saved = window.localStorage.getItem("syntexa_locale");
-      if (saved) return String(saved);
-    }
-  } catch {}
-  
-  try {
-    // Fallback: locale do navegador
     if (typeof navigator !== "undefined" && navigator.language) {
       return String(navigator.language);
     }
   } catch {}
-  
   return DEFAULT_LOCALE;
 }
 
@@ -1486,7 +1754,12 @@ export function normalizeLocale(locale) {
 export function t(key, locale) {
   var loc = normalizeLocale(locale || getClientLocale());
   var table = DICT[loc] || DICT[DEFAULT_LOCALE];
-  return table[key] || DICT[DEFAULT_LOCALE][key] || key;
+  var translation = table[key] || DICT[DEFAULT_LOCALE][key];
+  if (!translation) {
+    console.warn(`[i18n] Missing translation key: "${key}" for locale: "${loc}"`);
+    return DICT[DEFAULT_LOCALE][key] || `[${key}]`;
+  }
+  return translation;
 }
 
 export function formatDateTime(value, locale, options) {

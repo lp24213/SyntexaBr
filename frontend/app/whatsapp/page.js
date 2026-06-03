@@ -6,9 +6,9 @@ import { AppShell } from "../../components/shell";
 import { WhatsAppConnect } from "../../components/whatsapp-connect";
 import { WhatsAppDashboard } from "../../components/whatsapp-dashboard";
 import { t } from "../../lib/i18n";
-import { useLanguage, LanguageProvider } from "../../components/language-provider";
+import { useLanguage } from "../../components/language-provider";
 
-function WhatsAppPageContent() {
+export default function WhatsAppPage() {
   const { locale } = useLanguage();
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -72,10 +72,3 @@ function WhatsAppPageContent() {
   );
 }
 
-export default function WhatsAppPage() {
-  return React.createElement(
-    LanguageProvider,
-    { initialLocale: "pt-BR" },
-    React.createElement(WhatsAppPageContent)
-  );
-}
