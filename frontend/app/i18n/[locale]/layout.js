@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { AppShell } from "../../../components/shell";
 import { LanguageProvider } from "../../../components/language-provider";
 
 export default function LocaleLayout({ children, params }) {
@@ -16,6 +15,6 @@ export default function LocaleLayout({ children, params }) {
   return React.createElement(
     LanguageProvider,
     { initialLocale: locale },
-    React.createElement(AppShell, null, children)
+    children
   );
 }

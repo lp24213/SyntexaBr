@@ -7,6 +7,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import GrowthEngine from "../../../growth-engine/index.js";
+import { t } from "../lib/i18n";
+import { useLanguage } from "./language-provider";
 
 /**
  * Hook para usar Growth Engine
@@ -167,6 +169,7 @@ export function SmartPopup({ config, onLeadCaptured }) {
  * Componente de Dashboard de Growth
  */
 export function GrowthDashboard({ engine }) {
+  const { locale } = useLanguage();
   const [dashboard, setDashboard] = useState(null);
 
   useEffect(() => {
@@ -182,7 +185,7 @@ export function GrowthDashboard({ engine }) {
     return () => clearInterval(interval);
   }, [engine]);
 
-  if (!dashboard) return <div className="p-4">Carregando dashboard...</div>;
+  if (!dashboard) return <div className="p-4">{t("loadingDashboard", locale)}</div>;
 
   return (
     <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
@@ -234,7 +237,7 @@ export function GrowthDashboard({ engine }) {
         {/* Alerts */}
         {dashboard.alerts.length > 0 && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-            <h3 className="font-semibold text-yellow-900 mb-3">Alertas</h3>
+            <h3 className="font-semibold text-yellow-900 mb-3">{t("alerts", locale)}</h3>
             <ul className="space-y-2">
               {dashboard.alerts.map((alert) => (
                 <li key={alert} className="text-yellow-800">
@@ -247,16 +250,16 @@ export function GrowthDashboard({ engine }) {
 
         {/* Best Performers */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Top Performers</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">{t("topPerformers", locale)}</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-gray-600">Melhor Segment</p>
+              <p className="text-gray-600">{t("bestSegment", locale)}</p>
               <p className="text-xl font-bold text-gray-900">
                 {dashboard.bestPerformers.topSegment}
               </p>
             </div>
             <div>
-              <p className="text-gray-600">Melhor Fonte</p>
+              <p className="text-gray-600">{t("bestSource", locale)}</p>
               <p className="text-xl font-bold text-gray-900">
                 {dashboard.bestPerformers.topSource}
               </p>
@@ -272,6 +275,7 @@ export function GrowthDashboard({ engine }) {
  * Componente de Analytics de Leads
  */
 export function LeadsAnalytics({ engine }) {
+  const { locale } = useLanguage();
   const [analytics, setAnalytics] = useState(null);
 
   useEffect(() => {
@@ -279,34 +283,34 @@ export function LeadsAnalytics({ engine }) {
     setAnalytics(engine.leads.getLeadAnalytics());
   }, [engine]);
 
-  if (!analytics) return <div>Carregando...</div>;
+  if (!analytics) return <div>{t("loading", locale)}</div>;
 
   return (
     <div className="p-8">
-      <h2 className="text-2xl font-bold mb-6">Análise de Leads</h2>
+      <h2 className="text-2xl font-bold mb-6">{t("leadsAnalysis", locale)}</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg">
-          <p className="text-gray-600 text-sm">Total de Leads</p>
+          <p className="text-gray-600 text-sm">{t("totalLeads", locale)}</p>
           <p className="text-3xl font-bold text-blue-600">{analytics.totalLeads}</p>
         </div>
         <div className="bg-red-50 p-4 rounded-lg">
-          <p className="text-gray-600 text-sm">Leads Quentes</p>
+          <p className="text-gray-600 text-sm">{t("hotLeads", locale)}</p>
           <p className="text-3xl font-bold text-red-600">{analytics.byScore.hot}</p>
         </div>
         <div className="bg-yellow-50 p-4 rounded-lg">
-          <p className="text-gray-600 text-sm">Leads Mornos</p>
+          <p className="text-gray-600 text-sm">{t("warmLeads", locale)}</p>
           <p className="text-3xl font-bold text-yellow-600">{analytics.byScore.warm}</p>
         </div>
         <div className="bg-blue-50 p-4 rounded-lg">
-          <p className="text-gray-600 text-sm">Leads Frios</p>
+          <p className="text-gray-600 text-sm">{t("coldLeads", locale)}</p>
           <p className="text-3xl font-bold text-blue-400">{analytics.byScore.cold}</p>
         </div>
       </div>
 
       {/* Segments */}
       <div className="mt-8">
-        <h3 className="text-lg font-bold mb-4">Por Segment</h3>
+        <h3 className="text-lg font-bold mb-4">{t("bySegment", locale)}</h3>
         <div className="space-y-2">
           {Object.entries(analytics.bySegment).map(([segment, count]) => (
             <div key={segment} className="flex justify-between items-center bg-white p-3 rounded border">

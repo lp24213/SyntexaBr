@@ -35,12 +35,12 @@ function getPlanData(locale) {
       studentLabel: t('forEver', locale),
       description: t('planFreeDescription', locale),
       features: [
-        "200 mensagens/mes",
-        "Chat com pesquisa na web",
-        "Respostas com contexto",
-        "WhatsApp IA: 0 numeros",
-        "Exportacao PDF simples",
-        "Sem cartao de credito",
+        t('planFreeFeature1', locale),
+        t('planFreeFeature2', locale),
+        t('planFreeFeature3', locale),
+        t('planFreeFeature4', locale),
+        t('planFreeFeature5', locale),
+        t('planFreeFeature6', locale),
       ],
       highlighted: false,
     },
@@ -54,12 +54,12 @@ function getPlanData(locale) {
       studentLabel: t('perStudentMonth', locale),
       description: t('planBasicDescription', locale),
       features: [
-        "500 mensagens/mes",
-        "Upload de PDF, Word, Excel",
-        "Respostas detalhadas",
-        "WhatsApp IA: 1 numero",
-        "PDF e Word profissionais",
-        "Excel com graficos",
+        t('planBasicFeature1', locale),
+        t('planBasicFeature2', locale),
+        t('planBasicFeature3', locale),
+        t('planBasicFeature4', locale),
+        t('planBasicFeature5', locale),
+        t('planBasicFeature6', locale),
       ],
       highlighted: false,
     },
@@ -73,12 +73,12 @@ function getPlanData(locale) {
       studentLabel: t('perStudentMonth', locale),
       description: t('planMediumDescription', locale),
       features: [
-        "Mensagens ilimitadas",
-        "Geracao de imagem/video",
-        "Analise de codigo",
-        "WhatsApp IA: 3 numeros",
-        "Document Engine completo",
-        "Automacoes e chatbot",
+        t('planMediumFeature1', locale),
+        t('planMediumFeature2', locale),
+        t('planMediumFeature3', locale),
+        t('planMediumFeature4', locale),
+        t('planMediumFeature5', locale),
+        t('planMediumFeature6', locale),
       ],
       highlighted: true,
     },
@@ -92,12 +92,12 @@ function getPlanData(locale) {
       studentLabel: t('perStudentMonth', locale),
       description: t('planMasterDescription', locale),
       features: [
-        "Tudo ilimitado",
-        "WhatsApp IA: ilimitado",
-        "Agentes autonomos",
-        "White-label",
-        "Multiplos usuarios",
-        "API empresarial",
+        t('planMasterFeature1', locale),
+        t('planMasterFeature2', locale),
+        t('planMasterFeature3', locale),
+        t('planMasterFeature4', locale),
+        t('planMasterFeature5', locale),
+        t('planMasterFeature6', locale),
       ],
       highlighted: false,
     },
@@ -171,19 +171,22 @@ export default function PlanosPage() {
   const expiresIn = subscription?.subscription?.expires_in_days;
 
   return React.createElement(
-    "div",
-    { className: "mx-auto w-full max-w-[1200px] px-4 py-12 sm:px-6" },
-    // Header
+    AppShell,
+    null,
+    React.createElement(
+      "div",
+      { className: "mx-auto w-full max-w-[1200px] px-4 py-12 sm:px-6" },
+      // Header
     React.createElement(
       "div",
       { className: "mb-8 text-center" },
       React.createElement("h1", { className: "text-3xl font-semibold tracking-tight text-zinc-900" }, 
-        "Escolha seu Plano"
+        t('plansChooseTitle', locale)
       ),
       React.createElement(
         "p",
         { className: "mt-3 text-[15px] text-zinc-600" },
-        "Comece gratis com 30 dias de trial. Cancele quando quiser."
+        t('plansTrialBanner', locale)
       )
     ),
     
@@ -200,10 +203,10 @@ export default function PlanosPage() {
             "div",
             null,
             React.createElement("p", { className: "font-medium text-red-900" }, 
-              "Seu trial expirou ou subscription foi suspensa"
+              t('plansTrialExpiredTitle', locale)
             ),
             React.createElement("p", { className: "text-sm text-red-700" }, 
-              "Escolha um plano abaixo para continuar usando todas as funcionalidades."
+              t('plansTrialExpiredDesc', locale)
             )
           )
         ) :
@@ -216,10 +219,10 @@ export default function PlanosPage() {
               "div",
               null,
               React.createElement("p", { className: "font-medium text-green-900" }, 
-                "Voce esta no periodo de trial"
+                t('plansTrialActiveTitle', locale)
               ),
               React.createElement("p", { className: "text-sm text-green-700" }, 
-                "Faltam " + trialDays + " dias gratis. Aproveite todas as funcionalidades!"
+                t('plansTrialActiveDays', locale).replace('{days}', trialDays)
               )
             )
           ) :
@@ -228,10 +231,10 @@ export default function PlanosPage() {
               "div",
               { className: "bg-blue-50 border border-blue-200 rounded-lg p-4" },
               React.createElement("p", { className: "font-medium text-blue-900" }, 
-                "Plano atual: " + currentPlan.toUpperCase()
+                t('plansCurrentPlan', locale).replace('{plan}', currentPlan.toUpperCase())
               ),
               expiresIn !== null && React.createElement("p", { className: "text-sm text-blue-700" }, 
-                "Renova em " + expiresIn + " dias"
+                t('plansRenewsIn', locale).replace('{days}', expiresIn)
               )
             ) :
             null
@@ -248,7 +251,8 @@ export default function PlanosPage() {
           plan: plan, 
           onSubscribe: handleSubscribe,
           isCurrent: isCurrent,
-          CheckIcon: CheckIcon
+          CheckIcon: CheckIcon,
+          locale: locale
         });
       })
     ),
@@ -258,10 +262,11 @@ export default function PlanosPage() {
       "div",
       { className: "mt-12 text-center" },
       React.createElement("p", { className: "text-sm text-zinc-500" }, 
-        "Pagamento seguro via Stripe. 30 dias de garantia."
+        t('planSecurePayment', locale)
       )
     )
-  );
+  )
+);
 }
 
 

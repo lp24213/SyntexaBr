@@ -1,5 +1,6 @@
 import React from "react";
 import PlanosPage from "../../../../app/planos/page";
+import { LanguageProvider } from "../../../../components/language-provider";
 
 export async function generateStaticParams() {
   return [
@@ -11,5 +12,10 @@ export async function generateStaticParams() {
 }
 
 export default function LocalePlansPage({ params }) {
-  return React.createElement(PlanosPage);
+  const { locale } = params;
+  return React.createElement(
+    LanguageProvider,
+    { initialLocale: locale },
+    React.createElement(PlanosPage)
+  );
 }

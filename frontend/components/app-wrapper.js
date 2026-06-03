@@ -7,7 +7,11 @@ import { getClientLocale } from "../lib/i18n";
 
 export function AppWrapper(props) {
   const { children } = props;
-  const initialLocale = getClientLocale();
+  const [initialLocale, setInitialLocale] = React.useState("pt-BR");
+
+  React.useEffect(() => {
+    setInitialLocale(getClientLocale());
+  }, []);
   
   return React.createElement(
     LanguageProvider,

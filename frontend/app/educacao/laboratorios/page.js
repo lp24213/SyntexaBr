@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "../../../components/shell";
 import { educationCompute, educationCodeSandbox } from "../../../lib/api";
 import { FuturisticIcon } from "../../../components/icons/futuristic-icons";
+import { t } from "../../../lib/i18n";
+import { useLanguage } from "../../../components/language-provider";
 
 // ─── Icons ──────────────────────────────────────────────────────────────────
 
@@ -60,6 +62,7 @@ const CATEGORY_BADGE = {
 // ─── Physics: Projectile Simulator ────────────────────────────────────────
 
 function ProjetilLab() {
+  const { locale } = useLanguage();
   const canvasRef = useRef(null);
   const animRef = useRef(null);
   const [v0, setV0] = useState(40);
@@ -177,14 +180,14 @@ function ProjetilLab() {
   return React.createElement("div", { className: "space-y-4" },
     React.createElement("canvas", { ref: canvasRef, width: 600, height: 320, className: "w-full rounded-xl border border-zinc-200 bg-[#f1f5f9]" }),
     React.createElement("div", { className: "grid grid-cols-2 gap-4 sm:grid-cols-4" },
-      [["Velocidade inicial (m/s)", v0, setV0, 5, 100, 1], ["Ângulo (°)", angle, setAngle, 1, 89, 1]].map(([label, val, setter, min, max, step]) =>
+      [[t('labInitialVelocity', locale), v0, setV0, 5, 100, 1], [t('labAngle', locale), angle, setAngle, 1, 89, 1]].map(([label, val, setter, min, max, step]) =>
         React.createElement("div", { key: label },
           React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, label, ": ", React.createElement("span", { className: "text-zinc-700" }, val)),
           React.createElement("input", { type: "range", min, max, step, value: val, onChange: e => setter(Number(e.target.value)), className: "w-full accent-sky-500" })
         )
       ),
       info && React.createElement("div", { className: "col-span-2 grid grid-cols-3 gap-2" },
-        [["Alcance", info.range + " m"], ["Alt. máx.", info.maxH + " m"], ["Tempo voo", info.tFlight + " s"]].map(([k, v]) =>
+        [[t('labRange', locale), info.range + " m"], [t('labMaxHeight', locale), info.maxH + " m"], [t('labFlightTime', locale), info.tFlight + " s"]].map(([k, v]) =>
           React.createElement("div", { key: k, className: "rounded-xl border border-[rgba(20,24,30,0.06)] bg-[#f8f9fa] p-2 text-center" },
             React.createElement("p", { className: "text-[10px] text-zinc-500" }, k),
             React.createElement("p", { className: "text-sm font-bold text-[#1a1c1e]" }, v)
@@ -193,8 +196,8 @@ function ProjetilLab() {
       )
     ),
     React.createElement("div", { className: "flex gap-2" },
-      React.createElement("button", { onClick: runSimulation, disabled: running, className: "inline-flex items-center gap-1.5 rounded-xl bg-[#1a1c1e] border border-sky-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" }, React.createElement(PlayIcon, null), "Lançar"),
-      React.createElement("button", { onClick: reset, className: "inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-4 py-2 text-sm text-zinc-500 hover:text-zinc-900" }, React.createElement(ResetIcon, null), "Resetar")
+      React.createElement("button", { onClick: runSimulation, disabled: running, className: "inline-flex items-center gap-1.5 rounded-xl bg-[#1a1c1e] border border-sky-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" }, React.createElement(PlayIcon, null), t('labLaunch', locale)),
+      React.createElement("button", { onClick: reset, className: "inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-4 py-2 text-sm text-zinc-500 hover:text-zinc-900" }, React.createElement(ResetIcon, null), t('labReset', locale))
     )
   );
 }
@@ -202,6 +205,7 @@ function ProjetilLab() {
 // ─── Physics: Spring Oscillation ─────────────────────────────────────────
 
 function MolaLab() {
+  const { locale } = useLanguage();
   const canvasRef = useRef(null);
   const animRef = useRef(null);
   const [k, setK] = useState(20);
@@ -298,7 +302,7 @@ function MolaLab() {
   return React.createElement("div", { className: "space-y-4" },
     React.createElement("canvas", { ref: canvasRef, width: 600, height: 280, className: "w-full rounded-xl border border-zinc-200 bg-[#f1f5f9]" }),
     React.createElement("div", { className: "grid grid-cols-3 gap-4" },
-      [["Constante k (N/m)", k, setK, 5, 100, 5], ["Massa (kg)", mass, setMass, 0.5, 10, 0.5], ["Amortecimento (b)", damping, setDamping, 0, 2, 0.1]].map(([label, val, setter, min, max, step]) =>
+      [[t('labSpringConstant', locale), k, setK, 5, 100, 5], [t('labMass', locale), mass, setMass, 0.5, 10, 0.5], [t('labDamping', locale), damping, setDamping, 0, 2, 0.1]].map(([label, val, setter, min, max, step]) =>
         React.createElement("div", { key: label },
           React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, label, ": ", React.createElement("span", { className: "text-[#5a5c5e] font-mono" }, val)),
           React.createElement("input", { type: "range", min, max, step, value: val, onChange: e => setter(Number(e.target.value)), className: "w-full accent-violet-500" })
@@ -306,7 +310,7 @@ function MolaLab() {
       )
     ),
     React.createElement("div", { className: "flex gap-2" },
-      React.createElement("button", { onClick: running ? stop : run, className: `inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium transition-all ${running ? "bg-red-600/70 border-red-500/40 text-zinc-900" : "bg-[#1a1c1e] border-[rgba(20,24,30,0.1)] text-zinc-900"}` }, running ? "Pausar" : React.createElement(React.Fragment, null, React.createElement(PlayIcon, null), "Iniciar")),
+      React.createElement("button", { onClick: running ? stop : run, className: `inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium transition-all ${running ? "bg-red-600/70 border-red-500/40 text-zinc-900" : "bg-[#1a1c1e] border-[rgba(20,24,30,0.1)] text-zinc-900"}` }, running ? t('labPause', locale) : React.createElement(React.Fragment, null, React.createElement(PlayIcon, null), t('labStart', locale))),
       React.createElement("p", { className: "self-center text-xs text-zinc-500" }, `ω = ${(k / mass) ** 0.5 > 0 ? Math.sqrt(k / mass).toFixed(2) : 0} rad/s`)
     )
   );
@@ -315,6 +319,7 @@ function MolaLab() {
 // ─── Math: Function Plotter ───────────────────────────────────────────────
 
 function FuncaoLab() {
+  const { locale } = useLanguage();
   const canvasRef = useRef(null);
   const [funcStr, setFuncStr] = useState("sin(x)");
   const [xMin, setXMin] = useState(-10);
@@ -408,18 +413,18 @@ function FuncaoLab() {
     React.createElement("canvas", { ref: canvasRef, width: 600, height: 320, className: "w-full rounded-xl border border-zinc-200 bg-[#f1f5f9]" }),
     React.createElement("div", { className: "flex flex-wrap gap-3" },
       React.createElement("div", { className: "flex-1 min-w-[200px]" },
-        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "f(x) ="),
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, t('labFunction', locale)),
         React.createElement("input", { value: funcStr, onChange: e => setFuncStr(e.target.value), onKeyDown: e => e.key === "Enter" && plot(), className: "w-full rounded-xl border border-[rgba(20,24,30,0.1)] bg-white px-3 py-2 text-sm font-mono text-violet-200 focus:outline-none focus:border-violet-400/60", placeholder: "sin(x), x**2, cos(x)*x ..." })
       ),
       React.createElement("div", null,
-        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "x mín"),
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, t('labXMin', locale)),
         React.createElement("input", { type: "number", value: xMin, onChange: e => setXMin(Number(e.target.value)), className: "w-20 rounded-xl border border-zinc-200 bg-white px-2 py-2 text-sm text-zinc-900 focus:outline-none" })
       ),
       React.createElement("div", null,
-        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "x máx"),
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, t('labXMax', locale)),
         React.createElement("input", { type: "number", value: xMax, onChange: e => setXMax(Number(e.target.value)), className: "w-20 rounded-xl border border-zinc-200 bg-white px-2 py-2 text-sm text-zinc-900 focus:outline-none" })
       ),
-      React.createElement("button", { onClick: plot, className: "self-end rounded-xl bg-[#1a1c1e] border border-[rgba(20,24,30,0.1)] px-4 py-2 text-sm font-medium text-zinc-900" }, "Plotar")
+      React.createElement("button", { onClick: plot, className: "self-end rounded-xl bg-[#1a1c1e] border border-[rgba(20,24,30,0.1)] px-4 py-2 text-sm font-medium text-zinc-900" }, t('labPlot', locale))
     ),
     error && React.createElement("p", { className: "text-xs text-red-400" }, error),
     React.createElement("div", { className: "flex flex-wrap gap-1.5" },
@@ -433,6 +438,7 @@ function FuncaoLab() {
 // ─── Math: Compute Engine ────────────────────────────────────────────────
 
 function CalculoLab() {
+  const { locale } = useLanguage();
   const [expr, setExpr] = useState("");
   const [computeType, setComputeType] = useState("auto");
   const [variable, setVariable] = useState("x");
@@ -464,20 +470,20 @@ function CalculoLab() {
   return React.createElement("div", { className: "space-y-4" },
     React.createElement("div", { className: "flex flex-wrap gap-2" },
       React.createElement("div", { className: "flex-1 min-w-[240px]" },
-        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "Expressão"),
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, t('labExpression', locale)),
         React.createElement("input", { value: expr, onChange: e => setExpr(e.target.value), onKeyDown: e => e.key === "Enter" && compute(), className: "w-full rounded-xl border border-[rgba(20,24,30,0.1)] bg-white px-3 py-2 text-sm font-mono text-violet-200 focus:outline-none focus:border-violet-400/60", placeholder: "d/dx sin(x), ∫ x² dx, x²-5x+6=0 ..." })
       ),
       React.createElement("div", null,
-        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "Tipo"),
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, t('labType', locale)),
         React.createElement("select", { value: computeType, onChange: e => setComputeType(e.target.value), className: "rounded-xl border border-zinc-200 bg-white px-2 py-2 text-sm text-zinc-900 focus:outline-none" },
           TYPES.map(t => React.createElement("option", { key: t, value: t }, t))
         )
       ),
       React.createElement("div", null,
-        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, "Variável"),
+        React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, t('labVariable', locale)),
         React.createElement("input", { value: variable, onChange: e => setVariable(e.target.value), className: "w-16 rounded-xl border border-zinc-200 bg-white px-2 py-2 text-sm font-mono text-zinc-900 focus:outline-none" })
       ),
-      React.createElement("button", { onClick: compute, disabled: loading || !expr.trim(), className: "self-end rounded-xl bg-[#1a1c1e] border border-[rgba(20,24,30,0.1)] px-4 py-2 text-sm font-medium text-zinc-900 disabled:opacity-50" }, loading ? "..." : "Calcular")
+      React.createElement("button", { onClick: compute, disabled: loading || !expr.trim(), className: "self-end rounded-xl bg-[#1a1c1e] border border-[rgba(20,24,30,0.1)] px-4 py-2 text-sm font-medium text-zinc-900 disabled:opacity-50" }, loading ? "..." : t('labCalculate', locale))
     ),
     React.createElement("div", { className: "flex flex-wrap gap-1.5" },
       EXAMPLES.map(([e, t, v]) =>
@@ -487,21 +493,21 @@ function CalculoLab() {
     error && React.createElement("p", { className: "text-xs text-red-400" }, error),
     result && React.createElement(motion.div, { className: "rounded-2xl border border-[rgba(20,24,30,0.06)] bg-white p-5 space-y-3", initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } },
       result.steps && result.steps.length > 0 && React.createElement("div", null,
-        React.createElement("p", { className: "mb-2 text-xs font-medium text-[#5a5c5e] uppercase tracking-wider" }, "Passos"),
+        React.createElement("p", { className: "mb-2 text-xs font-medium text-[#5a5c5e] uppercase tracking-wider" }, t('labSteps', locale)),
         React.createElement("ol", { className: "space-y-1" }, result.steps.map((s, i) => React.createElement("li", { key: i, className: "flex gap-2 text-sm text-zinc-600" },
           React.createElement("span", { className: "text-violet-400/60 font-mono shrink-0" }, i + 1 + "."), s)))
       ),
       result.result && React.createElement("div", { className: "rounded-xl border border-violet-500/20 bg-violet-500/8 p-3" },
-        React.createElement("p", { className: "text-xs text-zinc-500 mb-0.5" }, "Resultado"),
+        React.createElement("p", { className: "text-xs text-zinc-500 mb-0.5" }, t('labResult', locale)),
         React.createElement("p", { className: "font-mono text-lg text-violet-200" }, result.result)
       ),
       result.interpretation && React.createElement("p", { className: "text-sm text-zinc-500 italic" }, result.interpretation),
       result.ai_solution && React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-4" },
-        React.createElement("p", { className: "mb-2 text-xs text-zinc-500 uppercase tracking-wider" }, "Resolução detalhada"),
+        React.createElement("p", { className: "mb-2 text-xs text-zinc-500 uppercase tracking-wider" }, t('labDetailedSolution', locale)),
         React.createElement("div", { className: "whitespace-pre-wrap text-sm text-zinc-900/75 leading-relaxed" }, result.ai_solution)
       ),
       result.explanation && React.createElement("div", { className: "rounded-xl border border-zinc-200 bg-zinc-50 p-4" },
-        React.createElement("p", { className: "mb-1 text-xs text-zinc-500 uppercase tracking-wider" }, "Explicação pedagógica"),
+        React.createElement("p", { className: "mb-1 text-xs text-zinc-500 uppercase tracking-wider" }, t('labPedagogicalExplanation', locale)),
         React.createElement("p", { className: "text-sm text-zinc-600 leading-relaxed" }, result.explanation)
       )
     )
@@ -511,6 +517,7 @@ function CalculoLab() {
 // ─── Chemistry: Equation Balancer ────────────────────────────────────────
 
 function QuimicaLab() {
+  const { locale } = useLanguage();
   const [equation, setEquation] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -530,10 +537,10 @@ function QuimicaLab() {
 
   return React.createElement("div", { className: "space-y-4" },
     React.createElement("div", { className: "rounded-2xl border border-emerald-500/15 bg-white p-5" },
-      React.createElement("p", { className: "mb-3 text-xs text-zinc-500 uppercase tracking-wider" }, "Balanceador de Equações Químicas"),
+      React.createElement("p", { className: "mb-3 text-xs text-zinc-500 uppercase tracking-wider" }, t('labChemicalBalancer', locale)),
       React.createElement("div", { className: "flex gap-2" },
         React.createElement("input", { value: equation, onChange: e => setEquation(e.target.value), onKeyDown: e => e.key === "Enter" && balance(), className: "flex-1 rounded-xl border border-emerald-500/25 bg-zinc-50 px-3 py-2 text-sm font-mono text-emerald-200 focus:outline-none focus:border-emerald-400/50", placeholder: "H2 + O2 → H2O" }),
-        React.createElement("button", { onClick: balance, disabled: loading || !equation.trim(), className: "rounded-xl bg-emerald-600/80 border border-emerald-500/40 px-4 py-2 text-sm font-medium text-zinc-900 disabled:opacity-50" }, loading ? "..." : "Balancear")
+        React.createElement("button", { onClick: balance, disabled: loading || !equation.trim(), className: "rounded-xl bg-emerald-600/80 border border-emerald-500/40 px-4 py-2 text-sm font-medium text-zinc-900 disabled:opacity-50" }, loading ? "..." : t('labCalculate', locale))
       ),
       React.createElement("div", { className: "mt-3 flex flex-wrap gap-1.5" },
         EXAMPLES.map(ex => React.createElement("button", { key: ex, onClick: () => setEquation(ex), className: "rounded-lg border border-zinc-200 px-2 py-1 text-xs font-mono text-zinc-500 hover:text-emerald-300 hover:border-emerald-500/30 transition-all" }, ex))
@@ -550,6 +557,7 @@ function QuimicaLab() {
 // ─── Engineering: Circuit Calculator ─────────────────────────────────────
 
 function CircuitoLab() {
+  const { locale } = useLanguage();
   const canvasRef = useRef(null);
   const [mode, setMode] = useState("serie"); // serie | paralelo | divisor
   const [r1, setR1] = useState(100);
@@ -642,10 +650,10 @@ function CircuitoLab() {
   return React.createElement("div", { className: "space-y-4" },
     React.createElement("canvas", { ref: canvasRef, width: 500, height: 260, className: "w-full rounded-xl border border-zinc-200 bg-[#f1f5f9]" }),
     React.createElement("div", { className: "flex gap-2" },
-      ["serie", "paralelo"].map(m => React.createElement("button", { key: m, onClick: () => setMode(m), className: `rounded-xl px-3 py-1.5 text-xs font-medium transition-all capitalize ${mode === m ? "bg-amber-600/70 border border-amber-500/40 text-zinc-900" : "border border-zinc-200 text-zinc-500 hover:text-zinc-900"}` }, m === "serie" ? "Série" : "Paralelo"))
+      ["serie", "paralelo"].map(m => React.createElement("button", { key: m, onClick: () => setMode(m), className: `rounded-xl px-3 py-1.5 text-xs font-medium transition-all capitalize ${mode === m ? "bg-amber-600/70 border border-amber-500/40 text-zinc-900" : "border border-zinc-200 text-zinc-500 hover:text-zinc-900"}` }, m === "serie" ? t('labSeries', locale) : t('labParallel', locale)))
     ),
     React.createElement("div", { className: "grid grid-cols-3 gap-4" },
-      [["R1 (Ω)", r1, setR1, 10, 1000, 10], ["R2 (Ω)", r2, setR2, 10, 1000, 10], ["Tensão (V)", v, setV, 1, 50, 1]].map(([label, val, setter, min, max, step]) =>
+      [[t('labR1', locale), r1, setR1, 10, 1000, 10], [t('labR2', locale), r2, setR2, 10, 1000, 10], [t('labVoltage', locale), v, setV, 1, 50, 1]].map(([label, val, setter, min, max, step]) =>
         React.createElement("div", { key: label },
           React.createElement("label", { className: "mb-1 block text-xs text-zinc-500" }, label, ": ", React.createElement("span", { className: "text-[#5a5c5e] font-mono" }, val)),
           React.createElement("input", { type: "range", min, max, step, value: val, onChange: e => setter(Number(e.target.value)), className: "w-full accent-amber-500" })
@@ -658,6 +666,7 @@ function CircuitoLab() {
 // ─── Programming: Code Sandbox ────────────────────────────────────────────
 
 function CodigoLab() {
+  const { locale } = useLanguage();
   const [code, setCode] = useState(`# Exemplo: Sequência de Fibonacci
 def fibonacci(n):
     a, b = 0, 1

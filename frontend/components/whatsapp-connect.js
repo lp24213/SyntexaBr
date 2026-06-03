@@ -3,8 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
+import { useLanguage } from "../lib/i18n";
 
 export function WhatsAppConnect({ onConnect }) {
+  const { t, locale } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -56,12 +58,12 @@ export function WhatsAppConnect({ onConnect }) {
             },
             body: JSON.stringify({ code, redirectUri }),
           });
-          if (!res.ok) throw new Error("Falha na integração");
+          if (!res.ok) throw new Error(t("integrationFailure", locale));
           onConnect();
         }
         if (event.data?.type === "META_OAUTH_ERROR") {
           window.removeEventListener("message", handleMessage);
-          setError("Autorização cancelada ou negada.");
+          setError(t("oauthCanceledError", locale));
         }
       };
       window.addEventListener("message", handleMessage);
@@ -93,10 +95,10 @@ export function WhatsAppConnect({ onConnect }) {
         </div>
 
         <h2 className="text-xl font-semibold text-[#0f172a]">
-          Conecte seu WhatsApp Business
+          {t("whatsappConnectTitle", locale)}
         </h2>
         <p className="mt-2 text-sm text-[#64748b] leading-relaxed">
-          Automatize atendimento, respostas e operações com IA integrada ao WhatsApp Business.
+          {t("whatsappConnectDesc", locale)}
         </p>
 
         <div className="mt-6 space-y-3">
@@ -112,7 +114,7 @@ export function WhatsAppConnect({ onConnect }) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Conectando...
+                {t("whatsappConnectConnecting", locale)}
               </span>
             ) : (
               <span className="flex items-center gap-2">
@@ -130,7 +132,7 @@ export function WhatsAppConnect({ onConnect }) {
         )}
 
         <p className="mt-4 text-xs text-[#94a3b8]">
-          Ao conectar, você autoriza a Syntexa a gerenciar seu WhatsApp Business API em seu nome.
+          {t("whatsappConnectDisclaimer", locale)}
         </p>
       </motion.div>
     </div>

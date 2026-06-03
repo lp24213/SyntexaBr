@@ -80,7 +80,14 @@ self.addEventListener("fetch", function (e) {
         return fetch(e.request).then(function (resp) {
           if (resp && resp.status === 200) {
             var clone = resp.clone();
-            caches.open(CACHE_NAME).then(function (c) { c.put(e.request, clone); });
+            caches.open(CACHE_NAME).then(function (c) { 
+              try {
+                c.put(e.request, clone); 
+              } catch (cacheErr) {
+                // Silenciar erros de cache (ex: HEAD requests não são cacheáveis)
+                console.warn("[SW] Cache.put failed:", cacheErr.message);
+              }
+            });
           }
           return resp;
         });
@@ -111,10 +118,15 @@ self.addEventListener("fetch", function (e) {
           if (resp && resp.status === 200 && resp.type === "basic") {
             try {
               cache.put(e.request, resp.clone());
-            } catch (e) {}
+            } catch (cacheErr) {
+              console.warn("[SW] Cache.put failed (stale-while-revalidate):", cacheErr.message);
+            }
           }
           return resp;
-        }).catch(function () { return cached; });
+        }).catch(function (err) { 
+          console.warn("[SW] Network fetch failed:", err.message);
+          return cached; 
+        });
         return cached || networkFetch;
       });
     })

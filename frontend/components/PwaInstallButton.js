@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { t } from "../lib/i18n";
+import { useLanguage } from "./language-provider";
 
 export function PwaInstallButton({ className }) {
+  const { locale } = useLanguage();
   const [ready, setReady] = useState(false);
   const [installed, setInstalled] = useState(false);
 
@@ -46,6 +49,6 @@ export function PwaInstallButton({ className }) {
         strokeLinejoin: "round",
       })
     ),
-    "Instalar app"
+    t("installApp", locale)
   );
 }

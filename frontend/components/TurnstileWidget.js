@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { useLanguage } from "../lib/i18n";
 
 /**
  * TurnstileWidget - Simples, robusto e otimizado para produção
@@ -18,6 +19,7 @@ export function TurnstileWidget({
   size = "normal",
   className = "",
 }) {
+  const { t, locale } = useLanguage();
   const containerRef = useRef(null);
   const widgetIdRef = useRef(null);
   const pollCountRef = useRef(0);
@@ -70,7 +72,7 @@ export function TurnstileWidget({
         if (pollCountRef.current > 100) {
           // Máximo 100 tentativas (10 segundos com 100ms cada)
           console.error("[Turnstile] Max poll attempts reached");
-          if (onError) onError("Turnstile não carregou após tempo limite");
+          if (onError) onError(t("turnstileLoadError", locale));
           return;
         }
         setTimeout(render, 100);
@@ -90,15 +92,15 @@ export function TurnstileWidget({
           },
           "error-callback": () => {
             console.error("[Turnstile] Error callback triggered");
-            onError?.("Erro na verificação do Turnstile");
+            onError?.(t("turnstileErrorCallback", locale));
           },
           "expired-callback": () => {
             console.warn("[Turnstile] Token expired");
-            onError?.("Verificação do Turnstile expirou");
+            onError?.(t("turnstileExpiredMessage", locale));
           },
           "timeout-callback": () => {
             console.error("[Turnstile] Timeout callback triggered");
-            onError?.("Timeout na verificação do Turnstile");
+            onError?.(t("turnstileTimeoutMessage", locale));
           },
           "before-interactive-callback": () => {
             console.log("[Turnstile] Before interactive callback");
@@ -111,7 +113,7 @@ export function TurnstileWidget({
         pollCountRef.current = 0;
       } catch (err) {
         console.error("[Turnstile] Render failed:", err);
-        onError?.("Falha ao renderizar widget Turnstile");
+        onError?.(t("turnstileRenderError", locale));
       }
     };
 

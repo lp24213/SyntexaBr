@@ -4,6 +4,8 @@ import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { encryptedPath } from "../lib/routes";
+import { t } from "../lib/i18n";
+import { useLanguage } from "./language-provider";
 
 function FadeIn({ children, delay = 0 }) {
   return (
@@ -41,6 +43,7 @@ function SectionTitle({ overline, title, subtitle }) {
 }
 
 export function HeroSection() {
+  const { locale } = useLanguage();
   return (
     <section className="relative z-10 flex min-h-[92dvh] flex-col items-center justify-center px-5 pt-16 pb-12 overflow-hidden">
       <div className="absolute inset-0 -z-10">
@@ -54,20 +57,20 @@ export function HeroSection() {
           <div className="mb-6 flex items-center gap-2 rounded-full border border-[rgba(15,23,42,0.08)] bg-white/80 backdrop-blur-sm px-4 py-1.5 shadow-sm">
             <span className="h-[6px] w-[6px] rounded-full bg-[#25D366] animate-pulse" />
             <span className="text-[11px] font-medium tracking-[0.1em] text-[#475569] uppercase">
-              Plataforma de IA empresarial
+              {t('homeOverline', locale)}
             </span>
           </div>
         </FadeIn>
 
         <FadeIn delay={0.1}>
           <h1 className="max-w-4xl text-[2.6rem] font-semibold leading-[1.1] tracking-[-0.03em] text-[#0f172a] md:text-[3.8rem] lg:text-[4.4rem]">
-            Uma IA que trabalha como uma equipe inteira.
+            {t('homeTitle', locale)}
           </h1>
         </FadeIn>
 
         <FadeIn delay={0.2}>
           <p className="mt-6 max-w-2xl text-[17px] leading-[1.7] text-[#64748b] md:text-[19px]">
-            Atendimento WhatsApp, automações, geração de documentos, planilhas inteligentes, relatórios empresariais e IA contextual — tudo em uma única plataforma.
+            {t('homeSubtitle', locale)}
           </p>
         </FadeIn>
 
@@ -77,20 +80,20 @@ export function HeroSection() {
               href={encryptedPath("/chat")}
               className="inline-flex items-center rounded-full bg-[#0f172a] px-7 py-3.5 text-[14px] font-medium text-white shadow-lg shadow-[#0f172a]/15 hover:bg-[#1e293b] transition-all hover:-translate-y-0.5"
             >
-              Testar a IA
+              {t('homeTryAi', locale)}
             </Link>
             <Link
               href={encryptedPath("/whatsapp")}
               className="inline-flex items-center rounded-full bg-[#25D366] px-7 py-3.5 text-[14px] font-medium text-white shadow-lg shadow-[#25D366]/20 hover:bg-[#128C7E] transition-all hover:-translate-y-0.5"
             >
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.004 5.45-4.439 9.884-9.887 9.884m8.413-18.3A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-              Conectar WhatsApp
+              {t('homeConnectWhatsapp', locale)}
             </Link>
             <Link
               href="#planos"
               className="inline-flex items-center rounded-full border border-[rgba(15,23,42,0.12)] bg-white px-7 py-3.5 text-[14px] font-medium text-[#475569] hover:bg-[#f8fafc] transition-all"
             >
-              Ver planos
+              {t('homeViewPlans', locale)}
             </Link>
           </div>
         </FadeIn>
@@ -100,13 +103,15 @@ export function HeroSection() {
 }
 
 export function WhatsAppSection() {
+  const { t, locale } = useLanguage();
+  
   const features = [
-    { icon: "🤖", title: "Chatbot com IA", desc: "Respostas inteligentes que entendem contexto e memória de conversas." },
-    { icon: "👥", title: "Múltiplos atendentes", desc: "Equipe completa atendendo com IA auxiliando cada conversa." },
-    { icon: "📱", title: "Múltiplos números", desc: "Gerencie vários números WhatsApp Business em um só lugar." },
-    { icon: "⚡", title: "Automações", desc: "Fluxos automáticos que respondem sozinhos e escalam quando precisa." },
-    { icon: "🧠", title: "Memória IA", desc: "A IA lembra de cada cliente, preferências e histórico completo." },
-    { icon: "📊", title: "Analytics", desc: "Métricas reais de atendimento, tempo de resposta e satisfação." },
+    { icon: "🤖", title: t("whatsappFeature1Title", locale), desc: t("whatsappFeature1Desc", locale) },
+    { icon: "👥", title: t("whatsappFeature2Title", locale), desc: t("whatsappFeature2Desc", locale) },
+    { icon: "📱", title: t("whatsappFeature3Title", locale), desc: t("whatsappFeature3Desc", locale) },
+    { icon: "⚡", title: t("whatsappFeature4Title", locale), desc: t("whatsappFeature4Desc", locale) },
+    { icon: "🧠", title: t("whatsappFeature5Title", locale), desc: t("whatsappFeature5Desc", locale) },
+    { icon: "📊", title: t("whatsappFeature6Title", locale), desc: t("whatsappFeature6Desc", locale) },
   ];
 
   return (
@@ -114,8 +119,8 @@ export function WhatsAppSection() {
       <div className="mx-auto max-w-[1140px]">
         <SectionTitle
           overline="WhatsApp Business"
-          title="Atendimento que nunca dorme"
-          subtitle="Sua equipe de IA responde clientes no WhatsApp 24 horas por dia. Quando precisar, transfere suavemente para um humano."
+          title={t("whatsappSectionTitle", locale)}
+          subtitle={t("whatsappSectionSubtitle", locale)}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -138,7 +143,7 @@ export function WhatsAppSection() {
               href={encryptedPath("/whatsapp")}
               className="inline-flex items-center rounded-full bg-[#25D366] px-6 py-3 text-[13px] font-medium text-white hover:bg-[#128C7E] transition-colors"
             >
-              Começar com WhatsApp IA
+              {t("homeAttendButton", locale)}
               <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </Link>
           </div>
@@ -149,11 +154,13 @@ export function WhatsAppSection() {
 }
 
 export function DocumentsSection() {
+  const { t, locale } = useLanguage();
+  
   const docs = [
-    { icon: "📄", title: "PDF Profissional", desc: "Relatórios, contratos e propostas com layout empresarial e zero branding obrigatório." },
-    { icon: "📊", title: "Excel Inteligente", desc: "Planilhas com fórmulas reais, gráficos, múltiplas abas e auto width." },
-    { icon: "📝", title: "Word/DOCX", desc: "Documentos com headings reais, sumário automático e paginação correta." },
-    { icon: "📑", title: "CSV", desc: "Exportação limpa para integração com qualquer sistema empresarial." },
+    { icon: "📄", title: t("documentsFeature1Title", locale), desc: t("documentsFeature1Desc", locale) },
+    { icon: "📊", title: t("documentsFeature2Title", locale), desc: t("documentsFeature2Desc", locale) },
+    { icon: "📝", title: t("documentsFeature3Title", locale), desc: t("documentsFeature3Desc", locale) },
+    { icon: "📑", title: t("documentsFeature4Title", locale), desc: t("documentsFeature4Desc", locale) },
   ];
 
   return (
@@ -161,8 +168,8 @@ export function DocumentsSection() {
       <div className="mx-auto max-w-[1140px]">
         <SectionTitle
           overline="Document Engine"
-          title="Documentos que impressionam"
-          subtitle="A IA gera documentos empresariais reais. Petições, contratos, relatórios, propostas, orçamentos e dashboards — tudo profissional."
+          title={t("documentsSectionTitle", locale)}
+          subtitle={t("documentsSectionSubtitle", locale)}
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -182,15 +189,15 @@ export function DocumentsSection() {
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-[#0f172a] mb-3">
-                  Feito para quem trabalha de verdade
+                  {t("documentsProTitle", locale)}
                 </h3>
                 <ul className="space-y-2.5">
                   {[
-                    "Sem rodapé obrigatório da plataforma",
-                    "Logo e cores da sua empresa",
-                    "Modo jurídico, empresarial e contrato",
-                    "Tabelas perfeitas e paginação correta",
-                    "Documentos longos sem quebrar layout",
+                    t("documentsProFeature1", locale),
+                    t("documentsProFeature2", locale),
+                    t("documentsProFeature3", locale),
+                    t("documentsProFeature4", locale),
+                    t("documentsProFeature5", locale),
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2.5 text-[14px] text-[#475569]">
                       <svg className="w-5 h-5 text-[#25D366] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -200,13 +207,13 @@ export function DocumentsSection() {
                 </ul>
               </div>
               <div className="w-full md:w-auto md:min-w-[280px] rounded-xl bg-[#f8fafc] border border-[rgba(20,24,30,0.06)] p-5 text-center">
-                <div className="text-[13px] text-[#8e9094] uppercase tracking-wide mb-2">Exemplo de saída</div>
+                <div className="text-[13px] text-[#8e9094] uppercase tracking-wide mb-2">{t("documentsExampleLabel", locale)}</div>
                 <div className="space-y-2">
                   <div className="h-3 bg-[#e2e8f0] rounded w-[90%] mx-auto" />
                   <div className="h-3 bg-[#e2e8f0] rounded w-[75%] mx-auto" />
                   <div className="h-3 bg-[#e2e8f0] rounded w-[85%] mx-auto" />
                   <div className="mt-3 h-16 bg-[#f1f5f9] rounded border border-dashed border-[#cbd5e1] flex items-center justify-center text-[11px] text-[#94a3b8]">
-                    📊 Tabela / Gráfico / Dashboard
+                    {t("documentsExamplePlaceholder", locale)}
                   </div>
                 </div>
               </div>
@@ -219,11 +226,13 @@ export function DocumentsSection() {
 }
 
 export function AutomationSection() {
+  const { t, locale } = useLanguage();
+  
   const steps = [
-    { num: "01", title: "Cliente envia mensagem", desc: "No WhatsApp, site ou app da sua empresa." },
-    { num: "02", title: "IA entende a intenção", desc: "Analisa contexto, histórico e documentos vinculados." },
-    { num: "03", title: "Responde ou executa", desc: "Gera resposta, cria documento ou aciona workflow." },
-    { num: "04", title: "Escalada humana se necessário", desc: "Transfere suavemente com todo o contexto da conversa." },
+    { num: "01", title: t("automationStep1Title", locale), desc: t("automationStep1Desc", locale) },
+    { num: "02", title: t("automationStep2Title", locale), desc: t("automationStep2Desc", locale) },
+    { num: "03", title: t("automationStep3Title", locale), desc: t("automationStep3Desc", locale) },
+    { num: "04", title: t("automationStep4Title", locale), desc: t("automationStep4Desc", locale) },
   ];
 
   return (
@@ -231,8 +240,8 @@ export function AutomationSection() {
       <div className="mx-auto max-w-[1140px]">
         <SectionTitle
           overline="Automações"
-          title="Fluxos que pensam sozinhos"
-          subtitle="Crie workflows inteligentes que respondem clientes, geram documentos e escalam para humanos — sem código."
+          title={t("automationSectionTitle", locale)}
+          subtitle={t("automationSectionSubtitle", locale)}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -255,36 +264,40 @@ export function AutomationSection() {
 }
 
 export function SecuritySection() {
+  const { t, locale } = useLanguage();
+  
+  const features = [
+    { title: t("securityFeature1Title", locale), desc: t("securityFeature1Desc", locale) },
+    { title: t("securityFeature2Title", locale), desc: t("securityFeature2Desc", locale) },
+    { title: t("securityFeature3Title", locale), desc: t("securityFeature3Desc", locale) },
+    { title: t("securityFeature4Title", locale), desc: t("securityFeature4Desc", locale) },
+    { title: t("securityFeature5Title", locale), desc: t("securityFeature5Desc", locale) },
+    { title: t("securityFeature6Title", locale), desc: t("securityFeature6Desc", locale) },
+  ];
+  
   return (
     <section className="relative py-24 px-5 bg-[#0f172a]">
       <div className="mx-auto max-w-[1140px]">
         <div className="mx-auto max-w-3xl text-center mb-12">
           <FadeIn>
             <span className="inline-block rounded-full bg-[#1e293b] text-[#94a3b8] px-3 py-1 text-[11px] font-semibold tracking-wide uppercase mb-4">
-              Segurança Enterprise
+              {t("securitySectionLabel", locale)}
             </span>
           </FadeIn>
           <FadeIn delay={0.1}>
             <h2 className="text-3xl md:text-4xl font-semibold text-white tracking-tight leading-tight">
-              Seus dados são seus. Ponto.
+              {t("securitySectionTitle", locale)}
             </h2>
           </FadeIn>
           <FadeIn delay={0.2}>
             <p className="mt-4 text-[#94a3b8] text-base md:text-lg leading-relaxed">
-              Isolamento total por empresa. Criptografia em trânsito e em repouso. Conformidade com LGPD.
+              {t("securitySectionSubtitle", locale)}
             </p>
           </FadeIn>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {[
-            { title: "Isolamento multi-tenant", desc: "Cada empresa vê apenas seus dados. Zero vazamento." },
-            { title: "Criptografia end-to-end", desc: "Trafega e armazena com criptografia moderna." },
-            { title: "Rate limiting inteligente", desc: "Proteção automática contra abuso e sobrecarga." },
-            { title: "Auditoria completa", desc: "Logs de toda ação para compliance e rastreabilidade." },
-            { title: "LGPD ready", desc: "Direito ao esquecimento, exportação e consentimento." },
-            { title: "Infraestrutura brasileira", desc: "Servidores no Brasil. Latência baixa, dados aqui." },
-          ].map((item, i) => (
+          {features.map((item, i) => (
             <FadeIn key={item.title} delay={i * 0.08}>
               <div className="rounded-xl bg-[#1e293b]/50 border border-[#334155]/50 p-5">
                 <h3 className="text-[14px] font-semibold text-white mb-1">{item.title}</h3>
@@ -299,6 +312,8 @@ export function SecuritySection() {
 }
 
 export function PlansHomeSection() {
+  const { t, locale } = useLanguage();
+  
   const plans = [
     {
       name: "Starter",

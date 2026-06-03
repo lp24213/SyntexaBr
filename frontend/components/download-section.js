@@ -64,34 +64,34 @@ export function DownloadSection({ locale, t }) {
         transition: { duration: 0.45 },
       },
       React.createElement("h2", { className: "text-[1.5rem] font-semibold tracking-tight text-[#1a1c1e] md:text-[1.75rem]" },
-        "Baixar Aplicativo"
+        t('downloadAppTitle', locale)
       ),
       React.createElement("p", { className: "mt-2 max-w-xl text-[15px] leading-relaxed text-[#5a5c5e]" },
-        "Download direto do instalador. Sem loja, sem GitHub, sem zip."
+        t('downloadAppSubtitle', locale)
       )
     ),
 
     React.createElement("div", { className: "grid gap-4 sm:grid-cols-3" },
       React.createElement(DownloadCard, {
         icon: React.createElement(IconWindows, null),
-        label: "Windows",
-        sub: "Instalador .msi · 64-bit",
+        label: t('downloadWindows', locale),
+        sub: t('downloadWindowsSub', locale),
         delay: 0.1,
         href: RAILWAY_DOWNLOAD_BASE + "/SyntexaAI-Setup-45.0.0.msi",
         filename: "SyntexaAI-Setup-45.0.0.msi",
       }),
       React.createElement(DownloadCard, {
         icon: React.createElement(IconLinux, null),
-        label: "Linux",
-        sub: "Aplicativo .AppImage · x64",
+        label: t('downloadLinux', locale),
+        sub: t('downloadLinuxSub', locale),
         delay: 0.2,
         href: RAILWAY_DOWNLOAD_BASE + "/SyntexaAI-linux-x64-45.0.0.AppImage",
         filename: "SyntexaAI-linux-x64-45.0.0.AppImage",
       }),
       React.createElement(DownloadCard, {
         icon: React.createElement(IconWeb, null),
-        label: "Abrir no browser",
-        sub: "Acesso imediato · sem instalar",
+        label: t('downloadWeb', locale),
+        sub: t('downloadWebSub', locale),
         delay: 0.3,
         href: "/chat",
         filename: null,
@@ -99,7 +99,7 @@ export function DownloadSection({ locale, t }) {
     ),
 
     React.createElement("p", { className: "mt-5 text-[11px] text-[#8e9094] text-center" },
-      "Windows · Linux · Web"
+      t('downloadPlatforms', locale)
     )
   );
 }

@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { AppShell } from "../../components/shell";
+import { t } from "../../lib/i18n";
+import { useLanguage } from "../../components/language-provider";
 
 const WIN_URL = "";
 const MAC_URL = "";
@@ -55,6 +57,7 @@ var btnBase =
 var btn = "inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition-all";
 
 export default function DownloadPage() {
+  const { locale } = useLanguage();
   const [pwaReady, setPwaReady] = useState(false);
   const [pwaInstalled, setPwaInstalled] = useState(false);
 
@@ -95,8 +98,8 @@ export default function DownloadPage() {
         /* Header */
         React.createElement("div", { className: "text-center" },
           React.createElement("img", { src: "/LOGOTIPO.png", alt: "Syntexa", className: "mx-auto mb-4 h-16 w-16 rounded-2xl object-contain shadow" }),
-          React.createElement("h1", { className: "text-2xl font-bold text-zinc-900" }, "Instalar Syntexa AI"),
-          React.createElement("p", { className: "mt-1 text-sm text-zinc-500" }, "App completo com atalho no desktop, menu Iniciar e abertura directa no chat.")
+          React.createElement("h1", { className: "text-2xl font-bold text-zinc-900" }, t('installTitle', locale)),
+          React.createElement("p", { className: "mt-1 text-sm text-zinc-500" }, t('installSubtitle', locale))
         ),
 
         /* Card principal — Instalar PWA */
@@ -108,44 +111,44 @@ export default function DownloadPage() {
               )
             ),
             React.createElement("div", null,
-              React.createElement("p", { className: "font-semibold text-zinc-900" }, "Instalar como app (PWA)"),
-              React.createElement("p", { className: "text-xs text-zinc-500" }, "Windows · macOS · Linux · Android · iOS")
+              React.createElement("p", { className: "font-semibold text-zinc-900" }, t('installPwaTitle', locale)),
+              React.createElement("p", { className: "text-xs text-zinc-500" }, t('installPwaPlatforms', locale))
             )
           ),
           React.createElement("ul", { className: "space-y-1.5 text-sm text-zinc-600" },
-            React.createElement("li", { className: "flex items-center gap-2" }, React.createElement("span", { className: "text-green-500 font-bold" }, "✓"), "Atalho no desktop e menu Iniciar"),
-            React.createElement("li", { className: "flex items-center gap-2" }, React.createElement("span", { className: "text-green-500 font-bold" }, "✓"), "Abre como janela própria, sem barra do browser"),
-            React.createElement("li", { className: "flex items-center gap-2" }, React.createElement("span", { className: "text-green-500 font-bold" }, "✓"), "Funciona offline para páginas já visitadas"),
-            React.createElement("li", { className: "flex items-center gap-2" }, React.createElement("span", { className: "text-green-500 font-bold" }, "✓"), "Abre directamente no chat da IA")
+            React.createElement("li", { className: "flex items-center gap-2" }, React.createElement("span", { className: "text-green-500 font-bold" }, "✓"), t('installPwaFeature1', locale)),
+            React.createElement("li", { className: "flex items-center gap-2" }, React.createElement("span", { className: "text-green-500 font-bold" }, "✓"), t('installPwaFeature2', locale)),
+            React.createElement("li", { className: "flex items-center gap-2" }, React.createElement("span", { className: "text-green-500 font-bold" }, "✓"), t('installPwaFeature3', locale)),
+            React.createElement("li", { className: "flex items-center gap-2" }, React.createElement("span", { className: "text-green-500 font-bold" }, "✓"), t('installPwaFeature4', locale))
           ),
           pwaInstalled
-            ? React.createElement("div", { className: btn + " bg-green-50 text-green-700 border border-green-200" }, "✓ App instalado com sucesso!")
+            ? React.createElement("div", { className: btn + " bg-green-50 text-green-700 border border-green-200" }, t('installPwaInstalled', locale))
             : pwaReady
-            ? React.createElement("button", { type: "button", onClick: installPwa, className: btn + " bg-zinc-900 text-white hover:bg-zinc-800 shadow" }, "Instalar app agora")
+            ? React.createElement("button", { type: "button", onClick: installPwa, className: btn + " bg-zinc-900 text-white hover:bg-zinc-800 shadow" }, t('installPwaInstallNow', locale))
             : React.createElement("div", { className: "space-y-2" },
-                React.createElement("button", { type: "button", onClick: installPwa, className: btn + " bg-zinc-900 text-white hover:bg-zinc-800 shadow" }, "Instalar app"),
-                React.createElement("p", { className: "text-center text-[11px] text-zinc-400" }, "Se o botão não funcionar: clique no ícone \u22EE ou ⊕ na barra de endereço do Chrome/Edge e escolha «Instalar Syntexa AI».")
+                React.createElement("button", { type: "button", onClick: installPwa, className: btn + " bg-zinc-900 text-white hover:bg-zinc-800 shadow" }, t('installPwaInstall', locale)),
+                React.createElement("p", { className: "text-center text-[11px] text-zinc-400" }, t('installPwaHelp', locale))
               )
         ),
 
         /* Separador */
         React.createElement("div", { className: "flex items-center gap-3" },
           React.createElement("div", { className: "flex-1 border-t border-zinc-200" }),
-          React.createElement("span", { className: "text-xs text-zinc-400" }, "ou"),
+          React.createElement("span", { className: "text-xs text-zinc-400" }, t('installOr', locale)),
           React.createElement("div", { className: "flex-1 border-t border-zinc-200" })
         ),
 
         /* Abrir no browser */
         React.createElement("a", { href: "/chat", className: btn + " border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 shadow-sm" },
-          "Abrir no browser sem instalar"
+          t('installOpenBrowser', locale)
         ),
 
         /* iOS / Android instrução */
         React.createElement("div", { className: "rounded-2xl border border-zinc-100 bg-zinc-50 p-4 space-y-3 text-xs text-zinc-500" },
-          React.createElement("p", { className: "font-semibold text-zinc-700" }, "iPhone / iPad (Safari)"),
-          React.createElement("p", null, "Toque em  Compartilhar → «Adicionar à Tela de Início». O app aparece no ecrã inicial como qualquer outro."),
-          React.createElement("p", { className: "font-semibold text-zinc-700 pt-1" }, "Android (Chrome)"),
-          React.createElement("p", null, "Toque no menu ⋮ → «Adicionar à tela inicial» ou aguarde o banner automático de instalação.")
+          React.createElement("p", { className: "font-semibold text-zinc-700" }, t('installIosTitle', locale)),
+          React.createElement("p", null, t('installIosHelp', locale)),
+          React.createElement("p", { className: "font-semibold text-zinc-700 pt-1" }, t('installAndroidTitle', locale)),
+          React.createElement("p", null, t('installAndroidHelp', locale))
         )
       )
     )

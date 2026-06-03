@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "../lib/i18n";
 
 /*
  * CinematicChat — UI premium para chat com streaming real
@@ -48,10 +49,11 @@ function StopIcon({ className }) {
 }
 
 export default function CinematicChat() {
+  const { t, locale } = useLanguage();
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "Olá. Sou a Syntexa AI. Infraestrutura cognitiva soberana à sua disposição. Como posso assistir?",
+      content: t("chatInitialGreeting", locale),
     },
   ]);
   const [input, setInput] = useState("");
@@ -102,7 +104,7 @@ export default function CinematicChat() {
       });
 
       if (!res.ok) {
-        const err = await res.text().catch(() => "Erro desconhecido");
+        const err = await res.text().catch(() => "Unknown error");
         throw new Error(`HTTP ${res.status}: ${err}`);
       }
 
@@ -139,11 +141,12 @@ export default function CinematicChat() {
       setStreamingText("");
     } catch (err) {
       if (err.name === "AbortError") {
-        setMessages((prev) => [...prev, { role: "assistant", content: streamingText || "Geração interrompida." }]);
+        setMessages((prev) => [...prev, { role: "assistant", content: streamingText || t("chatGenerationInterrupted", locale) }]);
       } else {
+        const errorMsg = t("chatErrorMessage", locale).replace("{error}", err.message);
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: `Erro: ${err.message}. Serviço pode estar temporariamente indisponível.` },
+          { role: "assistant", content: errorMsg },
         ]);
       }
       setStreamingText("");
@@ -266,7 +269,7 @@ export default function CinematicChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Mensagem Syntexa AI..."
+            placeholder={t("chatInputPlaceholder", locale)}
             className="max-h-[200px] w-full resize-none bg-transparent text-[14px] text-[#e8e8ec] placeholder-[#5a5a60] outline-none"
             disabled={isLoading}
           />

@@ -6,6 +6,7 @@ import {
   multimodalVoiceConversation,
 } from "../lib/api";
 import { transcribeWithXenova } from "../lib/xenova-stt";
+import { useLanguage } from "../lib/i18n";
 
 /**
  * @param {"transcribe"|"pipeline"} mode
@@ -29,6 +30,7 @@ export function AudioRecorder({
   buttonIcon,
   className,
 }) {
+  const { t, locale } = useLanguage();
   const [rec, setRec] = useState(null);
   const chunks = useRef([]);
   const [busy, setBusy] = useState(false);
@@ -107,7 +109,7 @@ export function AudioRecorder({
             if (typeof onVoicePipelineResult === "function") {
               onVoicePipelineResult(data);
             } else if (onError) {
-              onError("Configure onVoicePipelineResult no modo pipeline server.");
+              onError(t("pipelineConfigError", locale));
             }
           } else {
             setPhase("stt");

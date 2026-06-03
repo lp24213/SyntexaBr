@@ -10,6 +10,8 @@ import { motion, AnimatePresence } from "framer-motion";
    ─────────────────────────────────────────────── */
 
 import { getApiBase } from "../lib/api";
+import { t } from "../lib/i18n";
+import { useLanguage } from "./language-provider";
 var API_BASE = getApiBase();
 
 /* ─── Icons ─── */
@@ -110,6 +112,7 @@ function base64ToDisplayUrl(base64, mime) {
 
 /* ─── Main Component ─── */
 export default function CinematicChatPremium() {
+  const { locale } = useLanguage();
   const [messages, setMessages] = useState([
     {
       role: "assistant",
@@ -278,7 +281,7 @@ export default function CinematicChatPremium() {
         </div>
         <div className="flex items-center gap-2">
           <span className="h-[5px] w-[5px] rounded-full bg-[#5A7A96]" />
-          <span className="text-[10px] font-medium tracking-wide text-[#6b6b74]">Online</span>
+          <span className="text-[10px] font-medium tracking-wide text-[#6b6b74]">{t("online", locale)}</span>
         </div>
       </header>
 
@@ -322,7 +325,7 @@ export default function CinematicChatPremium() {
                 {/* Bubble */}
                 <div className={`max-w-[85%] space-y-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
                   <span className="block text-[10px] font-medium tracking-wide text-[#9a9aa2]">
-                    {msg.role === "user" ? "Você" : "Syntexa AI"}
+                    {msg.role === "user" ? t("youLabel", locale) : t("syntexaAiLabel", locale)}
                   </span>
                   <div className={`rounded-2xl px-4 py-3 text-[14px] leading-relaxed ${
                     msg.role === "user"
@@ -340,7 +343,7 @@ export default function CinematicChatPremium() {
 
                     {/* Media */}
                     {msg.media?.type === "image" && (
-                      <img src={msg.media.url} alt="Gerada" className="mt-2 max-h-[320px] w-full rounded-lg object-contain" />
+                      <img src={msg.media.url} alt={t("generatedAlt", locale)} className="mt-2 max-h-[320px] w-full rounded-lg object-contain" />
                     )}
                     {msg.media?.type === "video" && (
                       <video src={msg.media.url} controls className="mt-2 max-h-[320px] w-full rounded-lg" />
@@ -407,7 +410,7 @@ export default function CinematicChatPremium() {
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/[0.03] backdrop-blur-sm">
           <div className="rounded-2xl border-2 border-dashed border-black/10 bg-white px-8 py-6 text-center shadow-lg">
             <AttachIcon cls="mx-auto mb-2 h-8 w-8 text-[#6b6b74]" />
-            <p className="text-[14px] font-medium text-[#1a1c1e]">Solte os arquivos aqui</p>
+            <p className="text-[14px] font-medium text-[#1a1c1e]">{t("dropFilesHere", locale)}</p>
           </div>
         </div>
       )}

@@ -2,6 +2,8 @@
 
 import React from "react";
 import { sanitizeOutput, escapeHTML } from "../lib/sanitizeOutput";
+import { t } from "../lib/i18n";
+import { useLanguage } from "./language-provider";
 
 /**
  * Exporta conversa para múltiplos formatos.
@@ -14,14 +16,15 @@ function escapeCsv(text) {
   return t;
 }
 
-export function exportConversation(messages, format) {
+export function exportConversation(messages, format, locale) {
+  var loc = locale || "pt-BR";
   var visible = messages.filter(function (m) { return m.role !== "system"; });
   var dateStr = new Date().toISOString().slice(0, 10);
 
   if (format === "txt") {
     var txt = visible.map(function (msg) {
-      var time = msg.timestamp ? new Date(msg.timestamp).toLocaleString("pt-BR") : "";
-      var header = (msg.role === "user" ? "[Você]" : "[Syntexa]") + (time ? " " + time : "");
+      var time = msg.timestamp ? new Date(msg.timestamp).toLocaleString(loc) : "";
+      var header = (msg.role === "user" ? "[" + t("youLabel", loc) + "]" : "[" + t("syntexa", loc) + "]") + (time ? " " + time : "");
       return header + "\n" + sanitizeOutput(msg.content || "") + "\n";
     }).join("\n---\n\n");
     downloadBlob(txt, "text/plain;charset=utf-8", "syntexa-conversa-" + dateStr + ".txt");
@@ -29,11 +32,11 @@ export function exportConversation(messages, format) {
   }
 
   if (format === "md") {
-    var md = "# Conversa Syntexa\n\n";
-    md += "_Exportado em " + new Date().toLocaleString("pt-BR") + "_\n\n";
+    var md = "# " + t("exportConversationTitle", loc) + "\n\n";
+    md += "_" + t("exportedAt", loc) + " " + new Date().toLocaleString(loc) + "_\n\n";
     visible.forEach(function (msg) {
-      var time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
-      var role = msg.role === "user" ? "**Você**" : "**Syntexa**";
+      var time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" }) : "";
+      var role = msg.role === "user" ? "**" + t("youLabel", loc) + "**" : "**" + t("syntexa", loc) + "**";
       md += role + (time ? " _" + time + "_" : "") + "\n\n";
       md += sanitizeOutput(msg.content || "") + "\n\n---\n\n";
     });
@@ -64,7 +67,7 @@ export function exportConversation(messages, format) {
   }
 
   if (format === "html") {
-    var html = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Conversa Syntexa</title>";
+    var html = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>" + t("exportConversationTitle", loc) + "</title>";
     html += "<style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#333}";
     html += ".msg{margin:16px 0;padding:16px;border-radius:12px}";
     html += ".user{background:#f1f5f9;margin-left:40px}";
@@ -74,12 +77,12 @@ export function exportConversation(messages, format) {
     html += "h1{color:#1e293b;font-size:24px;margin-bottom:8px}";
     html += ".date{color:#64748b;font-size:14px;margin-bottom:32px}";
     html += "</style></head><body>";
-    html += "<h1>Conversa Syntexa</h1>";
-    html += "<div class=\"date\">Exportado em " + new Date().toLocaleString("pt-BR") + "</div>";
+    html += "<h1>" + t("exportConversationTitle", loc) + "</h1>";
+    html += "<div class=\"date\">" + t("exportedAt", loc) + " " + new Date().toLocaleString(loc) + "</div>";
     visible.forEach(function (msg) {
-      var time = msg.timestamp ? new Date(msg.timestamp).toLocaleString("pt-BR") : "";
+      var time = msg.timestamp ? new Date(msg.timestamp).toLocaleString(loc) : "";
       var roleClass = msg.role === "user" ? "user" : "assistant";
-      var roleLabel = msg.role === "user" ? "Você" : "Syntexa";
+      var roleLabel = msg.role === "user" ? t("youLabel", loc) : t("syntexa", loc);
       html += "<div class=\"msg " + roleClass + "\">";
       html += "<div class=\"meta\">" + roleLabel + (time ? " &middot; " + time : "") + "</div>";
       html += "<div class=\"content\">" + escapeHTML(sanitizeOutput(msg.content || "")) + "</div>";
@@ -103,6 +106,7 @@ function downloadBlob(content, mimeType, fileName) {
 
 export function ExportMenu({ messages }) {
   var [open, setOpen] = React.useState(false);
+  var { locale } = useLanguage();
 
   return React.createElement(
     "div",
@@ -117,7 +121,7 @@ export function ExportMenu({ messages }) {
       React.createElement("svg", { className: "h-3.5 w-3.5", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" },
         React.createElement("path", { d: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3", strokeLinecap: "round", strokeLinejoin: "round" })
       ),
-      "Exportar"
+      t("exportButton", locale)
     ),
     open && React.createElement(
       "div",
@@ -134,7 +138,7 @@ export function ExportMenu({ messages }) {
           {
             key: item.format,
             type: "button",
-            onClick: function () { exportConversation(messages, item.format); setOpen(false); },
+            onClick: function () { exportConversation(messages, item.format, locale); setOpen(false); },
             className: "w-full px-4 py-2 text-left text-xs text-[#475569] hover:bg-[#f1f5f9] transition-colors",
           },
           item.label

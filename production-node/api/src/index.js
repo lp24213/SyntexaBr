@@ -12,34 +12,89 @@ import { logger } from "./logger.js";
 import { apiRateLimiter } from "./rateLimit.js";
 import { sttQueue, connection, queueEventsChannel } from "./queue.js";
 
+// ✅ CORS whitelist — SOMENTE domínios confiáveis
+const ALLOWED_ORIGINS = [
+  "https://syntexabr.com.br",
+  "https://www.syntexabr.com.br",
+  "https://app.syntexabr.com.br",
+  "https://production.syntexa-frontend.pages.dev",
+  "http://localhost:3000", // Dev only
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      logger.warn({ origin }, "CORS origin rejected");
+      callback(new Error("CORS not allowed"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  maxAge: 86400,
+};
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   path: "/socket.io",
-  cors: {
-    origin: process.env.WS_CORS_ORIGIN || "*"
-  }
+  cors: corsOptions
 });
 
 const port = Number(process.env.PORT || 3001);
 const uploadDir = process.env.UPLOAD_DIR || "/data/uploads";
 fs.mkdirSync(uploadDir, { recursive: true });
 
+// ✅ WHITELIST de tipos MIME permitidos SOMENTE
+const ALLOWED_MIME_TYPES = [
+  "audio/webm",
+  "audio/mp4",
+  "audio/mpeg",
+  "audio/wav",
+  "audio/ogg",
+  "audio/flac",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+  "text/plain",
+  "text/csv",
+];
+
+const ALLOWED_EXTENSIONS = [".webm", ".mp4", ".mp3", ".wav", ".ogg", ".flac", ".pdf", ".docx", ".xlsx", ".txt", ".csv"];
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, uploadDir),
     filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname || "") || ".bin";
+      // ✅ Sanitizar nome do arquivo (remover path traversal)
+      const sanitized = path.basename(file.originalname || "").replace(/[^\w.-]/g, "_");
+      const ext = path.extname(sanitized) || ".bin";
       cb(null, `${Date.now()}-${uuidv4()}${ext}`);
     }
   }),
+  fileFilter: (req, file, cb) => {
+    // ✅ Validar MIME type (whitelist)
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      logger.warn({ mimetype: file.mimetype }, "MIME type rejected");
+      return cb(new Error(`MIME type not allowed: ${file.mimetype}`));
+    }
+    // ✅ Validar extensão (whitelist)
+    const ext = path.extname(file.originalname || "").toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      logger.warn({ ext }, "Extension rejected");
+      return cb(new Error(`Extension not allowed: ${ext}`));
+    }
+    cb(null, true);
+  },
   limits: {
-    fileSize: 40 * 1024 * 1024
+    fileSize: 40 * 1024 * 1024 // 40MB max
   }
 });
 
 app.use(express.json({ limit: "1mb" }));
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(apiRateLimiter());
 app.use(
   pinoHttp({
@@ -86,27 +141,40 @@ app.get("/health", async (_req, res) => {
 });
 
 app.post("/api/stt/enqueue", upload.any(), async (req, res) => {
-  const files = Array.isArray(req.files) ? req.files : [];
-  const picked =
-    files.find((f) => f && (f.fieldname === "audio" || f.fieldname === "file")) || files[0];
-  if (!picked) {
-    return res.status(400).json({ ok: false, error: "audio_file_required" });
+  try {
+    const files = Array.isArray(req.files) ? req.files : [];
+    const picked =
+      files.find((f) => f && (f.fieldname === "audio" || f.fieldname === "file")) || files[0];
+    if (!picked) {
+      return res.status(400).json({ ok: false, error: "audio_file_required" });
+    }
+
+    // ✅ Validar que o arquivo está em uploadDir seguro (sem path traversal)
+    const resolvedPath = path.resolve(picked.path);
+    const resolvedUploadDir = path.resolve(uploadDir);
+    if (!resolvedPath.startsWith(resolvedUploadDir)) {
+      logger.error({ filePath: picked.path, uploadDir }, "Path traversal attempt detected");
+      return res.status(403).json({ ok: false, error: "invalid_file_path" });
+    }
+
+    const clientJobId = String(req.body?.clientJobId || uuidv4());
+    const job = await sttQueue.add("transcribe", {
+      jobId: clientJobId,
+      filePath: resolvedPath, // ✅ Usar resolved path
+      mimeType: picked.mimetype || "application/octet-stream",
+      originalName: path.basename(picked.originalname || "audio.bin"), // ✅ Sanitizar
+      languageHint: req.body?.language || "pt"
+    });
+
+    res.status(202).json({
+      ok: true,
+      jobId: job.id,
+      status: "queued"
+    });
+  } catch (err) {
+    logger.error({ err }, "Error enqueueing STT job");
+    res.status(500).json({ ok: false, error: "internal_error" });
   }
-
-  const clientJobId = String(req.body?.clientJobId || uuidv4());
-  const job = await sttQueue.add("transcribe", {
-    jobId: clientJobId,
-    filePath: picked.path,
-    mimeType: picked.mimetype || "application/octet-stream",
-    originalName: picked.originalname || "audio.bin",
-    languageHint: req.body?.language || "pt"
-  });
-
-  res.status(202).json({
-    ok: true,
-    jobId: job.id,
-    status: "queued"
-  });
 });
 
 app.get("/api/stt/status/:jobId", async (req, res) => {

@@ -165,7 +165,7 @@ export default function HomePage() {
         >
           <div className="mb-2 flex items-center gap-2">
             <span className="h-[1px] w-8 bg-[#25D366]" />
-            <span className="text-[11px] font-medium tracking-[0.12em] text-[#25D366] uppercase">WhatsApp Business</span>
+            <span className="text-[11px] font-medium tracking-[0.12em] text-[#25D366] uppercase">{t('whatsappBusiness', locale)}</span>
           </div>
           <h2 className="text-[2rem] font-medium tracking-[-0.02em] text-[#0f172a] md:text-[2.5rem]">
             {t('whatsappTitle', locale)}

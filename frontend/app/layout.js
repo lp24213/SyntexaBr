@@ -2,7 +2,6 @@ import "./globals.css";
 import React, { Suspense } from "react";
 import Script from "next/script";
 import { AppWrapper } from "../components/app-wrapper";
-import { LanguageProvider } from "../components/language-provider";
 
 export const metadata = {
   metadataBase: new URL("https://syntexabr.com.br"),
@@ -161,11 +160,7 @@ export default function RootLayout(props) {
 })();`
         }
       }),
-      React.createElement(
-        LanguageProvider,
-        { initialLocale: "pt-BR" },
-        React.createElement(Suspense, { fallback: null }, React.createElement(AppWrapper, null, children))
-      )
+      React.createElement(Suspense, { fallback: null }, React.createElement(AppWrapper, null, children))
     )
   );
 }

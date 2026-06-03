@@ -5,6 +5,7 @@ import {
   CHAT_MAX_TOKENS,
   multimodalVoiceConversation,
 } from "../lib/api";
+import { useLanguage } from "../lib/i18n";
 
 /**
  * AudioRecorder Robusto - STT com Xenova + Fallback Web Speech API
@@ -21,6 +22,7 @@ export function AudioRecorder({
   buttonIcon,
   className = "",
 }) {
+  const { t, locale } = useLanguage();
   const [rec, setRec] = useState(null);
   const [mediaStream, setMediaStream] = useState(null);
   const chunks = useRef([]);
@@ -31,81 +33,138 @@ export function AudioRecorder({
   const [sttReady, setSttReady] = useState(false);
   const [sttError, setSttError] = useState(null);
 
-  // Carregar modelo STT dinamicamente
+  // ✅ Carregar modelo STT dinamicamente (lazy + cache)
   useEffect(() => {
     const initSTT = async () => {
       try {
+        // ✅ Usar Web Worker se disponível para não bloquear UI
+        if (typeof window !== "undefined" && global.transcriber) {
+          setSttReady(true);
+          setSttError(null);
+          return;
+        }
+
+        // Show loading feedback
+        setPhase("loading_stt");
+        
         // Lazy load xenova transformer
         const { pipeline } = await import("@xenova/transformers");
-        // Pré-carregar modelo para melhor performance
-        global.transcriber = global.transcriber || 
-          await pipeline("automatic-speech-recognition", "Xenova/whisper-tiny.pt");
+        
+        // Timeout para evitar hang indefinido
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("STT initialization timeout")), 30000)
+        );
+
+        const initPromise = pipeline(
+          "automatic-speech-recognition", 
+          "Xenova/whisper-tiny.pt"
+        );
+
+        global.transcriber = await Promise.race([initPromise, timeoutPromise]);
         setSttReady(true);
         setSttError(null);
+        setPhase(""); // Clear loading
       } catch (err) {
-        setSttError("Modelo STT não disponível, usando fallback");
-        setSttReady(false);
+        console.warn("STT initialization failed:", err);
+        setSttError(t("sttNotAvailable", locale));
+        setSttReady(false); // Fallback will be used
+        setPhase("");
       }
     };
 
     if (typeof window !== "undefined") {
-      initSTT();
+      // ✅ Init STT de forma não-blocking
+      if (!global.transcriber) {
+        initSTT();
+      }
     }
-  }, []);
+  }, [locale, t]);
 
   const transcribeAudio = useCallback(async (file) => {
     try {
       setPhase("stt");
       
-      if (!global.transcriber) {
-        throw new Error("STT não inicializado");
+      // ✅ Timeout para não travar indefinidamente
+      const transcriptionTimeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Transcrição expirou (timeout 60s)")), 60000)
+      );
+
+      let transcription;
+      
+      if (global.transcriber && sttReady) {
+        // ✅ Tentar Xenova (com timeout)
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const audioData = await audioContext.decodeAudioData(arrayBuffer);
+          const samples = audioData.getChannelData(0);
+          
+          const transcriptPromise = global.transcriber(samples, {
+            language: "portuguese",
+          }).then(result => result.text);
+
+          transcription = await Promise.race([transcriptPromise, transcriptionTimeout]);
+          setPhase("");
+          return transcription;
+        } catch (xenovaErr) {
+          console.warn("Xenova transcription failed, falling back to Web Speech:", xenovaErr);
+          // Continua para fallback
+        }
       }
 
-      const arrayBuffer = await file.arrayBuffer();
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const audioData = await audioContext.decodeAudioData(arrayBuffer);
-
-      // Extrair samples de áudio
-      const samples = audioData.getChannelData(0);
-      
-      // Usar modelo
-      const { text } = await global.transcriber(samples, {
-        language: "portuguese",
-      });
-
-      return text;
-    } catch (err) {
-      // Fallback para Web Speech API
+      // ✅ Fallback: Web Speech API (mais rápido, menos preciso)
       return new Promise((resolve, reject) => {
         try {
           const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
           if (!SR) {
-            reject(new Error("Nenhum motor de voz disponível"));
+            reject(new Error(t("voiceEngineNotAvailable", locale)));
             return;
           }
 
           const recognition = new SR();
           recognition.lang = "pt-BR";
           recognition.continuous = false;
+          recognition.interimResults = true;
+          
+          let finalTranscript = "";
           
           recognition.onresult = (event) => {
-            const transcript = Array.from(event.results)
-              .map(result => result[0].transcript)
-              .join("");
-            resolve(transcript);
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const transcript = event.results[i][0].transcript;
+              if (event.results[i].isFinal) {
+                finalTranscript += transcript + " ";
+              }
+            }
+          };
+
+          recognition.onend = () => {
+            setPhase("");
+            resolve(finalTranscript.trim() || "");
           };
 
           recognition.onerror = (event) => {
-            reject(new Error(`Erro STT: ${event.error}`));
+            setPhase("");
+            reject(new Error(t("sttError", locale).replace("{error}", event.error)));
           };
+
+          // ✅ Timeout para Web Speech também
+          const webSpeechTimeout = setTimeout(() => {
+            recognition.abort();
+            setPhase("");
+            reject(new Error("Web Speech timeout"));
+          }, 30000);
 
           recognition.start();
         } catch (err) {
+          setPhase("");
           reject(err);
         }
       });
+    } catch (err) {
+      setPhase("");
+      throw err;
     }
-  }, []);
+  }, [locale, t, sttReady]);
 
   const stopSpeech = useCallback(() => {
     try {
@@ -147,7 +206,7 @@ export function AudioRecorder({
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch (e2) {
-        if (onError) onError("Permissão de microfone negada");
+        if (onError) onError(t("microphonePermissionDenied", locale));
         throw e1;
       }
     }
@@ -194,7 +253,7 @@ export function AudioRecorder({
             if (typeof onVoicePipelineResult === "function") {
               onVoicePipelineResult(data);
             } else if (onError) {
-              onError("Configure onVoicePipelineResult no modo pipeline server.");
+              onError(t("pipelineConfigError", locale));
             }
           } else {
             const transcript = await transcribeAudio(file);

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { AppShell } from "../../components/shell";
 import { ChatLayout } from "../../components/chat-layout";
 import { Button } from "../../components/ui/button";
 import { FileExportMenu } from "../../components/FileExportMenu";
@@ -150,12 +151,12 @@ function ChatImage(props) {
   }
   if (failed[0]) {
     return React.createElement("p", { className: "mt-3 text-sm text-[#b45309]" },
-      "Não foi possível exibir a imagem (dados inválidos ou limite do navegador). Gere de novo."
+      t("chatImageError", locale)
     );
   }
   return React.createElement("img", {
     src: src,
-    alt: props.alt || "Imagem gerada",
+    alt: props.alt || t("imageGenerated", locale),
     className: "mt-3 max-h-[420px] w-full rounded-xl border border-[rgba(15,23,42,0.08)] object-contain",
     loading: "lazy",
     decoding: "async",
@@ -448,21 +449,22 @@ export default function ChatPage() {
           : wantsSpeech
             ? "speech"
             : "audio";
-      var label =
+      var labelKey =
         kind === "image"
-          ? "imagem"
+          ? "image"
           : kind === "video"
             ? "video"
             : kind === "speech"
-              ? "voz"
+              ? "speech"
               : "audio";
+      var label = t(labelKey, locale).toLowerCase();
       var userMsg = { role: "user", content: content };
       setMessages((prev) =>
         prev.concat([
           userMsg,
           {
             role: "assistant",
-            content: "Gerando " + label + " no provedor real...",
+            content: t("generating", locale) + " " + label + " " + t("providerReal", locale) + "...",
           },
         ])
       );
@@ -489,7 +491,7 @@ export default function ChatPage() {
             // substitui o placeholder "Gerando imagem..." pela resposta final com mídia
             p[p.length - 1] = {
               role: "assistant",
-              content: "Imagem gerada.",
+              content: t("imageGenerated", locale) + ".",
               media: { type: "image", url: imageUrl },
             };
             return p;
@@ -503,7 +505,7 @@ export default function ChatPage() {
             var p = prev.slice();
             p[p.length - 1] = {
               role: "assistant",
-              content: "Imagem gerada.",
+              content: t("imageGenerated", locale) + ".",
               media: { type: "image", url: imgU },
             };
             return p;
@@ -525,11 +527,11 @@ export default function ChatPage() {
               {
                 role: "assistant",
                 content:
-                  kind === "video"
-                    ? "Vídeo gerado."
-                    : kind === "speech"
-                      ? "Fala gerada."
-                      : "Áudio gerado.",
+                kind === "video"
+                  ? t("videoGenerated", locale) + "."
+                  : kind === "speech"
+                    ? t("speechGenerated", locale) + "."
+                    : t("audioGenerated", locale) + ".",
                 media: {
                   type: kind === "video" ? "video" : "audio",
                   url: mediaUrl,
@@ -630,7 +632,7 @@ export default function ChatPage() {
             diagParts.push("• " + (f.component || "unknown") + ": " + (f.error || "sem detalhe"));
           });
         } else if (bootDiagnostic && bootDiagnostic.error) {
-          diagParts.push("Erro: " + bootDiagnostic.error);
+          diagParts.push(t("error", locale) + ": " + bootDiagnostic.error);
         } else {
           diagParts.push("Checkpoint 70B inexistente ou não treinado.");
           diagParts.push("Verifique: checkpoints/foundation/ deve conter manifest.json + syntexa_foundation_weights.pt + tokenizer/");
@@ -747,13 +749,13 @@ export default function ChatPage() {
       var isLimitError = /403|forbidden|limite|limit/i.test(lower);
       var displayMsg;
       if (isLimitError) {
-        displayMsg = "Você atingiu o limite de mensagens do seu plano neste mês. Faça upgrade para continuar usando a IA sem interrupções.";
+        displayMsg = t("limitUsage", locale);
       } else if (desktopMode && !desktopReady) {
-        displayMsg = "Runtime local Syntexa não está pronto. Verifique o boot diagnostic do backend local.";
+        displayMsg = t("desktopNotReady", locale);
       } else if (isRuntimeOutage) {
-        displayMsg = "O motor de IA está temporariamente indisponível. Estamos restabelecendo o serviço — tente novamente em instantes.";
+        displayMsg = t("aiEngineUnavailable", locale);
       } else {
-        displayMsg = rawMsg || "Não foi possível concluir agora. Tente novamente.";
+        displayMsg = rawMsg || t("genericError", locale);
       }
       // Em desenvolvimento, exibe detalhes técnicos abaixo da mensagem amigável.
       var isDev = typeof window !== "undefined" && /^(localhost|127\.|192\.168\.)/i.test(window.location.hostname);
@@ -844,7 +846,7 @@ export default function ChatPage() {
           prev.concat([
             {
               role: "assistant",
-              content: "Imagem gerada.",
+              content: t("imageGenerated", locale) + ".",
               media: { type: "image", url: imageUrl2 },
             },
           ])
@@ -858,7 +860,7 @@ export default function ChatPage() {
           prev.concat([
             {
               role: "assistant",
-              content: "Imagem gerada.",
+              content: t("imageGenerated", locale) + ".",
               media: { type: "image", url: imgU2 },
             },
           ])
@@ -876,10 +878,10 @@ export default function ChatPage() {
               role: "assistant",
               content:
                 kind === "video"
-                  ? "Vídeo gerado."
+                  ? t("videoGenerated", locale) + "."
                   : kind === "speech"
-                    ? "Fala gerada."
-                    : "Áudio gerado.",
+                    ? t("speechGenerated", locale) + "."
+                    : t("audioGenerated", locale) + ".",
               media: { type: kind === "video" ? "video" : "audio", url: mediaUrl },
             },
           ])
@@ -1024,8 +1026,11 @@ export default function ChatPage() {
   }
 
   return React.createElement(
-    ChatLayout,
-    {
+    AppShell,
+    null,
+    React.createElement(
+      ChatLayout,
+      {
         onNewConversation: handleNewConversation,
       onSelectSession: async function (sessionId) {
         try {
@@ -1063,20 +1068,20 @@ export default function ChatPage() {
           className: "h-1.5 w-1.5 rounded-full " + (desktopReady ? "bg-[#059669]" : "bg-amber-500")
         }),
         desktopReady
-          ? "Runtime Soberano — Offline"
-          : "Desktop — Runtime não carregado"
+          ? t("runtimeSovereignOffline", locale)
+          : t("desktopRuntimeNotLoaded", locale)
       ),
       React.createElement("div", { className: "flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-3 pb-32 pt-3 sm:px-8 sm:pt-5 min-w-0" },
         React.createElement("div", { className: "mx-auto flex w-full max-w-3xl flex-col gap-4" },
           visible.map((m, idx) => {
             var cn = m.role === "user" ? "syntexa-bubble-user ml-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed break-words" : "syntexa-bubble-assistant mr-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed text-[var(--text-primary)] break-words";
-            var msgTime = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            var msgTime = m.timestamp ? new Date(m.timestamp).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
             return React.createElement(motion.div, { key: idx, initial: false, animate: { opacity: 1, y: 0 }, transition: { duration: 0.25 }, className: cn },
               React.createElement("div", { className: "mb-1.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8]" },
                 React.createElement("span", null, m.role === "user" ? t("you", locale) : t("syntexa", locale)),
                 React.createElement("span", { className: "text-[10px] font-normal normal-case tracking-normal text-[#cbd5e1]" }, msgTime)
               ),
-              (m.role === "assistant" && /^Gerando\s/i.test(String(m.content || "")))
+              (m.role === "assistant" && new RegExp("^" + t("generating", locale) + "\\s", "i").test(String(m.content || "")))
                 ? React.createElement(
                     "div",
                     { className: "flex items-center gap-2 whitespace-pre-wrap" },
@@ -1089,7 +1094,7 @@ export default function ChatPage() {
               m.media && m.media.type === "image" &&
                 React.createElement(ChatImage, {
                   src: m.media.url,
-                  alt: "Imagem gerada",
+                  alt: t("imageGenerated", locale),
                 }),
               m.media && m.media.type === "image" &&
                 React.createElement(
@@ -1102,7 +1107,7 @@ export default function ChatPage() {
                     className:
                       "mt-2 inline-flex items-center text-xs font-medium text-[#64748b] hover:text-[#475569] underline decoration-[#64748b]/40",
                   },
-                  "Baixar imagem"
+                  t('chatDownloadImage', locale)
                 ),
               m.media && m.media.type === "video" &&
                 (String(m.media.url || "").startsWith("data:image/")
@@ -1128,7 +1133,7 @@ export default function ChatPage() {
                     className:
                       "mt-2 inline-flex items-center text-xs font-medium text-[#64748b] hover:text-[#475569] underline decoration-[#64748b]/40",
                   },
-                  "Baixar vídeo"
+                  t('chatDownloadVideo', locale)
                 ),
               m.media && m.media.type === "audio" &&
                 React.createElement("audio", {
@@ -1147,9 +1152,9 @@ export default function ChatPage() {
                     className:
                       "mt-2 inline-flex items-center text-xs font-medium text-[#64748b] hover:text-[#475569] underline decoration-[#64748b]/40",
                   },
-                  "Baixar áudio"
+                  t('chatDownloadAudio', locale)
                 ),
-              m.role === "assistant" && m.content && !/^Gerando\s|^Erro:/i.test(String(m.content || "")) &&
+              m.role === "assistant" && m.content && !new RegExp("^(" + t("generating", locale) + "\\s|" + t("error", locale) + ":)", "i").test(String(m.content || "")) &&
                 React.createElement("div", { className: "mt-2 flex items-center gap-3" },
                   React.createElement("button", {
                     type: "button",
@@ -1157,7 +1162,7 @@ export default function ChatPage() {
                       try { await navigator.clipboard.writeText(m.content); } catch (e) {}
                     },
                     className: "inline-flex items-center gap-1 text-[10px] font-medium text-[#64748b] hover:text-[#475569] transition-colors",
-                    title: "Copiar resposta",
+                    title: t("copyAnswer", locale),
                   },
                     React.createElement("svg", { className: "h-3 w-3", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" },
                       React.createElement("rect", { x: "9", y: "9", width: "13", height: "13", rx: "2", ry: "2" }),
@@ -1170,14 +1175,14 @@ export default function ChatPage() {
                     onClick: function () {
                       try {
                         var utter = new window.SpeechSynthesisUtterance(m.content);
-                        utter.lang = "pt-BR";
+                        utter.lang = locale;
                         utter.rate = 1.1;
                         window.speechSynthesis.cancel();
                         window.speechSynthesis.speak(utter);
                       } catch (e) {}
                     },
                     className: "inline-flex items-center gap-1 text-[10px] font-medium text-[#64748b] hover:text-[#475569] transition-colors",
-                    title: "Ouvir resposta",
+                    title: t("listenAnswer", locale),
                   },
                     React.createElement("svg", { className: "h-3 w-3", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" },
                       React.createElement("path", { d: "M11 5L6 9H2v6h4l5 4V5z" }),
@@ -1218,15 +1223,15 @@ export default function ChatPage() {
                 )
               ),
               React.createElement("h2", { className: "text-[22px] sm:text-[26px] font-semibold tracking-tight text-[#0f172a]" }, t("askAnything", locale)),
-              React.createElement("p", { className: "mt-2 text-sm text-[#64748b]" }, "Escolha um ponto de partida ou escreva sua pergunta abaixo."),
+              React.createElement("p", { className: "mt-2 text-sm text-[#64748b]" }, t('chatQuickStartTitle', locale)),
               React.createElement(
                 "div",
                 { className: "mt-7 grid w-full grid-cols-1 gap-2 sm:grid-cols-2" },
                 [
-                  { t: "Resuma um texto longo em tópicos claros", i: "M4 6h16M4 12h16M4 18h10" },
-                  { t: "Explique um conceito difícil de forma simples", i: "M12 3v18M3 12h18" },
-                  { t: "Me ajude a planejar minha semana de estudos", i: "M3 4h18v4H3zM3 12h18v4H3zM3 20h12" },
-                  { t: "Escreva um e-mail profissional para mim", i: "M3 7l9 6 9-6M3 7v10h18V7" },
+                  { k: 'chatQuickSummarize', i: "M4 6h16M4 12h16M4 18h10" },
+                  { k: 'chatQuickExplain', i: "M12 3v18M3 12h18" },
+                  { k: 'chatQuickPlan', i: "M3 4h18v4H3zM3 12h18v4H3zM3 20h12" },
+                  { k: 'chatQuickEmail', i: "M3 7l9 6 9-6M3 7v10h18V7" },
                 ].map(function (it, idx) {
                   return React.createElement(
                     motion.button,
@@ -1238,7 +1243,7 @@ export default function ChatPage() {
                       transition: { duration: 0.35, delay: 0.15 + idx * 0.06, ease: [0.22, 1, 0.36, 1] },
                       whileHover: { y: -2 },
                       whileTap: { scale: 0.98 },
-                      onClick: function () { setInput(it.t); try { textareaRef.current && textareaRef.current.focus(); } catch (_) {} },
+                      onClick: function () { setInput(t(it.k, locale)); try { textareaRef.current && textareaRef.current.focus(); } catch (_) {} },
                       className: "group flex items-center gap-3 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white/70 px-4 py-3 text-left text-[13px] text-[#334155] transition-colors hover:border-[rgba(15,23,42,0.12)] hover:bg-white",
                     },
                     React.createElement(
@@ -1248,7 +1253,7 @@ export default function ChatPage() {
                         React.createElement("path", { d: it.i })
                       )
                     ),
-                    React.createElement("span", { className: "flex-1" }, it.t)
+                    React.createElement("span", { className: "flex-1" }, t(it.k, locale))
                   );
                 })
               )
@@ -1359,15 +1364,15 @@ export default function ChatPage() {
                   var fullChat = [];
                   messages.forEach(function (mm) {
                     if (!mm || !mm.content) return;
-                    var role = mm.role === "user" ? "Você:" : "Assistente:";
+                    var role = mm.role === "user" ? t("roleUser", locale) : t("roleAssistant", locale);
                     var content = String(mm.content);
-                    if (/^Gerando\s/i.test(content)) return;
+                    if (new RegExp("^" + t("generating", locale) + "\\s", "i").test(content)) return;
                     var lines = [role, content];
                     if (mm.media && mm.media.type) {
-                      var mediaLabel = mm.media.type === "image" ? "Imagem gerada" :
-                        mm.media.type === "video" ? "Vídeo gerado" :
-                        mm.media.type === "audio" ? "Áudio gerado" :
-                        mm.media.type === "speech" ? "Fala gerada" : "Mídia gerada";
+                      var mediaLabel = mm.media.type === "image" ? t("imageGenerated", locale) :
+                        mm.media.type === "video" ? t("videoGenerated", locale) :
+                        mm.media.type === "audio" ? t("audioGenerated", locale) :
+                        mm.media.type === "speech" ? t("speechGenerated", locale) : t("mediaGenerated", locale);
                       lines.push("[" + mediaLabel + "]");
                     }
                     fullChat.push(lines.join("\n"));
@@ -1467,12 +1472,13 @@ export default function ChatPage() {
                   className: "text-xs " + (voiceError ? "text-red-600" : "text-[#64748b]"),
                   role: voiceError ? "alert" : "status",
                 },
-                voiceError || voiceProgress || "Escutando…"
+                voiceError || voiceProgress || t("listening", locale)
               )
           )
         )
       )
     )
-  );
+  )
+);
 }
 

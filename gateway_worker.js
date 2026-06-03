@@ -407,18 +407,20 @@ export default {
       // Priority:
       // 1. Environment variable (mais confiável em CI/CD)
       if (env.FRONTEND_PAGES_URL) {
+        console.log("[Gateway] Using FRONTEND_PAGES_URL from env:", env.FRONTEND_PAGES_URL);
         return env.FRONTEND_PAGES_URL.replace(/\/$/, "");
       }
       
       // 2. Header X-Pages-URL passado pelo CI/CD
       const headerPagesUrl = request.headers.get("X-Pages-URL");
       if (headerPagesUrl) {
+        console.log("[Gateway] Using X-Pages-URL from header:", headerPagesUrl);
         return headerPagesUrl.replace(/\/$/, "");
       }
       
-      // 3. Fallback com documentação clara
-      console.warn("[Gateway] Using fallback Pages deployment URL. Set FRONTEND_PAGES_URL in env.");
-      return "https://4611dec3.syntexa-frontend.pages.dev";
+      // 3. Log de erro se nenhuma config encontrada
+      console.error("[Gateway] CRITICAL: FRONTEND_PAGES_URL not configured! Using production fallback.");
+      return "https://production.syntexa-frontend.pages.dev";
     }
     
     const pagesDeployment = getPagesDeploymentUrl(env, request);
@@ -438,7 +440,10 @@ export default {
     init.headers.delete("CF-Connecting-IP");
     init.headers.delete("CF-IPCountry");
     init.headers.set("User-Agent", "Syntexa-Gateway/1.0");
+    // ⚠️ IMPORTANTE: Preservar accept-language para i18n funcionar
+    // (middleware.js usa este header para detectar Mandarim, etc)
 
+    console.log("[Gateway] Proxying to Pages:", targetUrl.toString());
     const pagesResp = await fetch(targetUrl.toString(), init);
     const pageHeaders = new Headers(pagesResp.headers);
 

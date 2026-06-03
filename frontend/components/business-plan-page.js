@@ -3,6 +3,8 @@
 import React, { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
+import { t } from "../lib/i18n";
+import { useLanguage } from "./language-provider";
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Ícones inline (SVG) — sem dependências externas                            */
@@ -1080,7 +1082,7 @@ function ChatPreviewMockup() {
 /*  Cards de planos                                                            */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-export function PlanCard({ plan, onSubscribe }) {
+export function PlanCard({ plan, onSubscribe, locale }) {
   const isFree = plan.key === "free";
   const isPro = plan.highlighted;
   return (
@@ -1094,14 +1096,14 @@ export function PlanCard({ plan, onSubscribe }) {
     >
       {isPro ? (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white shadow-sm">
-          Mais escolhido
+          {t('planMostChosen', locale)}
         </span>
       ) : null}
 
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">{plan.tag}</p>
         {isFree ? (
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600">grátis</span>
+          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600">{t('planFreeBadge', locale)}</span>
         ) : null}
       </div>
       <h3 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900">{plan.name}</h3>
@@ -1114,11 +1116,11 @@ export function PlanCard({ plan, onSubscribe }) {
 
       {!isFree ? (
         <p className="mt-1 text-[12px] text-emerald-700">
-          Estudante (.edu): <span className="font-semibold">{plan.priceStudent}</span>{" "}
-          <span className="text-zinc-500">{plan.studentLabel}</span>
+          {t('planStudentLabel', locale)} <span className="font-semibold">{plan.priceStudent}</span>{" "}
+          <span className="text-zinc-500">{t('planStudentMonth', locale)}</span>
         </p>
       ) : (
-        <p className="mt-1 text-[12px] text-zinc-500">Sem cartão · sem prazo</p>
+        <p className="mt-1 text-[12px] text-zinc-500">{t('planNoCard', locale)}</p>
       )}
 
       <ul className="mt-5 space-y-2.5 text-[13.5px] text-zinc-700">
@@ -1143,7 +1145,7 @@ export function PlanCard({ plan, onSubscribe }) {
           className="w-full justify-center rounded-xl"
           onClick={() => onSubscribe(plan.key || "basic")}
         >
-          {isFree ? "Começar grátis" : "Assinar " + plan.name}
+          {isFree ? t('planStartFree', locale) : t('planSubscribe', locale) + " " + plan.name}
         </Button>
       </div>
     </article>
@@ -1155,6 +1157,7 @@ export function PlanCard({ plan, onSubscribe }) {
 /* ────────────────────────────────────────────────────────────────────────── */
 
 export function BusinessPlanPage({ plans, onSubscribe, showBusinessPlan = true }) {
+  const { locale } = useLanguage();
   const [exportBusy, setExportBusy] = useState(null);
 
   const runExport = useCallback(
@@ -1162,16 +1165,12 @@ export function BusinessPlanPage({ plans, onSubscribe, showBusinessPlan = true }
       if (typeof window === "undefined") return;
       setExportBusy(kind);
       try {
-        // V46 — geração 100% client-side: independe da API e nunca trava no
-        // gateway (`api.syntexabr.com.br`). PDF via popup com print do navegador;
-        // DOCX via HTML msword (.doc), aberto nativamente no Word/LibreOffice.
         if (kind === "pdf") {
-          downloadPlanAsPdf();
+          downloadPlanAsPdf(locale);
         } else {
-          downloadPlanAsDoc(PLAN_DOCUMENT);
+          downloadPlanAsDoc(PLAN_DOCUMENT, locale);
         }
       } catch (e) {
-        // Último fallback: TXT puro — sempre baixa.
         const text = PLAN_DOCUMENT.chapters.map((ch) => {
           const parts = [`${ch.number}. ${ch.title}`, "", ch.lead || ""];
           ch.paragraphs.forEach((p) => parts.push(p));
@@ -1184,7 +1183,7 @@ export function BusinessPlanPage({ plans, onSubscribe, showBusinessPlan = true }
         setExportBusy(null);
       }
     },
-    []
+    [locale]
   );
 
   const handlePrint = useCallback(() => {

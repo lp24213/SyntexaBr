@@ -54,7 +54,7 @@ function LanguageSelector() {
     React.createElement("button", {
       onClick: function() { setIsOpen(!isOpen); },
       className: "flex items-center gap-1.5 rounded-lg border border-[rgba(15,23,42,0.08)] px-2 py-1.5 hover:bg-[rgba(20,24,30,0.04)] transition-colors",
-      title: "Mudar idioma",
+      title: t("changeLanguage", locale),
       "aria-expanded": isOpen,
       "aria-haspopup": "true"
     }, React.createElement(IconLanguage, null)),
@@ -479,7 +479,7 @@ export function AppShell(props) {
                   "a",
                   { href: encryptedPath("login"), className: "inline-flex items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] transition-colors duration-150 hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e]" },
                   React.createElement(IconLogin, null),
-                  React.createElement("span", { className: "hidden sm:inline" }, "Login")
+                  React.createElement("span", { className: "hidden sm:inline" }, t("login", locale))
                 )
           )
         )

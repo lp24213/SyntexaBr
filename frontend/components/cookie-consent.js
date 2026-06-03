@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { t } from "../lib/i18n";
+import { useLanguage } from "./language-provider";
 
 const TERMS_KEY = "syntexa_terms_accepted_v1";
 const CONSENT_KEY = "syntexa_cookie_consent_v1";
@@ -40,6 +42,7 @@ function requestOptionalGeolocation() {
 }
 
 export function CookieConsent() {
+  const { locale } = useLanguage();
   const [visible, setVisible] = useState(false);
   const [needsTerms, setNeedsTerms] = useState(false);
 
@@ -108,20 +111,21 @@ export function CookieConsent() {
         "p",
         { className: "text-sm leading-relaxed text-[#475569]" },
         needsTerms
-          ? "Para usar o chat, aceite os "
-          : "Usamos cookies para manter sua sessão. Veja ",
+          ? t('cookieTermsPrompt', locale)
+          : t('cookieSessionPrompt', locale),
+        " ",
         React.createElement(
           "a",
           { href: "/termos", className: "font-medium text-[#0f172a] underline-offset-2 hover:underline" },
-          "Termos"
+          t('termsPageTitle', locale)
         ),
-        " e ",
+        " · ",
         React.createElement(
           "a",
           { href: "/privacidade", className: "font-medium text-[#0f172a] underline-offset-2 hover:underline" },
-          "Privacidade"
+          t('privacyPageTitle', locale)
         ),
-        needsTerms ? "." : "."
+        ""
       ),
       React.createElement(
         "div",
@@ -134,7 +138,7 @@ export function CookieConsent() {
             className:
               "rounded-lg px-3 py-2 text-xs font-medium text-[#64748b] hover:bg-[rgba(15,23,42,0.04)]",
           },
-          "Só o essencial"
+          t('cookieEssentialOnly', locale)
         ),
         React.createElement(
           "button",
@@ -144,7 +148,7 @@ export function CookieConsent() {
             className:
               "rounded-lg bg-[#334155] px-4 py-2 text-xs font-medium text-white hover:bg-[#1e293b]",
           },
-          "Aceitar e continuar"
+          t('cookieAcceptAll', locale)
         )
       )
     )

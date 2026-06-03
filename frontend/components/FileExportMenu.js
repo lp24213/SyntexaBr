@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import { sanitizeForExport } from "../lib/sanitizeOutput";
 import { AudioRecorder } from "./AudioRecorder";
+import { t } from "../lib/i18n";
+import { useLanguage } from "./language-provider";
 
 function ToolbarIcon(props) {
   var path = props.path;
@@ -524,24 +526,25 @@ function splitChatBlocks(rawText) {
  * ═════════════════════════════════════════════════════════════════════════ */
 
 /** Gera ficheiro. `kind`: pdf | xlsx | docx | csv | txt | html */
-export async function downloadStructuredExport(kind, rawText, token, options) {
+export async function downloadStructuredExport(kind, rawText, token, options, locale) {
   options = options || {};
+  var loc = locale || "pt-BR";
   // Validação
   if (!rawText || String(rawText).trim().length === 0) {
-    throw new Error("Nenhum conteúdo para exportar. Envie uma mensagem primeiro.");
-  }
-  
-  if (!kind || typeof kind !== "string") {
-    throw new Error("Tipo de exportação inválido.");
-  }
-  
-  const rawStr = String(rawText).trim();
-  if (rawStr.length > 500000) {
-    throw new Error("Conteúdo muito grande para exportar (máx. 500KB). Divida em partes menores.");
+    throw new Error(t("noContentToExport", loc));
   }
 
-  const title = "Syntexa — Documento";
-  const subtitle = new Date().toLocaleString("pt-BR");
+  if (!kind || typeof kind !== "string") {
+    throw new Error(t("typeLabel", loc) + " inválido.");
+  }
+
+  const rawStr = String(rawText).trim();
+  if (rawStr.length > 500000) {
+    throw new Error(t("contentTooLarge", loc));
+  }
+
+  const title = "Syntexa — " + t("documentLabel", loc);
+  const subtitle = new Date().toLocaleString(loc);
   
   // ─────────────────────────────────────────────────────────────────────────────
   // TXT: Split por "Você:" e "Assistente:" + salva como plaintext
@@ -586,7 +589,7 @@ export async function downloadStructuredExport(kind, rawText, token, options) {
   if (kind === "html") {
     const chat = splitChatBlocks(rawText);
     const bodyHtml = chat.map(function (m) {
-      const heading = m.role === "user" ? '<h3 style="color:#0f172a;margin-top:20px;margin-bottom:8px;">Pergunta</h3>' : '<h3 style="color:#0f172a;margin-top:20px;margin-bottom:8px;">Resposta</h3>';
+      const heading = m.role === "user" ? '<h3 style="color:#0f172a;margin-top:20px;margin-bottom:8px;">' + t("questionLabel", loc) + '</h3>' : '<h3 style="color:#0f172a;margin-top:20px;margin-bottom:8px;">' + t("answerLabel", loc) + '</h3>';
       const content = '<p style="margin:0 0 12px;font-size:14px;line-height:1.7;color:#1e293b;text-align:justify;">' + escHtml(m.content).replace(/\n/g, "<br/>") + '</p>';
       return heading + content;
     }).join("\n");
@@ -612,19 +615,19 @@ export async function downloadStructuredExport(kind, rawText, token, options) {
   chat.forEach(function (m) {
     if (m.role === "user") {
       sections.push({
-        heading: "Pergunta",
+        heading: t("questionLabel", loc),
         body: m.content
       });
     } else if (m.role === "ai") {
       sections.push({
-        heading: "Resposta",
+        heading: t("answerLabel", loc),
         body: m.content
       });
     }
   });
-  
+
   if (sections.length === 0) {
-    sections.push({ heading: "Conteúdo", body: rawText });
+    sections.push({ heading: t("contentLabel", loc), body: rawText });
   }
 
   // PDF via backend
@@ -769,6 +772,7 @@ export function FileExportMenu({
   onVoiceError,
   voicePipelineMode = "chat",
 }) {
+  const { locale } = useLanguage();
   const [busy, setBusy] = useState(false);
   const [exportError, setExportError] = useState("");
   const [pdfOpen, setPdfOpen] = useState(false);
@@ -780,10 +784,10 @@ export function FileExportMenu({
     try {
       const raw =
         typeof getExportText === "function" ? String(getExportText() || "").trim() : "";
-      await downloadStructuredExport(kind, raw, token || undefined);
+      await downloadStructuredExport(kind, raw, token || undefined, undefined, locale);
     } catch (err) {
       var msg = err instanceof Error ? err.message : String(err);
-      setExportError(msg || "Falha ao exportar. Verifique sua conexão e tente novamente.");
+      setExportError(msg || t("exportErrorGeneric", locale));
     } finally {
       setBusy(false);
     }
@@ -802,7 +806,7 @@ export function FileExportMenu({
         <div className="relative inline-flex items-center">
           <button type="button" disabled={busy} className={btn + " rounded-r-none border-r-0"} onClick={() => void run("pdf-styled")}>
             <ToolbarIcon path="M7 3h7l5 5v13H7zM14 3v5h5M9 15h8M9 18h6" />
-            PDF
+            {t('exportPdf', locale)}
           </button>
           <button
             type="button"
@@ -824,7 +828,7 @@ export function FileExportMenu({
                 onClick={() => { setPdfOpen(false); run("pdf-styled"); }}
               >
                 <span className="inline-block h-2 w-2 rounded-full bg-[#3b82f6]" />
-                Com visual (estilizado)
+                {t('exportPdfStyled', locale)}
               </button>
               <button
                 type="button"
@@ -832,30 +836,30 @@ export function FileExportMenu({
                 onClick={() => { setPdfOpen(false); run("pdf-simple"); }}
               >
                 <span className="inline-block h-2 w-2 rounded-full bg-[#94a3b8]" />
-                Simples (limpo)
+                {t('exportPdfSimple', locale)}
               </button>
             </div>
           )}
         </div>
         <button type="button" disabled={busy} className={btn} onClick={() => void run("xlsx")}>
           <ToolbarIcon path="M4 5h16v14H4zM4 10h16M9 5v14" />
-          Excel
+          {t('exportExcel', locale)}
         </button>
         <button type="button" disabled={busy} className={btn} onClick={() => void run("docx")}>
           <ToolbarIcon path="M7 3h7l5 5v13H7zM14 3v5h5M9 15h6" />
-          Word
+          {t('exportWord', locale)}
         </button>
         <button type="button" disabled={busy} className={btn} onClick={() => void run("html")}>
           <ToolbarIcon path="M4 4h16v16H4zM4 9h16M9 4v5" />
-          HTML
+          {t('exportHtml', locale)}
         </button>
         <button type="button" disabled={busy} className={btn} onClick={() => void run("csv")}>
           <ToolbarIcon path="M4 6h16M4 12h16M4 18h16M8 4v16M16 4v16" />
-          CSV
+          {t('exportCsv', locale)}
         </button>
         <button type="button" disabled={busy} className={btn} onClick={() => void run("txt")}>
           <ToolbarIcon path="M6 5h12M12 5v14M8 19h8" />
-          TXT
+          {t('exportTxt', locale)}
         </button>
       </div>
       {typeof onVoiceSubmitChat === "function" && (
@@ -872,7 +876,7 @@ export function FileExportMenu({
                 : undefined
             }
             onError={onVoiceError}
-            buttonLabel="Voz (IA)"
+            buttonLabel={t('exportVoice', locale)}
             buttonIcon={<ToolbarIcon path="M12 3a4 4 0 014 4v5a4 4 0 11-8 0V7a4 4 0 014-4zm-7 9h2a5 5 0 0010 0h2a7 7 0 01-6 6.92V21h-2v-2.08A7 7 0 015 12z" />}
             className="inline-flex w-full min-w-0 sm:w-auto"
           />
