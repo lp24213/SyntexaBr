@@ -2,7 +2,8 @@
 
 import React from "react";
 import { AppShell } from "../../components/shell";
-import { getClientLocale, t } from "../../lib/i18n";
+import { t } from "../../lib/i18n";
+import { useLanguage } from "../../components/language-provider";
 
 function getPHASES(locale) {
   return [
@@ -46,7 +47,7 @@ function getPHASES(locale) {
 }
 
 export default function RoadmapPage() {
-  const locale = getClientLocale();
+  const { locale } = useLanguage();
   const PHASES = getPHASES(locale);
   return (
     <AppShell>

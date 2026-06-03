@@ -28,7 +28,8 @@ from vereda_backend.core.job_queue import (
 )
 from vereda_backend.core.redis_app import get_redis
 from vereda_backend.core.rate_limit import get_client_ip
-from vereda_backend.core.security import get_current_user_optional
+from vereda_backend.core.security import get_current_user, get_current_user_optional
+from vereda_backend.core.subscription import require_subscription
 from vereda_backend.db import models
 from vereda_backend.db.session import get_db
 from vereda_backend.core.public_messages import MSG_TRY_AGAIN_PT
@@ -491,11 +492,15 @@ def tts_generate(
     db=Depends(get_db),
     current_user: models.User | None = Depends(get_current_user_optional),
 ) -> Dict[str, Any]:
-    _assert_media_limit(db, request, "tts", current_user)
+    # Microfone/Audio SEM limite de plano - funciona em TODOS os planos
     result = generate_tts_from_text(text, voice=voice)
     if not result.get("ok"):
         raise HTTPException(status_code=503, detail=MSG_TRY_AGAIN_PT)
-    _register_media_usage(db, request, "tts", current_user)
+    # Registrar uso sem bloquear
+    try:
+        _register_media_usage(db, request, "tts", current_user)
+    except:
+        pass  # Não bloquear mesmo se falhar registro
     return result
 
 

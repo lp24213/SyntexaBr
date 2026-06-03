@@ -1,12 +1,85 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { PwaInstallButton } from "./PwaInstallButton";
 import { encryptedPath } from "../lib/routes";
 import { getAdminMe } from "../lib/api";
-import { getClientLocale, t } from "../lib/i18n";
+import { t } from "../lib/i18n";
+import { useLanguage, LanguageProvider } from "./language-provider";
 var QuantumCodeStream = dynamic(function () { return import("./quantum-code-stream").then(function (m) { return m.QuantumCodeStream; }); }, { ssr: false });
+
+// Componente LanguageSelector com suporte mobile (click/touch)
+function LanguageSelector() {
+  var _useState = React.useState(false);
+  var isOpen = _useState[0];
+  var setIsOpen = _useState[1];
+  var containerRef = React.useRef(null);
+  var router = useRouter();
+  var _useLanguage = useLanguage();
+  var locale = _useLanguage.locale;
+  var setLocale = _useLanguage.setLocale;
+
+  React.useEffect(function() {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+    return function() {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  function changeLocale(newLocale) {
+    setLocale(newLocale);
+    setIsOpen(false);
+    try {
+      document.cookie = "syntexa_locale=" + newLocale + "; path=/; max-age=" + (60*60*24*365) + "; SameSite=Lax";
+    } catch(e) {}
+    var currentPath = window.location.pathname;
+    var newPath = currentPath.replace(/^\/i18n\/[^\/]+/, "/i18n/" + newLocale);
+    router.push(newPath);
+  }
+
+  return React.createElement(
+    "div",
+    { ref: containerRef, className: "relative" },
+    React.createElement("button", {
+      onClick: function() { setIsOpen(!isOpen); },
+      className: "flex items-center gap-1.5 rounded-lg border border-[rgba(15,23,42,0.08)] px-2 py-1.5 hover:bg-[rgba(20,24,30,0.04)] transition-colors",
+      title: "Mudar idioma",
+      "aria-expanded": isOpen,
+      "aria-haspopup": "true"
+    }, React.createElement(IconLanguage, null)),
+    isOpen && React.createElement("div", {
+      className: "absolute right-0 mt-1 flex flex-col bg-white border border-[rgba(15,23,42,0.08)] rounded-lg shadow-lg z-50 min-w-[120px]"
+    },
+      React.createElement("button", {
+        onClick: function() { changeLocale("pt-BR"); },
+        className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)] border-b border-[rgba(15,23,42,0.04)] text-left"
+      }, React.createElement(FlagBR, null), React.createElement("span", null, "Português")),
+      React.createElement("button", {
+        onClick: function() { changeLocale("en-US"); },
+        className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)] border-b border-[rgba(15,23,42,0.04)] text-left"
+      }, React.createElement(FlagUS, null), React.createElement("span", null, "English")),
+      React.createElement("button", {
+        onClick: function() { changeLocale("es-ES"); },
+        className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)] border-b border-[rgba(15,23,42,0.04)] text-left"
+      }, React.createElement(FlagES, null), React.createElement("span", null, "Español")),
+      React.createElement("button", {
+        onClick: function() { changeLocale("zh-CN"); },
+        className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)] text-left"
+      }, React.createElement(FlagCN, null), React.createElement("span", null, "中文"))
+    )
+  );
+}
 
 function IconConfig() {
   return React.createElement(
@@ -271,7 +344,7 @@ function IconClose() {
 
 export function AppShell(props) {
   const { children, fullWidth } = props;
-  const locale = getClientLocale();
+  const { locale, setLocale } = useLanguage();
   const [authed, setAuthed] = useState(false);
   const [role, setRole] = useState("user");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -308,6 +381,7 @@ export function AppShell(props) {
     })();
   }, []);
 
+
   useEffect(function () {
     if (typeof document === "undefined") return;
     if (menuOpen) {
@@ -323,12 +397,11 @@ export function AppShell(props) {
     };
   }, [menuOpen]);
 
-  const currentLocale = getClientLocale();
   var navItems = [
-    { path: `/i18n/${currentLocale}/`, labelKey: "navHome", icon: IconGlobe },
-    { path: `/i18n/${currentLocale}/plans`, labelKey: "plans", icon: IconChart },
-    { path: `/i18n/${currentLocale}/chat`, labelKey: "chat", icon: IconChat },
-    { path: `/i18n/${currentLocale}/integrations`, labelKey: "integrations", icon: IconWhatsApp },
+    { path: `/i18n/${locale}/`, labelKey: "navHome", icon: IconGlobe },
+    { path: `/i18n/${locale}/plans`, labelKey: "plans", icon: IconChart },
+    { path: `/i18n/${locale}/chat`, labelKey: "chat", icon: IconChat },
+    { path: `/i18n/${locale}/integrations`, labelKey: "integrations", icon: IconWhatsApp },
   ];
 
   return React.createElement(
@@ -374,7 +447,7 @@ export function AppShell(props) {
             navItems.map(function (item) {
               const Icon = item.icon;
               const href = encryptedPath(item.path);
-              const label = t(item.labelKey, currentLocale);
+              const label = t(item.labelKey, locale);
               return React.createElement(
                 "a",
                 {
@@ -388,68 +461,7 @@ export function AppShell(props) {
             })
           ),
           React.createElement("div", { className: "flex items-center gap-3 min-w-0 flex-1 justify-end" },
-            React.createElement("div", { className: "relative group" },
-              React.createElement("button", {
-                className: "flex items-center gap-1.5 rounded-lg border border-[rgba(15,23,42,0.08)] px-2 py-1.5 hover:bg-[rgba(20,24,30,0.04)] transition-colors",
-                title: "Mudar idioma",
-              },
-                React.createElement(IconLanguage, null)
-              ),
-              React.createElement("div", { className: "absolute right-0 mt-1 hidden group-hover:flex flex-col bg-white border border-[rgba(15,23,42,0.08)] rounded-lg shadow-lg z-50 min-w-[120px]" },
-                React.createElement("button", {
-                  onClick: function() {
-                    const newLocale = "pt-BR";
-                    window.localStorage.setItem("syntexa_locale", newLocale);
-                    var currentPath = window.location.pathname;
-                    var newPath = currentPath.replace(/^\/i18n\/[^\/]+/, "/i18n/" + newLocale);
-                    window.location.pathname = newPath;
-                  },
-                  className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)] border-b border-[rgba(15,23,42,0.04)]",
-                },
-                  React.createElement(FlagBR, null),
-                  React.createElement("span", {}, "Português")
-                ),
-                React.createElement("button", {
-                  onClick: function() {
-                    const newLocale = "en-US";
-                    window.localStorage.setItem("syntexa_locale", newLocale);
-                    var currentPath = window.location.pathname;
-                    var newPath = currentPath.replace(/^\/i18n\/[^\/]+/, "/i18n/" + newLocale);
-                    window.location.pathname = newPath;
-                  },
-                  className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)] border-b border-[rgba(15,23,42,0.04)]",
-                },
-                  React.createElement(FlagUS, null),
-                  React.createElement("span", {}, "English")
-                ),
-                React.createElement("button", {
-                  onClick: function() {
-                    const newLocale = "es-ES";
-                    window.localStorage.setItem("syntexa_locale", newLocale);
-                    var currentPath = window.location.pathname;
-                    var newPath = currentPath.replace(/^\/i18n\/[^\/]+/, "/i18n/" + newLocale);
-                    window.location.pathname = newPath;
-                  },
-                  className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)] border-b border-[rgba(15,23,42,0.04)]",
-                },
-                  React.createElement(FlagES, null),
-                  React.createElement("span", {}, "Español")
-                ),
-                React.createElement("button", {
-                  onClick: function() {
-                    const newLocale = "zh-CN";
-                    window.localStorage.setItem("syntexa_locale", newLocale);
-                    var currentPath = window.location.pathname;
-                    var newPath = currentPath.replace(/^\/i18n\/[^\/]+/, "/i18n/" + newLocale);
-                    window.location.pathname = newPath;
-                  },
-                  className: "flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[rgba(15,23,42,0.04)]",
-                },
-                  React.createElement(FlagCN, null),
-                  React.createElement("span", {}, "中文")
-                )
-              )
-            ),
+            React.createElement(LanguageSelector, null),
             React.createElement(PwaInstallButton, { className: "hidden sm:inline-flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] border border-[rgba(15,23,42,0.08)] hover:bg-[rgba(20,24,30,0.04)] transition-colors duration-150" }),
             authed
               ? React.createElement(
@@ -480,7 +492,7 @@ export function AppShell(props) {
         React.createElement("nav", { className: "flex flex-col gap-0.5" },
           navItems.map(function (item) {
             const Icon = item.icon;
-            const label = t(item.labelKey, currentLocale);
+            const label = t(item.labelKey, locale);
             return React.createElement("a", {
               key: item.path + "-" + item.labelKey,
               href: encryptedPath(item.path),
@@ -493,12 +505,12 @@ export function AppShell(props) {
                 type: "button",
                 onClick: function () { setMenuOpen(false); logout(); },
                 className: "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#5a5c5e] transition-colors hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e] mt-2 border-t border-[rgba(20,24,30,0.06)] pt-2"
-              }, React.createElement(IconExit, null), t("logout", currentLocale))
+              }, React.createElement(IconExit, null), t("logout", locale))
             : React.createElement("a", {
                 href: encryptedPath("login"),
                 onClick: function () { setMenuOpen(false); },
                 className: "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#5a5c5e] transition-colors hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e] mt-2 border-t border-[rgba(20,24,30,0.06)] pt-2"
-              }, React.createElement(IconLogin, null), t("login", currentLocale))
+              }, React.createElement(IconLogin, null), t("login", locale))
         )
       ),
       React.createElement(

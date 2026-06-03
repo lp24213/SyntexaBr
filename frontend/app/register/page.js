@@ -9,12 +9,13 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 
 import { getApiBase } from "../../lib/api";
-import { getClientLocale, t } from "../../lib/i18n";
+import { t } from "../../lib/i18n";
+import { useLanguage, LanguageProvider } from "../../components/language-provider";
 
 var API_BASE = getApiBase();
 
-export default function RegisterPage() {
-  const locale = getClientLocale();
+function RegisterPageContent() {
+  const { locale } = useLanguage();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -124,4 +125,12 @@ export default function RegisterPage() {
               t("alreadyHaveAccount", locale),
               " ",
               React.createElement("button", { type: "button", onClick: goLogin, className: "text-zinc-200 underline-offset-2 hover:underline" }, t("backToLogin", locale))))))));
+}
+
+export default function RegisterPage() {
+  return React.createElement(
+    LanguageProvider,
+    { initialLocale: "pt-BR" },
+    React.createElement(RegisterPageContent)
+  );
 }

@@ -5,10 +5,11 @@ import { motion } from "framer-motion";
 import { AppShell } from "../../components/shell";
 import { WhatsAppConnect } from "../../components/whatsapp-connect";
 import { WhatsAppDashboard } from "../../components/whatsapp-dashboard";
-import { getClientLocale, t } from "../../lib/i18n";
+import { t } from "../../lib/i18n";
+import { useLanguage, LanguageProvider } from "../../components/language-provider";
 
-export default function WhatsAppPage() {
-  const locale = getClientLocale();
+function WhatsAppPageContent() {
+  const { locale } = useLanguage();
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -68,5 +69,13 @@ export default function WhatsAppPage() {
         </motion.div>
       </div>
     </AppShell>
+  );
+}
+
+export default function WhatsAppPage() {
+  return React.createElement(
+    LanguageProvider,
+    { initialLocale: "pt-BR" },
+    React.createElement(WhatsAppPageContent)
   );
 }

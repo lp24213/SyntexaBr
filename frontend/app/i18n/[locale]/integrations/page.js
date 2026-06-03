@@ -1,3 +1,4 @@
+import React from "react";
 import IntegrationsClient from "./IntegrationsClient";
 
 export async function generateStaticParams() {
@@ -10,7 +11,6 @@ export async function generateStaticParams() {
 }
 
 export default function IntegrationsPage({ params }) {
-  const { locale } = params;
-  return <IntegrationsClient locale={locale} />;
+  return React.createElement(IntegrationsClient, { locale: params.locale });
 }
 

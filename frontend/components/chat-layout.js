@@ -7,7 +7,8 @@ import { Button } from "./ui/button";
 import { encryptedPath } from "../lib/routes";
 import { getAdminMe, listChatSessions } from "../lib/api";
 import { FuturisticIcon } from "./icons/futuristic-icons";
-import { formatDateTime, getClientLocale, t } from "../lib/i18n";
+import { formatDateTime, t } from "../lib/i18n";
+import { useLanguage } from "./language-provider";
 import { QuantumCodeStream } from "./quantum-code-stream";
 
 
@@ -120,7 +121,7 @@ export function ChatLayout(props) {
   var sessionsRefreshKey = props.sessionsRefreshKey || 0;
   var router = useRouter();
   var pathname = usePathname();
-  var locale = getClientLocale();
+  const { locale } = useLanguage();
 
   var _a = useState(false), authed = _a[0], setAuthed = _a[1];
   var _b = useState([]), sessions = _b[0], setSessions = _b[1];
@@ -172,71 +173,20 @@ export function ChatLayout(props) {
 
   return React.createElement(
     "div",
-    { className: "relative flex h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-hidden bg-transparent text-[#1a1c1e]" },
+    { className: "chat-root" },
     React.createElement("div", { className: "fixed inset-0 z-0 pointer-events-none" },
       React.createElement("div", { className: "absolute inset-0 bg-[linear-gradient(180deg,#fafbfc_0%,#f5f6f8_50%,#f3f4f5_100%)]" }),
       React.createElement(QuantumCodeStream, null)
     ),
-    /* V46 — header unificado, idêntico ao da home (Syntexa · Início · Planos · Console · Login).
-       Substituiu a barra antiga com mac dots para acabar com a sensação de "dois menus". */
     React.createElement(
-      "header",
-      { className: "syntexa-header fixed top-0 left-0 z-[40] w-full" },
+      "div",
+      { className: "chat-layout" },
       React.createElement(
-        "div",
-        { className: "mx-auto flex h-14 max-w-[1280px] items-center justify-between px-4 sm:px-6" },
-        React.createElement("div", { className: "flex items-center gap-3 min-w-0 flex-1" },
-          React.createElement(
-            "a",
-            { href: "/", className: "flex shrink-0 items-center justify-center" },
-            React.createElement("img", {
-              src: "/LOGOTIPO.png",
-              alt: "Syntexa",
-              className: "h-7 w-auto object-contain",
-              draggable: false,
-              decoding: "async",
-            })
-          )
-        ),
-        React.createElement(
-          "nav",
-          { className: "hidden items-center gap-1 lg:flex absolute left-1/2 -translate-x-1/2" },
-          [
-            { path: "/", label: "Início" },
-            { path: "/plans", label: "Planos" },
-            { path: "/chat", label: "Console" },
-          ].map(function (item) {
-            return React.createElement(
-              "a",
-              {
-                key: item.path,
-                href: encryptedPath(item.path),
-                className: "rounded-lg px-3 py-1.5 text-[13px] text-[#64748b] transition-colors duration-200 hover:bg-[rgba(15,23,42,0.04)] hover:text-[#0f172a]",
-              },
-              item.label
-            );
-          })
-        ),
-        React.createElement("div", { className: "flex items-center gap-3 min-w-0 flex-1 justify-end" },
-          authed
-            ? React.createElement("button", {
-                type: "button",
-                onClick: logout,
-                className: "inline-flex items-center justify-center rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] transition-colors duration-150 hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e]",
-              }, t("logout", locale))
-            : React.createElement("a", {
-                href: encryptedPath("login"),
-                className: "inline-flex items-center justify-center rounded-[10px] px-3 py-2 text-[13px] font-medium text-[#5a5c5e] transition-colors duration-150 hover:bg-[rgba(20,24,30,0.04)] hover:text-[#1a1c1e]",
-              }, "Login")
-        )
-      )
-    ),
-    React.createElement(
-      "aside",
-      {
-        className: "syntexa-sidebar hidden h-full max-h-full min-w-[220px] w-[260px] max-w-[320px] shrink-0 overflow-y-auto px-5 py-6 sm:flex sm:flex-col border-r border-[rgba(20,24,30,0.06)] bg-white/70 backdrop-blur-[16px]",
-        style: { paddingTop: 56 },
-      },
+        "aside",
+        {
+          className: "syntexa-sidebar h-full max-h-full min-w-[220px] w-[260px] max-w-[320px] shrink-0 overflow-y-auto px-5 py-6 flex flex-col border-r border-[rgba(20,24,30,0.06)] bg-white/70 backdrop-blur-[16px]",
+          style: { paddingTop: 0 },
+        },
       /* V46 — banner Syntexa interno do sidebar removido (era o "2º header"
          duplicado relatado pelo usuário). O logo já existe no top header. */
       React.createElement(
@@ -300,16 +250,12 @@ export function ChatLayout(props) {
             t("logout", locale)
           )
         )
-    ),
-    React.createElement(
-      "div",
-      { className: "flex min-h-0 min-w-0 flex-1 flex-col w-full max-w-full overflow-hidden bg-transparent" },
-      // ...existing code...
+      ),
       React.createElement(
         "main",
         {
-          className: "chat-main flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden",
-          style: { paddingTop: 56, background: "transparent", color: "#1a1c1e", position: "relative", isolation: "isolate" },
+          className: "chat-main",
+          style: { paddingTop: 0, background: "transparent", color: "#1a1c1e", position: "relative", isolation: "isolate" },
         },
         React.createElement("div", {
           className: "pointer-events-none absolute inset-0 z-0",

@@ -8,12 +8,13 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { encryptedPath } from "../../lib/routes";
 import { getApiBase } from "../../lib/api";
-import { getClientLocale, t } from "../../lib/i18n";
+import { t } from "../../lib/i18n";
+import { useLanguage } from "../../components/language-provider";
 
 var API_BASE = getApiBase();
 
 export default function RecuperarSenhaPage() {
-  const locale = getClientLocale();
+  const { locale } = useLanguage();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");

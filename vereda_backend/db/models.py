@@ -52,6 +52,27 @@ class User(Base):
     totp_enabled = Column(Boolean, default=False)
     backup_codes_json = Column(Text, nullable=True)  # JSON: lista de hashes bcrypt
 
+    # Subscription / Billing fields
+    subscription_status = Column(String(32), default="trial", nullable=False)  # trial | active | overdue | suspended | cancelled | expired
+    trial_start = Column(DateTime, nullable=True)
+    trial_end = Column(DateTime, nullable=True)
+    subscription_start = Column(DateTime, nullable=True)
+    subscription_end = Column(DateTime, nullable=True)
+    renewal_date = Column(DateTime, nullable=True)
+    payment_status = Column(String(32), default="pending", nullable=False)  # pending | paid | failed | overdue | refunded
+    payment_gateway = Column(String(32), nullable=True)  # stripe | pagarme | pagbank | coinbase
+    payment_gateway_customer_id = Column(String(255), nullable=True)
+    payment_gateway_subscription_id = Column(String(255), nullable=True)
+    last_payment_date = Column(DateTime, nullable=True)
+    last_payment_amount = Column(Float, nullable=True)
+    payment_failure_count = Column(Integer, default=0)
+    usage_limits = Column(JSON, default=dict, nullable=True)  # {"messages": 200, "whatsapp_connections": 1}
+    feature_flags = Column(JSON, default=dict, nullable=True)  # {"premium_ai": true, "whatsapp_saas": false}
+    billing_email = Column(String(255), nullable=True)
+    billing_name = Column(String(255), nullable=True)
+    billing_document = Column(String(32), nullable=True)
+    grace_period_until = Column(DateTime, nullable=True)  # Período de carência após vencimento
+
     created_at = Column(DateTime, default=datetime.utcnow)
     chat_sessions = relationship("ChatSession", back_populates="user")
 

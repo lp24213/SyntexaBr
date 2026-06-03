@@ -64,8 +64,9 @@ def _make_task_manager():
 
 
 def _make_vector_store():
-    from vereda_ai.memory import InMemoryVectorStore
-    return InMemoryVectorStore(embed_batch_fn=_runtime_embed_batch)
+    # Usar PostgreSQL para persistência de embeddings
+    from vereda_backend.core.vector_store_pg import PostgreSQLVectorStore
+    return PostgreSQLVectorStore(embed_batch_fn=_runtime_embed_batch)
 
 
 def _make_conversation_memory():

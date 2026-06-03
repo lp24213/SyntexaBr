@@ -1,4 +1,6 @@
+import React from "react";
 import ChatPage from "../../../../app/chat/page";
+import { LanguageProvider } from "../../../../components/language-provider";
 
 export async function generateStaticParams() {
   return [
@@ -10,5 +12,10 @@ export async function generateStaticParams() {
 }
 
 export default function LocaleChatPage({ params }) {
-  return <ChatPage />;
+  const { locale } = params;
+  return React.createElement(
+    LanguageProvider,
+    { initialLocale: locale },
+    React.createElement(ChatPage)
+  );
 }

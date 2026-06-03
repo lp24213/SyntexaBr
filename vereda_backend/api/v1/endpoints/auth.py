@@ -57,6 +57,7 @@ from vereda_backend.schemas.auth import (
     PasswordResetConfirm,
 )
 from vereda_backend.services import events
+from vereda_backend.core.subscription import init_trial_for_user
 
 
 router = APIRouter(prefix="/auth")
@@ -663,10 +664,18 @@ def verify_email(
 
     user.is_active = True
     code_row.used_at = now
+    
+    # Inicializa trial grátis para novos usuários
+    init_trial_for_user(user)
+    
     db.add(user)
     db.add(code_row)
     db.commit()
-    return {"detail": "E-mail verificado com sucesso. Você já pode fazer login."}
+    
+    # Notifica que usuário ativou trial
+    events.notify_user_registered(user)
+    
+    return {"detail": "E-mail verificado com sucesso. Trial de 30 dias ativado! Você já pode fazer login."}
 
 
 @router.post("/request-password-reset")

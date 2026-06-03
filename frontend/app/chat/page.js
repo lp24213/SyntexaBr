@@ -24,7 +24,8 @@ import {
   desktopHealthCheck,
   desktopBootDiagnostic,
 } from "../../lib/desktop-api";
-import { t, getClientLocale } from "../../lib/i18n";
+import { t } from "../../lib/i18n";
+import { useLanguage, LanguageProvider } from "../../components/language-provider";
 import { sanitizeOutput, sanitizeStreamChunk } from "../../lib/sanitizeOutput";
 import { setXenovaSttProgressCallback } from "../../lib/xenova-stt";
 import { MarkdownMessage } from "../../components/MarkdownMessage";
@@ -231,7 +232,7 @@ function IconSend() {
   );
 }
 
-export default function ChatPage() {
+function ChatPageContent() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -254,7 +255,7 @@ export default function ChatPage() {
   const abortRef = useRef(null);
   var messagesEndRef = useRef(null);
   var textareaRef = useRef(null);
-  var locale = getClientLocale();
+  const { locale } = useLanguage();
   const speechRef = useRef(null);
 
   // Detecção de modo desktop + boot validation obrigatória
@@ -579,7 +580,7 @@ export default function ChatPage() {
       var reply;
       var hasMedia = attachments && attachments.length > 0;
 
-      // ── MODO DESKTOP SOBERANO (offline) ─────────────────────
+      // ── MODO DESKTOP SOBERANO (offline) — só sem arquivos e desktop pronto ─────────────────────
       if (desktopMode && desktopReady && !hasMedia) {
         setMessages((prev) => prev.concat([{ role: "assistant", content: "" }]));
         const controller = new AbortController();
@@ -620,8 +621,8 @@ export default function ChatPage() {
           });
         }
       }
-      // ── MODO DESKTOP SEM RUNTIME — DIAGNÓSTICO TÉCNICO REAL ─────────────────────────────
-      else if (desktopMode && !desktopReady) {
+      // ── MODO DESKTOP SEM RUNTIME — só bloqueia se não tiver arquivos ─────────────────────────────
+      else if (desktopMode && !desktopReady && !hasMedia) {
         var diagParts = ["[Syntexa Desktop V45] BOOT BLOQUEADO — Foundation Model não operacional."];
         if (bootFailures.length > 0) {
           diagParts.push("Falhas detectadas:");
@@ -640,7 +641,7 @@ export default function ChatPage() {
           content: diagParts.join("\n")
         }]));
       }
-      // ── MODO ONLINE (API remota) ─────────────────────────────
+      // ── MODO ONLINE (API remota) — sempre quando tem arquivos ou desktop não disponível ─────────────────────────────
       else if (token) {
         try {
           if (hasMedia) {
@@ -794,7 +795,16 @@ export default function ChatPage() {
   function handleFilesChange(e) {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    setAttachments(files);
+    setAttachments(prev => [...prev, ...files]);
+    e.target.value = "";
+  }
+
+  function removeAttachment(index) {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function clearAttachments() {
+    setAttachments([]);
   }
 
   async function handleGenerateMedia(kind) {
@@ -904,173 +914,100 @@ export default function ChatPage() {
     }
   }
 
-  function stopSpeechRecognition() {
-    try {
-      if (speechRef.current) {
-        speechRef.current.stop();
-        speechRef.current.abort();
-        speechRef.current = null;
-      }
-    } catch (_) {}
-  }
-
-  async function startMediaRecorder() {
-    var stream;
-    // 1) tenta configuração completa
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
-    } catch (e1) {
-      // 2) fallback: pedido mínimo de áudio
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (e2) {
-        throw e1; // propaga o erro original
-      }
-    }
-    micStreamRef.current = stream;
-    micChunksRef.current = [];
-    var mime = pickMicMimeType();
-    var opts = mime ? { mimeType: mime } : undefined;
-    var recorder = new MediaRecorder(stream, opts);
-    var usedMime = recorder.mimeType || mime || "audio/webm";
-    recorder.ondataavailable = function (e) {
-      if (e.data && e.data.size) micChunksRef.current.push(e.data);
-    };
-    recorder.onerror = function () {
-      setVoiceError("Erro na gravação de áudio.");
-      setListening(false);
-      stopMicStream();
-      micRecorderRef.current = null;
-    };
-    recorder.onstop = function () {
-      setListening(false);
-      stopMicStream();
-      micRecorderRef.current = null;
-      var blob = new Blob(micChunksRef.current, { type: usedMime });
-      micChunksRef.current = [];
-      void finishMicRecording(blob);
-    };
-    micRecorderRef.current = recorder;
-    recorder.start(250);
-    setListening(true);
-  }
-
-  function startWebSpeechFallback() {
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return false;
-    stopSpeechRecognition();
-    var rec = new SR();
-    rec.lang = "pt-BR";
-    rec.continuous = false;
-    rec.interimResults = true;
-    var finalTranscript = "";
-    var interimTranscript = "";
-    rec.onstart = function () {
-      setListening(true);
-      setVoiceError("");
-    };
-    rec.onresult = function (event) {
-      interimTranscript = "";
-      for (var i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
-      setInput(finalTranscript + interimTranscript);
-      try { autoGrowTextarea(); } catch (_) {}
-    };
-    rec.onerror = function (event) {
-      setListening(false);
-      speechRef.current = null;
-      var errCode = event && event.error ? event.error : "";
-      if (errCode === "not-allowed" || errCode === "service-not-allowed") {
-        setVoiceError("Permissão de microfone negada. Toque no cadeado ao lado da URL e permita o acesso.");
-      } else if (errCode === "no-speech") {
-        setVoiceError("Não detectamos nenhuma fala. Fale mais perto do microfone e tente novamente.");
-      } else if (errCode === "audio-capture") {
-        setVoiceError("Microfone não encontrado. Verifique se há um microfone conectado e tente novamente.");
-      } else if (errCode === "network") {
-        setVoiceError("Sem conexão. Verifique sua internet e tente novamente.");
-      } else if (errCode === "aborted") {
-        setVoiceError("");
-      } else {
-        setVoiceError("Não foi possível usar o microfone. Tente novamente.");
-      }
-    };
-    rec.onend = function () {
-      setListening(false);
-      speechRef.current = null;
-      if (finalTranscript) {
-        setInput(finalTranscript);
-        try { autoGrowTextarea(); } catch (_) {}
-      }
-    };
-    speechRef.current = rec;
-    try {
-      rec.start();
-      return true;
-    } catch (e) {
-      speechRef.current = null;
-      return false;
-    }
-  }
-
   async function toggleVoice() {
     if (voiceTranscribing || loading) return;
 
-    // Se MediaRecorder estiver ativo, para
     var mr = micRecorderRef.current;
     if (mr && mr.state === "recording") {
-      try { mr.requestData(); } catch (_) {}
-      try { mr.stop(); } catch (_) {}
+      mr.stop();
       setListening(false);
       return;
     }
 
-    // Se SpeechRecognition estiver ativo, para
-    if (speechRef.current) {
-      stopSpeechRecognition();
-      setListening(false);
-      return;
-    }
-
-    if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setVoiceError("Este navegador não suporta acesso ao microfone. Use Chrome ou Edge atualizado.");
-      return;
-    }
-    if (typeof MediaRecorder === "undefined") {
-      setVoiceError("Gravação de áudio não suportada. Use Chrome ou Edge atualizado.");
+    if (typeof navigator === "undefined" || !navigator.mediaDevices) {
+      setVoiceError("Navegador não suporta microfone");
       return;
     }
 
     setVoiceError("");
-
-    var hasSpeechAPI = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
-    if (hasSpeechAPI) {
-      var started = startWebSpeechFallback();
-      if (started) return;
-    }
+    setVoiceProgress("Iniciando microfone…");
 
     try {
-      setVoiceProgress("Preparando microfone…");
-      await startMediaRecorder();
-      return;
+      var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
+      micChunksRef.current = [];
+      
+      var mime = "audio/webm";
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) mime = "audio/webm;codecs=opus";
+      else if (!MediaRecorder.isTypeSupported("audio/webm")) mime = "audio/mp4";
+      
+      var recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      
+      recorder.ondataavailable = function (e) {
+        if (e.data && e.data.size) micChunksRef.current.push(e.data);
+      };
+      
+      recorder.onstop = async function () {
+        setListening(false);
+        stopMicStream();
+        micRecorderRef.current = null;
+        
+        var blob = new Blob(micChunksRef.current, { type: mime || "audio/webm" });
+        micChunksRef.current = [];
+        
+        if (blob.size === 0) {
+          setVoiceError("Nenhum áudio gravado");
+          return;
+        }
+        
+        setVoiceTranscribing(true);
+        setVoiceProgress("Transcrevendo…");
+        
+        try {
+          var fd = new FormData();
+          fd.append("file", blob, "audio.webm");
+          
+          var resp = await fetch("https://api.syntexabr.com.br/v1/voice/stt", {
+            method: "POST",
+            body: fd,
+          });
+          
+          if (!resp.ok) throw new Error("STT " + resp.status);
+          
+          var data = await resp.json();
+          var text = data.text || data.transcript || "";
+          
+          if (!text) throw new Error("Transcrição vazia");
+          
+          setInput(text);
+          setVoiceProgress("");
+          setVoiceTranscribing(false);
+          autoGrowTextarea();
+        } catch (err) {
+          setVoiceTranscribing(false);
+          setVoiceProgress("");
+          setVoiceError("Falha na transcrição: " + (err.message || "erro"));
+        }
+      };
+      
+      micRecorderRef.current = recorder;
+      recorder.start(100);
+      setListening(true);
+      setVoiceProgress("");
+      
     } catch (e) {
-      stopMicStream();
-      micRecorderRef.current = null;
       setVoiceProgress("");
       var errName = e && e.name ? e.name : "";
-      var isPermissionDenied = errName === "NotAllowedError" || errName === "PermissionDeniedError";
-      if (isPermissionDenied) {
-        setVoiceError("Microfone bloqueado. Clique no cadeado 🔒 ao lado da URL → Microfone → Permitir e recarregue a página.");
+      
+      if (errName === "NotAllowedError" || errName === "PermissionDeniedError") {
+        setVoiceError("Microfone bloqueado. Clique no ícone de cadeado na barra de endereço → Microfone → Permitir → Recarregue a página.");
+      } else if (errName === "NotFoundError") {
+        setVoiceError("Nenhum microfone detectado. Verifique se está conectado.");
+      } else if (errName === "NotReadableError") {
+        setVoiceError("Microfone em uso por outro aplicativo. Feche outros programas e tente novamente.");
       } else {
-        setVoiceError(e instanceof Error ? e.message : "Não foi possível acessar o microfone.");
+        setVoiceError("Erro ao acessar microfone: " + (e.message || "desconhecido"));
       }
-      setListening(false);
     }
   }
 
@@ -1331,17 +1268,36 @@ export default function ChatPage() {
             React.createElement(
               "div",
               { className: "flex flex-wrap items-center gap-2 text-xs text-[#475569]" },
-              attachments.map((file) =>
+              attachments.map((file, idx) =>
                 React.createElement(
                   "span",
                   {
-                    key: file.name + file.size,
+                    key: file.name + file.size + idx,
                     className:
                       "inline-flex items-center gap-1.5 rounded-full border border-[#e2e8f0] bg-[#f8fafc] px-3 py-1.5",
                   },
                   React.createElement("span", { className: "h-2 w-2 rounded-full bg-[#94a3b8]" }),
-                  React.createElement("span", null, file.name)
+                  React.createElement("span", null, file.name),
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: function() { removeAttachment(idx); },
+                      className: "ml-1 text-[#94a3b8] hover:text-red-500",
+                      title: "Remover arquivo"
+                    },
+                    "×"
+                  )
                 )
+              ),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  onClick: clearAttachments,
+                  className: "text-[10px] text-red-500 hover:text-red-700 underline"
+                },
+                "Limpar todos"
               )
             ),
           React.createElement(
@@ -1517,5 +1473,13 @@ export default function ChatPage() {
         )
       )
     )
+  );
+}
+
+export default function ChatPage() {
+  return React.createElement(
+    LanguageProvider,
+    { initialLocale: "pt-BR" },
+    React.createElement(ChatPageContent)
   );
 }

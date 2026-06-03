@@ -10,12 +10,13 @@ import { Button } from "../../components/ui/button";
 import { TurnstileWidget } from "../../components/TurnstileWidget";
 import { login, getMe, verifyTwoFactor, githubLoginUrl } from "../../lib/api";
 import { encryptedPath } from "../../lib/routes";
-import { getClientLocale, t } from "../../lib/i18n";
+import { t } from "../../lib/i18n";
+import { useLanguage, LanguageProvider } from "../../components/language-provider";
 
 const TURNSTILE_SITE_KEY = "0x4AAAAAADXPQoicsnfeZhcl";
 
-export default function LoginPage() {
-  const locale = getClientLocale();
+function LoginPageContent() {
+  const { locale } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -167,4 +168,12 @@ export default function LoginPage() {
   var outerMotion = React.createElement(motion.div, { className: "w-full max-w-md", initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: "easeOut" } }, innerMotion, cardContent);
   var wrap = React.createElement("div", { className: "flex min-h-[calc(100vh-6rem)] items-start justify-center py-8" }, outerMotion);
   return React.createElement(AppShell, null, wrap);
+}
+
+export default function LoginPage() {
+  return React.createElement(
+    LanguageProvider,
+    { initialLocale: "pt-BR" },
+    React.createElement(LoginPageContent)
+  );
 }

@@ -350,6 +350,17 @@ const DICT = {
     privacyPageTitle: "Política de Privacidade",
     privacyContent1: "Tratamos dados pessoais conforme a LGPD, com finalidade de autenticação, segurança, prestação do serviço e melhoria contínua da plataforma.",
     privacyContent2: "Você pode solicitar atualização ou exclusão de dados nos canais oficiais de suporte, observadas obrigações legais de retenção.",
+
+    // WhatsApp
+    whatsappCompanies: "Empresas",
+    whatsappActiveNumbers: "Números Ativos",
+    whatsappConversations: "Conversas",
+    whatsappMessages: "Mensagens",
+    whatsappRecentConversations: "Conversas Recentes",
+    whatsappNoConversations: "Nenhuma conversa ainda",
+    whatsappConversationsAppear: "As conversas aparecerão quando mensagens forem recebidas",
+    whatsappContact: "Contato",
+    whatsappNoMessage: "Nenhuma mensagem",
   },
   "en-US": {
     // Navigation & Layout
@@ -700,6 +711,17 @@ const DICT = {
     privacyPageTitle: "Privacy Policy",
     privacyContent1: "We handle personal data per LGPD for authentication, security, service provision, and continuous platform improvement.",
     privacyContent2: "You can request data updates or deletion through official support channels, subject to legal retention obligations.",
+
+    // WhatsApp
+    whatsappCompanies: "Companies",
+    whatsappActiveNumbers: "Active Numbers",
+    whatsappConversations: "Conversations",
+    whatsappMessages: "Messages",
+    whatsappRecentConversations: "Recent Conversations",
+    whatsappNoConversations: "No conversations yet",
+    whatsappConversationsAppear: "Conversations will appear when messages are received",
+    whatsappContact: "Contact",
+    whatsappNoMessage: "No message",
   },
   "es-ES": {
     // Navigation & Layout
@@ -1049,6 +1071,17 @@ const DICT = {
     privacyPageTitle: "Política de Privacidad",
     privacyContent1: "Manejamos datos personales según LGPD para autenticación, seguridad, provisión del servicio y mejora continua de la plataforma.",
     privacyContent2: "Puedes solicitar actualización o eliminación de datos a través de canales oficiales de soporte, sujeto a obligaciones legales de retención.",
+
+    // WhatsApp
+    whatsappCompanies: "Empresas",
+    whatsappActiveNumbers: "Números Activos",
+    whatsappConversations: "Conversaciones",
+    whatsappMessages: "Mensajes",
+    whatsappRecentConversations: "Conversaciones Recientes",
+    whatsappNoConversations: "Aún no hay conversaciones",
+    whatsappConversationsAppear: "Las conversaciones aparecerán cuando se reciban mensajes",
+    whatsappContact: "Contacto",
+    whatsappNoMessage: "Ningún mensaje",
   },
   "zh-CN": {
     // Navigation & Layout
@@ -1398,15 +1431,47 @@ const DICT = {
     privacyPageTitle: "隐私政策",
     privacyContent1: "我们根据LGPD处理个人数据,用于身份验证、安全、服务提供和持续的平台改进。",
     privacyContent2: "您可以通过官方支持渠道请求更新或删除数据,受法律保留义务的限制。",
+
+    // WhatsApp
+    whatsappCompanies: "公司",
+    whatsappActiveNumbers: "活跃号码",
+    whatsappConversations: "对话",
+    whatsappMessages: "消息",
+    whatsappRecentConversations: "最近对话",
+    whatsappNoConversations: "暂无对话",
+    whatsappConversationsAppear: "收到消息时将显示对话",
+    whatsappContact: "联系人",
+    whatsappNoMessage: "无消息",
   },
 };
 
 export function getClientLocale() {
   try {
+    // Primeiro: tentar cookie (prioridade máxima - vem do middleware)
+    if (typeof document !== "undefined") {
+      const cookieMatch = document.cookie.match(/syntexa_locale=([^;]+)/);
+      if (cookieMatch) {
+        const cookieLocale = decodeURIComponent(cookieMatch[1]);
+        if (cookieLocale) return cookieLocale;
+      }
+    }
+  } catch {}
+
+  try {
+    // Segundo: tentar localStorage
+    if (typeof window !== "undefined" && window.localStorage) {
+      const saved = window.localStorage.getItem("syntexa_locale");
+      if (saved) return String(saved);
+    }
+  } catch {}
+  
+  try {
+    // Fallback: locale do navegador
     if (typeof navigator !== "undefined" && navigator.language) {
       return String(navigator.language);
     }
   } catch {}
+  
   return DEFAULT_LOCALE;
 }
 

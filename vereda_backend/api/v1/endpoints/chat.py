@@ -47,6 +47,7 @@ from vereda_backend.services.conversation_store import (
 from vereda_backend.core.syntexa_intel import detect_language, detect_sentiment, detect_subject
 from vereda_backend.core.syntexa_intel import remember_user_preference
 from vereda_backend.core.prom_metrics import record_chat_error, record_chat_success
+from vereda_backend.core.subscription import require_subscription
 
 
 router = APIRouter()
@@ -66,7 +67,46 @@ def _resolve_locale(preferred: Optional[str], accept_language: Optional[str]) ->
     return "pt-BR"
 
 
+def _extract_text_simple(content: bytes, filename: str) -> str:
+    """Extrai texto simples de documentos para o chat."""
+    suffix = filename.lower().split(".")[-1] if "." in filename else ""
+    
+    if suffix == "pdf":
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(content))
+            text_parts = []
+            for page in reader.pages:
+                text_parts.append(page.extract_text() or "")
+            return "\n".join(text_parts).strip()[:8000]  # Limite de 8000 chars
+        except Exception:
+            return ""
+    
+    elif suffix in ["txt", "md", "markdown", "csv", "json", "xml"]:
+        return content.decode("utf-8", errors="ignore").strip()[:8000]
+    
+    elif suffix == "docx":
+        try:
+            import docx
+            doc = docx.Document(io.BytesIO(content))
+            text = "\n".join([para.text for para in doc.paragraphs])
+            return text.strip()[:8000]
+        except Exception:
+            return ""
+    
+    elif suffix in ["xlsx", "xls"]:
+        try:
+            import pandas as pd
+            df = pd.read_excel(io.BytesIO(content))
+            return df.to_string(index=False)[:8000]
+        except Exception:
+            return ""
+    
+    return ""
+
+
 def _attachments_context(file_list: List) -> str:
+    import io
     lines: List[str] = []
     for f in file_list:
         content_type = (getattr(f, "content_type", "") or "").lower()
@@ -95,9 +135,20 @@ def _attachments_context(file_list: List) -> str:
                     + (f"Transcrição: {transcript}" if transcript else "Sem transcrição disponível.")
                 )
             else:
-                lines.append(f"- arquivo {filename}: tipo={content_type or 'desconhecido'}.")
+                # Tentar extrair texto de documentos
+                try:
+                    f.file.seek(0)
+                    content = f.file.read()
+                    f.file.seek(0)
+                    extracted = _extract_text_simple(content, filename)
+                    if extracted:
+                        lines.append(f"- documento {filename}:\n```\n{extracted}\n```")
+                    else:
+                        lines.append(f"- arquivo {filename}: tipo={content_type or 'desconhecido'}")
+                except Exception:
+                    lines.append(f"- arquivo {filename}: tipo={content_type or 'desconhecido'}")
         except Exception:
-            lines.append(f"- arquivo {filename}: não foi possível extrair metadados.")
+            lines.append(f"- arquivo {filename}: não foi possível extrair conteúdo.")
     if not lines:
         return ""
     return "\nContexto dos anexos:\n" + "\n".join(lines)
@@ -350,6 +401,19 @@ async def chat_completions(
         http_request.headers.get("accept-language"),
     )
 
+    # Reconhecimento de pagamento: verificar subscription ativa
+    if current_user:
+        sub_check = require_subscription(db, current_user, feature="premium_ai")
+        if not sub_check["allowed"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error": sub_check["error"],
+                    "redirect_url": sub_check["redirect_url"],
+                    "required_plan": sub_check.get("required_plan"),
+                },
+            )
+    
     # Reconhecimento de pagamento: aplicar limite de mensagens por plano
     if current_user:
         plan = getattr(current_user, "subscription_plan", None) or "free"

@@ -691,21 +691,6 @@ export async function getChatSessionMessages(sessionId, token) {
   return resp.json();
 }
 
-export async function createStripeCheckout(plan, token) {
-  const headers = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = "Bearer " + token;
-  const resp = await fetchWithResilience( "/v1/payments/stripe/checkout", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ plan }),
-  });
-  if (!resp.ok) {
-    throw new Error(await readErrorMessage(resp));
-  }
-  const data = await resp.json();
-  return data?.url;
-}
-
 async function mergeImageBase64FromWhitelistedUrl(data, token) {
   if (!data || data.image_base64) return data;
   const rawUrl = data.url || data.image_url;
@@ -1421,4 +1406,31 @@ export async function institutionalRegenerateKey(id) {
   );
   await throwIfNotOk(resp);
   return resp.json();
+}
+
+// ─── Subscription API ───────────────────────────────────────────
+
+/** Busca status da subscription do usuario */
+export async function getSubscriptionStatus(token) {
+  const headers = {};
+  if (token) headers.Authorization = "Bearer " + token;
+  const resp = await fetchWithResilience("/v1/subscription/status", {
+    headers,
+  });
+  await throwIfNotOk(resp);
+  return resp.json();
+}
+
+/** Cria checkout Stripe para um plano */
+export async function createStripeCheckout(plan, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = "Bearer " + token;
+  const resp = await fetchWithResilience("/v1/payments/stripe/checkout", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ plan }),
+  });
+  await throwIfNotOk(resp);
+  const data = await resp.json();
+  return data.url;
 }

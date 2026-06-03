@@ -6,10 +6,11 @@ import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { encryptedPath } from "../../lib/routes";
 import { getMe, updateMe } from "../../lib/api";
-import { getClientLocale, t } from "../../lib/i18n";
+import { t } from "../../lib/i18n";
+import { useLanguage, LanguageProvider } from "../../components/language-provider";
 
-export default function PerfilPage() {
-  const locale = getClientLocale();
+function PerfilPageContent() {
+  const { locale } = useLanguage();
   const [token, setToken] = useState(null);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -240,5 +241,13 @@ export default function PerfilPage() {
         )
       )
     )
+  );
+}
+
+export default function PerfilPage() {
+  return React.createElement(
+    LanguageProvider,
+    { initialLocale: "pt-BR" },
+    React.createElement(PerfilPageContent)
   );
 }

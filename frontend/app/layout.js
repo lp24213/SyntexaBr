@@ -106,14 +106,39 @@ export default function RootLayout(props) {
       "body",
       { className: "antialiased bg-white text-[#0f172a]" },
       React.createElement(Script, {
+        id: "sw-cleanup",
+        strategy: "beforeInteractive",
+        dangerouslySetInnerHTML: {
+          __html: `(function(){
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    regs.forEach(function(reg){
+      console.log('[SW] Unregistering old SW:', reg.scope);
+      reg.unregister();
+    });
+  });
+  if('caches' in window){
+    caches.keys().then(function(names){
+      names.forEach(function(name){
+        if(name.indexOf('syntexa-') !== -1){
+          console.log('[SW] Deleting old cache:', name);
+          caches.delete(name);
+        }
+      });
+    });
+  }
+})();`
+        }
+      }),
+      React.createElement(Script, {
         id: "pwa-register",
         strategy: "afterInteractive",
         dangerouslySetInnerHTML: {
           __html: `(function(){
   if(!('serviceWorker' in navigator)) return;
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('/sw.js', { scope: '/' })
-      .then(function(reg){ console.log('[SW] registado:', reg.scope); })
+    navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
+      .then(function(reg){ console.log('[SW] registado v6:', reg.scope); })
       .catch(function(err){ console.warn('[SW] falhou:', err); });
   });
   var _deferredPrompt = null;

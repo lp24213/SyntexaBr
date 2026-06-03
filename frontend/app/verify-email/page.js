@@ -8,12 +8,13 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { getApiBase } from "../../lib/api";
 import { encryptedPath } from "../../lib/routes";
-import { getClientLocale, t } from "../../lib/i18n";
+import { t } from "../../lib/i18n";
+import { useLanguage } from "../../components/language-provider";
 
 var API_BASE = getApiBase();
 
 export default function VerifyEmailPage() {
-  const locale = getClientLocale();
+  const { locale } = useLanguage();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);

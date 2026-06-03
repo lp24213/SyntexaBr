@@ -13,6 +13,24 @@ export const config = {
 
 const SUPPORTED_LOCALES = ["pt-BR", "en-US", "es-ES", "zh-CN"];
 const DEFAULT_LOCALE = "pt-BR";
+const LOCALE_COOKIE = "syntexa_locale";
+
+function getLocaleFromCookie(request) {
+  const cookie = request.cookies.get(LOCALE_COOKIE);
+  if (cookie && SUPPORTED_LOCALES.includes(cookie.value)) {
+    return cookie.value;
+  }
+  return null;
+}
+
+function getLocaleFromBrowser(request) {
+  const acceptLang = request.headers.get("accept-language") || "";
+  const browserLocale = acceptLang.split(",")[0].split("-")[0].toLowerCase();
+  if (browserLocale === "en") return "en-US";
+  if (browserLocale === "es") return "es-ES";
+  if (browserLocale === "zh") return "zh-CN";
+  return DEFAULT_LOCALE;
+}
 
 export function middleware(request) {
   const { pathname, search } = request.nextUrl;
@@ -20,13 +38,46 @@ export function middleware(request) {
   // ── i18n routing: /i18n/locale/page ───────────────────────
   const pathnameWithoutLocale = pathname.replace(/^\/i18n\/[^\/]+/, "") || "/";
   const localeMatch = pathname.match(/^\/i18n\/([^\/]+)/);
-  const locale = localeMatch ? localeMatch[1] : null;
+  const currentLocale = localeMatch ? localeMatch[1] : null;
   
-  // Se não tem /i18n/locale, redirecionar para /i18n/pt-BR
-  if (!locale && pathname !== "/" && !pathname.startsWith("/_next") && !pathname.startsWith("/api")) {
+  // Determinar o locale correto com PRIORIDADE:
+  // 1. Cookie salvo (escolha manual do usuário)
+  // 2. Locale do navegador (detecção automática)
+  // 3. Padrão (pt-BR)
+  const savedLocale = getLocaleFromCookie(request);
+  const browserLocale = getLocaleFromBrowser(request);
+  const targetLocale = savedLocale || browserLocale;
+  
+  // Se não tem /i18n/locale na URL, redirecionar para o locale correto
+  const isStaticFile = /\.[a-zA-Z0-9]+$/.test(pathname);
+  if (!currentLocale && pathname !== "/" && !pathname.startsWith("/_next") && !pathname.startsWith("/api") && !isStaticFile) {
     const newUrl = new URL(request.url);
-    newUrl.pathname = `/i18n/${DEFAULT_LOCALE}${pathname}`;
-    return NextResponse.redirect(newUrl);
+    newUrl.pathname = `/i18n/${targetLocale}${pathname}`;
+    const response = NextResponse.redirect(newUrl);
+    // Setar cookie se ainda não existir
+    if (!savedLocale) {
+      response.cookies.set(LOCALE_COOKIE, targetLocale, { 
+        maxAge: 60 * 60 * 24 * 365, // 1 ano
+        path: "/",
+        sameSite: "lax"
+      });
+    }
+    return response;
+  }
+
+  // Raiz redireciona para o locale correto
+  if (pathname === "/") {
+    const newUrl = new URL(request.url);
+    newUrl.pathname = `/i18n/${targetLocale}/`;
+    const response = NextResponse.redirect(newUrl);
+    if (!savedLocale) {
+      response.cookies.set(LOCALE_COOKIE, targetLocale, { 
+        maxAge: 60 * 60 * 24 * 365,
+        path: "/",
+        sameSite: "lax"
+      });
+    }
+    return response;
   }
   
   const response = NextResponse.next();

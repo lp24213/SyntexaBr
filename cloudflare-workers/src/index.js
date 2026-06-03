@@ -77,7 +77,7 @@ export default {
     // Cloudflare Workers bloqueia fetch a IPs públicos directos (error 1003).
     // Railway é HTTPS com domínio — sempre acessível pelo Worker.
     const backendBase = railwayBase || awsBase;
-    var frontendBase = "https://production.syntexa-frontend.pages.dev";
+    var frontendBase = "https://syntexa-frontend.pages.dev";
     const origin = request.headers.get("Origin") || "";
 
     if (request.method === "OPTIONS") {

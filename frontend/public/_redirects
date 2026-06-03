@@ -1,0 +1,21 @@
+# Cloudflare Pages Redirects
+# Suporte a rotas i18n e fallback para SPA
+
+# Rotas i18n - garantir que todas as rotas de idioma funcionem
+/i18n/pt-BR/* /i18n/pt-BR/:splat 200
+/i18n/en-US/* /i18n/en-US/:splat 200
+/i18n/es-ES/* /i18n/es-ES/:splat 200
+/i18n/zh-CN/* /i18n/zh-CN/:splat 200
+
+# Fallback para index.html (SPA behavior) - preservar i18n
+/i18n/* /i18n/:splat 200
+
+# API e webhooks - proxy para backend
+/api/* https://syntexa-backend-production.up.railway.app/api/:splat 200
+/webhooks/* https://syntexa-backend-production.up.railway.app/webhooks/:splat 200
+
+# WhatsApp API - proxy para serviço whatsapp
+/whatsapp-api/* https://api-whatsapp.syntexabr.com.br/:splat 200
+
+# Fallback geral
+/* /index.html 404

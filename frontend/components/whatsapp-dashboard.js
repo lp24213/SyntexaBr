@@ -3,8 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
+import { t } from "../lib/i18n";
+import { useLanguage } from "./language-provider";
 
 export function WhatsAppDashboard() {
+  const { locale } = useLanguage();
   const [stats, setStats] = useState({
     conversations: 0,
     messages: 0,
@@ -56,24 +59,24 @@ export function WhatsAppDashboard() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Empresas" value={stats.companies} icon="building" />
-        <StatCard label="Números Ativos" value={stats.activeNumbers} icon="phone" />
-        <StatCard label="Conversas" value={stats.conversations} icon="chat" />
-        <StatCard label="Mensagens" value={stats.messages} icon="message" />
+        <StatCard label={t("whatsappCompanies", locale)} value={stats.companies} icon="building" />
+        <StatCard label={t("whatsappActiveNumbers", locale)} value={stats.activeNumbers} icon="phone" />
+        <StatCard label={t("whatsappConversations", locale)} value={stats.conversations} icon="chat" />
+        <StatCard label={t("whatsappMessages", locale)} value={stats.messages} icon="message" />
       </div>
 
       <div className="syntexa-card rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6">
         <h3 className="text-lg font-semibold text-[#0f172a] mb-4">
-          Conversas Recentes
+          {t("whatsappRecentConversations", locale)}
         </h3>
         {conversations.length === 0 ? (
           <div className="text-center py-12">
             <svg className="w-12 h-12 text-[#cbd5e1] mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
             </svg>
-            <p className="text-[#64748b] text-sm">Nenhuma conversa ainda</p>
+            <p className="text-[#64748b] text-sm">{t("whatsappNoConversations", locale)}</p>
             <p className="text-[#94a3b8] text-xs mt-1">
-              As conversas aparecerão quando mensagens forem recebidas
+              {t("whatsappConversationsAppear", locale)}
             </p>
           </div>
         ) : (
@@ -140,14 +143,14 @@ function ConversationRow({ conversation }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium text-[#0f172a] text-sm truncate">
-            {conversation.contact_name || conversation.contact_phone || "Contato"}
+            {conversation.contact_name || conversation.contact_phone || t("whatsappContact", locale)}
           </span>
           {conversation.status === "active" && (
             <span className="w-2 h-2 rounded-full bg-[#25D366]" />
           )}
         </div>
         <p className="text-xs text-[#8e9094] truncate mt-0.5">
-          {conversation.last_message || "Nenhuma mensagem"}
+          {conversation.last_message || t("whatsappNoMessage", locale)}
         </p>
       </div>
       <div className="text-xs text-[#8e9094]">

@@ -4,6 +4,7 @@ from fastapi import APIRouter, FastAPI
 from vereda_backend.api.v1.endpoints import (
     auth,
     desktop_downloads,
+    documents,
     education,
     export_api,
     feedback,
@@ -11,7 +12,9 @@ from vereda_backend.api.v1.endpoints import (
     institutional,
     integrations,
     payments,
+    subscription,
     webhooks,
+    webhooks_billing,
 )
 from vereda_backend.api import public
 from vereda_backend.core.config import settings
@@ -54,11 +57,14 @@ def register(app: FastAPI) -> None:
     api_v1_router.include_router(auth.router, tags=["auth"])
     api_v1_router.include_router(desktop_downloads.router, tags=["desktop"])
     api_v1_router.include_router(payments.router, tags=["payments"])
+    api_v1_router.include_router(subscription.router, tags=["subscription"])
     api_v1_router.include_router(feedback.router, tags=["feedback"])
     api_v1_router.include_router(webhooks.router, tags=["webhooks"])
+    api_v1_router.include_router(webhooks_billing.router, tags=["webhooks"])
     api_v1_router.include_router(education.router, tags=["education"])
     api_v1_router.include_router(institutional.router, tags=["institutional"])
     api_v1_router.include_router(integrations.router, tags=["integrations"])
+    api_v1_router.include_router(documents.router, tags=["documents"])
     api_v1_router.include_router(export_api.router, tags=["export"])
 
     # ── Rotas pesadas (IA) — só em modo NÃO-gateway ──

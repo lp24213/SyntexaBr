@@ -5,7 +5,9 @@ const nextConfig = {
   trailingSlash: true,
   distDir: "out",
   images: { unoptimized: true },
-  turbopack: {},
+  turbopack: {
+    root: ".",
+  },
   env: {
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADXPQoicsnfeZhcl",
     NEXT_PUBLIC_WHATSAPP_API: "https://api-whatsapp.syntexabr.com.br",

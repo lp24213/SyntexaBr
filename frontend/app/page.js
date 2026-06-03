@@ -6,7 +6,8 @@ import React from "react";
 import { AppShell } from "../components/shell";
 import { InfrastructureVisual } from "../components/infrastructure-visual";
 import { DownloadSection } from "../components/download-section";
-import { getClientLocale, t } from "../lib/i18n";
+import { t } from "../lib/i18n";
+import { useLanguage, LanguageProvider } from "../components/language-provider";
 import { encryptedPath } from "../lib/routes";
 
 const MODULES = [
@@ -25,14 +26,14 @@ const MODULES = [
 ];
 
 const PLANS = [
-  { name: "Gratuito", price: "R$ 0/mês", desc: "120 mensagens por dia para experimentar. Chat, pesquisa na web e respostas inteligentes — sem cartão." },
-  { name: "Básico", price: "R$ 39/mês", desc: "500 mensagens/mês, upload de arquivos e respostas mais completas. Ideal para estudantes e freelancers." },
-  { name: "Médio", price: "R$ 99/mês", desc: "Mensagens ilimitadas, geração de imagem/vídeo/áudio, código e contexto estendido. Para profissionais." },
-  { name: "Master", price: "R$ 199/mês", desc: "Tudo ilimitado + agentes avançados, suporte prioritário, múltiplos usuários e ferramentas empresariais." },
+  { nameKey: "planFreeName", priceKey: "planFreePrice", descKey: "planFreeDesc" },
+  { nameKey: "planBasicName", priceKey: "planBasicPrice", descKey: "planBasicDesc" },
+  { nameKey: "planMidName", priceKey: "planMidPrice", descKey: "planMidDesc" },
+  { nameKey: "planMasterName", priceKey: "planMasterPrice", descKey: "planMasterDesc" },
 ];
 
-export default function HomePage() {
-  const locale = getClientLocale();
+function HomePageContent() {
+  const { locale } = useLanguage();
   return (
     <AppShell fullWidth={true}>
       <main className="relative min-h-[100dvh] w-full overflow-x-hidden overflow-y-auto bg-white text-[#0f172a] [scroll-behavior:smooth]">
@@ -167,32 +168,32 @@ export default function HomePage() {
             <span className="text-[11px] font-medium tracking-[0.12em] text-[#25D366] uppercase">WhatsApp Business</span>
           </div>
           <h2 className="text-[2rem] font-medium tracking-[-0.02em] text-[#0f172a] md:text-[2.5rem]">
-            Atendimento que nunca dorme
+            {t('whatsappTitle', locale)}
           </h2>
           <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-[#64748b]">
-            Sua equipe de IA responde clientes no WhatsApp 24 horas por dia. Quando precisar, transfere suavemente para um humano.
+            {t('whatsappSubtitle', locale)}
           </p>
         </motion.div>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { title: "Chatbot com IA", desc: "Respostas inteligentes que entendem contexto e memória de conversas." },
-            { title: "Múltiplos atendentes", desc: "Equipe completa atendendo com IA auxiliando cada conversa." },
-            { title: "Múltiplos números", desc: "Gerencie vários números WhatsApp Business em um só lugar." },
-            { title: "Automações", desc: "Fluxos automáticos que respondem sozinhos e escalam quando precisa." },
-            { title: "Memória IA", desc: "A IA lembra de cada cliente, preferências e histórico completo." },
-            { title: "Analytics", desc: "Métricas reais de atendimento, tempo de resposta e satisfação." },
+            { titleKey: "whatsappChatbot", descKey: "whatsappChatbotDesc" },
+            { titleKey: "whatsappAttendants", descKey: "whatsappAttendantsDesc" },
+            { titleKey: "whatsappNumbers", descKey: "whatsappNumbersDesc" },
+            { titleKey: "whatsappAutomations", descKey: "whatsappAutomationsDesc" },
+            { titleKey: "whatsappMemory", descKey: "whatsappMemoryDesc" },
+            { titleKey: "whatsappAnalytics", descKey: "whatsappAnalyticsDesc" },
           ].map((mod, i) => (
             <motion.div
-              key={mod.title}
+              key={mod.titleKey}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.05 }}
               className="syntexa-card rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6"
             >
-              <h3 className="text-[15px] font-semibold text-[#0f172a]">{mod.title}</h3>
-              <p className="mt-2 text-[13px] leading-[1.6] text-[#64748b]">{mod.desc}</p>
+              <h3 className="text-[15px] font-semibold text-[#0f172a]">{t(mod.titleKey, locale)}</h3>
+              <p className="mt-2 text-[13px] leading-[1.6] text-[#64748b]">{t(mod.descKey, locale)}</p>
             </motion.div>
           ))}
         </div>
@@ -208,33 +209,33 @@ export default function HomePage() {
         >
           <div className="mb-2 flex items-center gap-2">
             <span className="h-[1px] w-8 bg-[rgba(15,23,42,0.15)]" />
-            <span className="text-[11px] font-medium tracking-[0.12em] text-[#475569] uppercase">Document Engine</span>
+            <span className="text-[11px] font-medium tracking-[0.12em] text-[#475569] uppercase">{t('documentEngine', locale)}</span>
           </div>
           <h2 className="text-[2rem] font-medium tracking-[-0.02em] text-[#0f172a] md:text-[2.5rem]">
-            Documentos que impressionam
+            {t('documentEngineTitle', locale)}
           </h2>
           <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-[#64748b]">
-            A IA gera documentos empresariais reais. Petições, contratos, relatórios, propostas e dashboards — tudo profissional.
+            {t('documentEngineDesc', locale)}
           </p>
         </motion.div>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { title: "PDF Profissional", desc: "Relatórios, contratos e propostas com layout empresarial." },
-            { title: "Excel Inteligente", desc: "Planilhas com fórmulas reais, gráficos e múltiplas abas." },
-            { title: "Word / DOCX", desc: "Documentos com headings reais, sumário automático e paginação." },
-            { title: "CSV", desc: "Exportação limpa para integração com qualquer sistema empresarial." },
+            { titleKey: "docPdf", descKey: "docPdfDesc" },
+            { titleKey: "docExcel", descKey: "docExcelDesc" },
+            { titleKey: "docWord", descKey: "docWordDesc" },
+            { titleKey: "docCsv", descKey: "docCsvDesc" },
           ].map((mod, i) => (
             <motion.div
-              key={mod.title}
+              key={mod.titleKey}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.05 }}
               className="syntexa-card rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6"
             >
-              <h3 className="text-[15px] font-semibold text-[#0f172a]">{mod.title}</h3>
-              <p className="mt-2 text-[13px] leading-[1.6] text-[#64748b]">{mod.desc}</p>
+              <h3 className="text-[15px] font-semibold text-[#0f172a]">{t(mod.titleKey, locale)}</h3>
+              <p className="mt-2 text-[13px] leading-[1.6] text-[#64748b]">{t(mod.descKey, locale)}</p>
             </motion.div>
           ))}
         </div>
@@ -245,13 +246,13 @@ export default function HomePage() {
         <div className="syntexa-card rounded-3xl border border-[rgba(15,23,42,0.06)] bg-[#f8fafc] p-8 md:p-12">
           <div className="grid gap-8 md:grid-cols-4">
             {[
-              { value: "13B+", label: "Parâmetros do Modelo", sub: "Arquitetura Transformer própria" },
-              { value: "<200ms", label: "Resposta por Voz", sub: "Fale com a Syntexa naturalmente" },
-              { value: "GPU", label: "Processamento Rápido", sub: "Respostas em segundos, não minutos" },
-              { value: "100%", label: "Dados Protegidos", sub: "Nenhuma informação vendida a terceiros" }
+              { value: "13B+", labelKey: "specModelParams", subKey: "specTransformer" },
+              { value: "<200ms", labelKey: "specVoice", subKey: "specVoiceDesc" },
+              { value: "GPU", labelKey: "specProcessing", subKey: "specProcessingDesc" },
+              { value: "100%", labelKey: "specData", subKey: "specDataDesc" }
             ].map((stat, i) => (
               <motion.div
-                key={stat.label}
+                key={stat.labelKey}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -261,8 +262,8 @@ export default function HomePage() {
                 <div className="text-[2rem] font-medium tracking-[-0.02em] text-[#0f172a] md:text-[2.5rem]">
                   {stat.value}
                 </div>
-                <div className="mt-1 text-[13px] font-medium text-[#334155]">{stat.label}</div>
-                <div className="text-[11px] text-[#94a3b8]">{stat.sub}</div>
+                <div className="mt-1 text-[13px] font-medium text-[#334155]">{t(stat.labelKey, locale)}</div>
+                <div className="text-[11px] text-[#94a3b8]">{t(stat.subKey, locale)}</div>
               </motion.div>
             ))}
           </div>
@@ -279,30 +280,29 @@ export default function HomePage() {
         >
           <div className="mb-2 flex items-center gap-2">
             <span className="h-[1px] w-8 bg-[rgba(15,23,42,0.15)]" />
-            <span className="text-[11px] font-medium tracking-[0.12em] text-[#475569] uppercase">Infraestrutura</span>
+            <span className="text-[11px] font-medium tracking-[0.12em] text-[#475569] uppercase">{t('infrastructureLabel', locale)}</span>
           </div>
           <h2 className="text-[2rem] font-medium tracking-[-0.02em] text-[#0f172a] md:text-[2.5rem]">
-            Camadas de Acesso
+            {t('accessLayers', locale)}
           </h2>
           <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-[#64748b]">
-            Escolha o plano que faz sentido para você. Pode começar de graça e subir
-            de nível conforme suas necessidades crescem.
+            {t('accessLayersDesc', locale)}
           </p>
         </motion.div>
 
         <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((plan, i) => (
             <motion.div
-              key={plan.name}
+              key={plan.nameKey}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
               className="syntexa-card relative rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white p-6"
             >
-              <h3 className="text-[15px] font-medium text-[#0f172a]">{plan.name}</h3>
-              <div className="mt-2 text-[12px] font-medium tracking-wide text-[#475569]">{plan.price}</div>
-              <p className="mt-4 text-[13px] leading-relaxed text-[#64748b]">{plan.desc}</p>
+              <h3 className="text-[15px] font-medium text-[#0f172a]">{t(plan.nameKey, locale)}</h3>
+              <div className="mt-2 text-[12px] font-medium tracking-wide text-[#475569]">{t(plan.priceKey, locale)}</div>
+              <p className="mt-4 text-[13px] leading-relaxed text-[#64748b]">{t(plan.descKey, locale)}</p>
             </motion.div>
           ))}
         </div>
@@ -318,3 +318,10 @@ export default function HomePage() {
   );
 }
 
+export default function HomePage() {
+  return React.createElement(
+    LanguageProvider,
+    { initialLocale: "pt-BR" },
+    React.createElement(HomePageContent)
+  );
+}
