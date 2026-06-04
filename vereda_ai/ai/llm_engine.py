@@ -241,12 +241,18 @@ class HTTPJSONLLMProvider:
                             continue
                         ch0 = choices[0]
                         delta = ch0.get("delta") or {}
-                        content = str(delta.get("content") or "")
+                        content = delta.get("content", "")
+                        if not isinstance(content, str):
+                            content = ""
                         if not content:
                             msg = ch0.get("message") or {}
-                            content = str(msg.get("content") or "")
+                            content = msg.get("content", "")
+                            if not isinstance(content, str):
+                                content = ""
                         if not content:
-                            content = str(ch0.get("text") or "")
+                            content = ch0.get("text", "")
+                            if not isinstance(content, str):
+                                content = ""
                         if content:
                             yield content
                 finally:

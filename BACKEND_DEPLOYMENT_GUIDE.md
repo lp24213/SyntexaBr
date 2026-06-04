@@ -127,11 +127,11 @@ brew install railway  # macOS
 railway login
 
 # 3. Fazer link com projeto existente
-cd production-node
+cd ..  # Voltar para a raiz do repositório onde está o Railway config
 railway link  # Selecionar projeto "syntexa-backend-production"
 
 # 4. Deploy
-railway up  # Automático trigger de build
+railway up  # Automático trigger de build usando Dockerfile.railway
 
 # 5. Verificar status
 railway status

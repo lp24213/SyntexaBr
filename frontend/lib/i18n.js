@@ -689,6 +689,9 @@ const DICT = {
     desktopPanelUpdateFailure: "Falha ao atualizar.",
     desktopPanelSaveFailure: "Falha ao salvar.",
     desktopPanelSaveButton: "Salvar",
+    changeLanguage: "Alterar idioma",
+    history: "Histórico",
+    close: "Fechar",
   },
 
   "en-US": {
@@ -1419,6 +1422,9 @@ const DICT = {
     desktopPanelUpdateFailure: "Failed to update.",
     desktopPanelSaveFailure: "Failed to save.",
     desktopPanelSaveButton: "Save",
+    changeLanguage: "Change language",
+    history: "History",
+    close: "Close",
   },
 
   "es-ES": {
@@ -2109,6 +2115,9 @@ const DICT = {
     desktopPanelUpdateFailure: "No se pudo actualizar.",
     desktopPanelSaveFailure: "No se pudo guardar.",
     desktopPanelSaveButton: "Guardar",
+    changeLanguage: "Cambiar idioma",
+    history: "Historial",
+    close: "Cerrar",
   },
 
   "zh-CN": {
@@ -2839,6 +2848,9 @@ const DICT = {
     desktopPanelUpdateFailure: "更新失败。",
     desktopPanelSaveFailure: "保存失败。",
     desktopPanelSaveButton: "保存",
+    changeLanguage: "更改语言",
+    history: "历史记录",
+    close: "关闭",
   },
 };
 

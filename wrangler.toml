@@ -19,9 +19,9 @@ LOCAL_BASE_URL = ""
 # V47 — PRODUÇÃO: Frontend servido direto em syntexabr.com.br
 # (Cloudflare Pages roteado via CNAME para pages.dev)
 FRONTEND_BASE_URL = "https://syntexabr.com.br"
-# FRONTEND_PAGES_URL: URL PRODUCTION do deployment no Cloudflare Pages
-# Usar production alias (sempre aponta para latest production build)
-FRONTEND_PAGES_URL = "https://production.syntexa-frontend.pages.dev"
+# FRONTEND_PAGES_URL: URL do projeto Cloudflare Pages (URL padrão)
+# Sempre aponta para o latest deployment no main branch
+FRONTEND_PAGES_URL = "https://syntexa-frontend.pages.dev"
 
 # ── EDGE SECURITY ──────────────────────────────────────
 REQUIRE_CLOUDFLARE = "true"
@@ -44,6 +44,56 @@ PROXY_TIMEOUT_MS = "45000"
 # VEREDA_SECRET_KEY
 # AI_WORKER_API_KEY
 # LOCAL_AI_API_KEY
+
+# ── ALIASES (Deploy múltiplos ambientes) ───────────────
+[[env.production.routes]]
+pattern = "syntexabr.com.br/*"
+zone_name = "syntexabr.com.br"
+
+[[env.production.routes]]
+pattern = "www.syntexabr.com.br/*"
+zone_name = "syntexabr.com.br"
+
+[[env.production.routes]]
+pattern = "api.syntexabr.com.br/*"
+zone_name = "syntexabr.com.br"
+
+[env.production.vars]
+BACKEND_BASE_URL = "https://syntexa-backend-production.up.railway.app"
+AWS_BASE_URL = "http://98.94.86.193:8000"
+LOCAL_BASE_URL = ""
+FRONTEND_BASE_URL = "https://syntexabr.com.br"
+FRONTEND_PAGES_URL = "https://syntexa-frontend.pages.dev"
+REQUIRE_CLOUDFLARE = "true"
+JWT_EDGE_VERIFY = "false"
+HMAC_VERIFY = "true"
+RATE_LIMIT_ENABLED = "true"
+RATE_LIMIT_WINDOW = "60"
+RATE_LIMIT_MAX = "200"
+PROXY_TIMEOUT_MS = "45000"
+ENVIRONMENT = "production"
+
+# STAGING - Deploy alternativo para testes
+[env.staging]
+name = "syntexa-gateway-staging"
+routes = [
+  { pattern = "staging.syntexabr.com.br/*", zone_name = "syntexabr.com.br" }
+]
+
+[env.staging.vars]
+BACKEND_BASE_URL = "https://syntexa-backend-staging.up.railway.app"
+AWS_BASE_URL = "http://98.94.86.193:8001"
+LOCAL_BASE_URL = ""
+FRONTEND_BASE_URL = "https://staging.syntexabr.com.br"
+FRONTEND_PAGES_URL = "https://syntexa-frontend-staging.pages.dev"
+REQUIRE_CLOUDFLARE = "true"
+JWT_EDGE_VERIFY = "false"
+HMAC_VERIFY = "true"
+RATE_LIMIT_ENABLED = "true"
+RATE_LIMIT_WINDOW = "60"
+RATE_LIMIT_MAX = "200"
+PROXY_TIMEOUT_MS = "45000"
+ENVIRONMENT = "staging"
 
 
 

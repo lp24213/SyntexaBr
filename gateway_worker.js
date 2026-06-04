@@ -27,6 +27,7 @@ const AI_PREFIXES = [
 ];
 
 const API_PREFIXES = [
+  "/api/",
   "/v1/",
   "/health",
   "/docs",

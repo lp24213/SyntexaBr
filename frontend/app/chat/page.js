@@ -654,6 +654,14 @@ export default function ChatPage() {
             const controller = new AbortController();
             abortRef.current = controller;
             setCanStop(true);
+            
+            // Gera session_id na primeira mensagem
+            var sessionId = currentSessionId;
+            if (!sessionId) {
+              sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+              setCurrentSessionId(sessionId);
+            }
+            
             try {
               await chatCompletionStream(token, nextHistory, function (chunk) {
                 var safeChunk = sanitizeStreamChunk(chunk);
@@ -665,7 +673,7 @@ export default function ChatPage() {
                   }
                   return p;
                 });
-              }, controller.signal);
+              }, controller.signal, sessionId);
             } finally {
               setCanStop(false);
               abortRef.current = null;

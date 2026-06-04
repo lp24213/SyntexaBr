@@ -334,6 +334,8 @@ def _stream_events(
             if now - last_ping >= 15.0:
                 yield ": keep-alive\n\n"
                 last_ping = now
+            if not isinstance(chunk, str):
+                chunk = str(chunk) if chunk else ""
             full_content.append(chunk)
             yield f"data: {json.dumps({'content': chunk})}\n\n"
     except Exception:

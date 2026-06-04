@@ -127,6 +127,19 @@ export function ChatLayout(props) {
   var _b = useState([]), sessions = _b[0], setSessions = _b[1];
   var _c = useState("user"), role = _c[0], setRole = _c[1];
   var _d = useState(false), isAdmin = _d[0], setIsAdmin = _d[1];
+  var _e = useState(false), sidebarOpen = _e[0], setSidebarOpen = _e[1];
+
+  useEffect(function () {
+    // Em desktop (sm:), sempre mostrar sidebar. Em mobile, começar fechado.
+    if (typeof window !== "undefined") {
+      var isMobile = window.innerWidth < 640;
+      if (isMobile) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    }
+  }, []);
 
   useEffect(function () {
     (async function () {
@@ -174,6 +187,7 @@ export function ChatLayout(props) {
   return React.createElement(
     "div",
     { className: "chat-root" },
+    React.createElement("style", null, "@media (max-width: 639px) { .syntexa-sidebar { display: none !important; visibility: hidden !important; pointer-events: none !important; width: 0 !important; height: 0 !important; } }"),
     React.createElement("div", { className: "fixed inset-0 z-0 pointer-events-none" },
       React.createElement("div", { className: "absolute inset-0 bg-[linear-gradient(180deg,#fafbfc_0%,#f5f6f8_50%,#f3f4f5_100%)]" }),
       React.createElement(QuantumCodeStream, null)
@@ -182,23 +196,52 @@ export function ChatLayout(props) {
       "div",
       { className: "chat-layout" },
       React.createElement(
+        "div",
+        { className: "hidden" },
+        React.createElement(
+          Button,
+          {
+            type: "button",
+            variant: "outline",
+            onClick: function () { return setSidebarOpen(!sidebarOpen); },
+            className: "inline-flex items-center gap-2 rounded-2xl border border-[#e2e8f0] bg-white px-3 py-2 text-sm text-[#0f172a] shadow-sm",
+          },
+          React.createElement(IconChat, null),
+          t("history", locale)
+        )
+      ),
+      React.createElement(
         "aside",
         {
-          className: "syntexa-sidebar h-full max-h-full min-w-[220px] w-[260px] max-w-[320px] shrink-0 overflow-y-auto px-5 py-6 flex flex-col border-r border-[rgba(20,24,30,0.06)] bg-white/70 backdrop-blur-[16px]",
-          style: { paddingTop: 0 },
+          className:
+            "syntexa-sidebar hidden sm:flex sm:flex-col sm:z-auto sm:h-full sm:max-h-full sm:w-[260px] sm:max-w-[320px] sm:border-r sm:border-b-0 sm:bg-white/70 sm:shadow-none sm:overflow-visible sm:static border-none px-5 py-6 shadow-none transition-all duration-200",
         },
       /* V46 — banner Syntexa interno do sidebar removido (era o "2º header"
          duplicado relatado pelo usuário). O logo já existe no top header. */
       React.createElement(
         "div",
-        { className: "mb-4 flex items-center justify-between" },
+        { className: "mb-4 flex items-center justify-between gap-2" },
         React.createElement("span", { className: "text-xs text-zinc-500" }, t("conversations", locale)),
-        React.createElement(Button, {
-          size: "sm",
-          variant: "ghost",
-          onClick: onNewConversation,
-          className: "text-xs text-zinc-400 hover:text-zinc-900",
-        }, t("new", locale))
+        React.createElement(
+          "div",
+          { className: "flex items-center gap-2" },
+          React.createElement(Button, {
+            size: "sm",
+            variant: "ghost",
+            onClick: onNewConversation,
+            className: "text-xs text-zinc-400 hover:text-zinc-900",
+          }, t("new", locale)),
+          React.createElement(
+            "button",
+            {
+              type: "button",
+              onClick: function () { return setSidebarOpen(false); },
+              className: "inline-flex items-center justify-center rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-2.5 py-2 text-xs font-medium text-[#475569] hover:bg-[#f1f5f9] sm:hidden",
+              "aria-label": t("close", locale) || "Fechar histórico",
+            },
+            "×"
+          )
+        )
       ),
       React.createElement(
         "div",

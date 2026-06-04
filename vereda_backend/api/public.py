@@ -437,7 +437,11 @@ async def _public_chat_stream_impl(
             if content:
                 async def _proxy_stream(content):
                     import json
+                    if not isinstance(content, str):
+                        content = str(content) if content else ""
                     for word in content.split():
+                        if not isinstance(word, str):
+                            word = str(word)
                         yield f"data: {json.dumps({'content': word + ' '})}\n\n"
                     yield f"data: {json.dumps({'content': ''})}\n\n"
                 return StreamingResponse(

@@ -1,5 +1,7 @@
 import { getClientLocale } from "./i18n";
+import { normalizeContent, normalizeStreamChunk } from "./normalizeContent";
 export { getClientLocale } from "./i18n";
+export { normalizeContent, normalizeStreamChunk } from "./normalizeContent";
 
 /**
  * API pública (produção): build estático usa sempre este host (sem override acidental no Pages).
@@ -379,17 +381,19 @@ export async function chatCompletionStream(token, history, onChunk, signal, sess
         if (line.startsWith("data: ")) {
           try {
             const data = JSON.parse(line.slice(6));
-            if (data.content) {
-              full += data.content;
-              if (onChunk) onChunk(data.content);
+            if (data.content !== undefined && data.content !== null) {
+              const normalized = normalizeStreamChunk(data.content);
+              full += normalized;
+              if (onChunk) onChunk(normalized);
             }
           } catch (_) {}
         }
       }
     }
     flushSseTail(state, (c) => {
-      full += c;
-      if (onChunk) onChunk(c);
+      const normalized = normalizeStreamChunk(c);
+      full += normalized;
+      if (onChunk) onChunk(normalized);
     });
     return full || "Nenhuma resposta retornada.";
   } finally {
@@ -510,17 +514,19 @@ export async function publicChatStream(history, onChunk, signal) {
         if (line.startsWith("data: ")) {
           try {
             const data = JSON.parse(line.slice(6));
-            if (data.content) {
-              full += data.content;
-              if (onChunk) onChunk(data.content);
+            if (data.content !== undefined && data.content !== null) {
+              const normalized = normalizeStreamChunk(data.content);
+              full += normalized;
+              if (onChunk) onChunk(normalized);
             }
           } catch (_) {}
         }
       }
     }
     flushSseTail(state, (c) => {
-      full += c;
-      if (onChunk) onChunk(c);
+      const normalized = normalizeStreamChunk(c);
+      full += normalized;
+      if (onChunk) onChunk(normalized);
     });
     return full || "Nenhuma resposta retornada.";
   } finally {

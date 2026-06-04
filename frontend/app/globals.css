@@ -421,6 +421,13 @@ canvas[data-decorative="true"] {
   min-height: 0;
   overflow: hidden;
   width: 100%;
+  flex-direction: column;
+}
+
+@media (min-width: 640px) {
+  .chat-layout {
+    flex-direction: row;
+  }
 }
 
 .chat-main {

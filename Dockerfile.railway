@@ -1,44 +1,19 @@
 # syntax=docker/dockerfile:1
-# Syntexa Railway Gateway — Container LEVE (sem IA pesada)
-FROM python:3.12-slim-bookworm
+# Syntexa Railway Production API — Node Express service for /api/stt and health checks
+FROM node:22-alpine
+
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libpq-dev curl ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+COPY production-node/api/package.json production-node/api/package-lock.json* ./
+RUN npm install --omit=dev
 
-COPY requirements.railway.txt .
-RUN pip install --no-cache-dir -r requirements.railway.txt \
- && pip install --no-cache-dir "psycopg2-binary>=2.9.9"
+COPY production-node/api/src ./src
 
-# Código do gateway + vereda_ai (sem modelo pesado — LLM fica na AWS)
-COPY vereda_backend ./vereda_backend
-COPY vereda_ai ./vereda_ai
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+EXPOSE 3001
+ENV PORT=3001
+ENV NODE_ENV=production
 
-# Baixa instaladores desktop durante o build (não precisam estar no repo)
-RUN mkdir -p /app/vereda_backend/static/desktop \
- && curl -fSL --retry 3 --retry-delay 5 \
-    "http://52.70.129.80/downloads/SyntexaAI-Setup-45.0.0.msi" \
-    -o /app/vereda_backend/static/desktop/SyntexaAI-Setup-45.0.0.msi \
- && curl -fSL --retry 3 --retry-delay 5 \
-    "http://52.70.129.80/downloads/SyntexaAI-linux-x64-45.0.0.tar.gz" \
-    -o /app/vereda_backend/static/desktop/SyntexaAI-linux-x64-45.0.0.tar.gz \
- || echo "[desktop] Aviso: falha ao baixar binários desktop — continuando build"
-
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-ENV UVICORN_WORKERS=1
-ENV UVICORN_TIMEOUT_KEEPALIVE=120
-ENV GATEWAY_MODE=true
-
-# Railway injeta PORT dinamicamente; default 8000 para compatibilidade local
-EXPOSE 8000
-ENV PORT=8000
-
-# Healthcheck rápido — startup deve ser <10s
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=2 \
-  CMD curl -fsS http://127.0.0.1:8000/health || exit 1
+  CMD node -e "const http=require('http'); const req=http.get('http://127.0.0.1:3001/health', res=>{ res.resume(); process.exit(res.statusCode===200?0:1); }); req.on('error', ()=>process.exit(1)); req.end();"
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["npm", "start"]

@@ -139,13 +139,15 @@ export default {
       targetUrl.pathname = pathname;
       targetUrl.search = incomingUrl.search;
 
+      let body = undefined;
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        body = await request.arrayBuffer();
+      }
+
       const init = {
         method: request.method,
         headers: new Headers(request.headers),
-        body:
-          request.method === "GET" || request.method === "HEAD"
-            ? undefined
-            : request.body,
+        body: body,
         redirect: "manual",
       };
       init.headers.delete("host");
@@ -172,6 +174,16 @@ export default {
         respHeaders.set("Cache-Control", "no-store");
       }
 
+      // SSE STREAMING — NÃO BUFFERIZAR
+      const contentType = respHeaders.get("Content-Type") || "";
+      if (contentType.includes("text/event-stream") || pathname.includes("/stream")) {
+        respHeaders.set("Content-Type", "text/event-stream; charset=utf-8");
+        respHeaders.set("Cache-Control", "no-cache");
+        respHeaders.set("Connection", "keep-alive");
+        respHeaders.set("X-Accel-Buffering", "no");
+        respHeaders.delete("Content-Length");
+      }
+
       return new Response(backendResp.body, {
         status: backendResp.status,
         headers: respHeaders,
@@ -182,13 +194,15 @@ export default {
     targetUrl.pathname = pathname;
     targetUrl.search = incomingUrl.search;
 
+    let pageBody = undefined;
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      pageBody = await request.arrayBuffer();
+    }
+
     const init = {
       method: request.method,
       headers: new Headers(request.headers),
-      body:
-        request.method === "GET" || request.method === "HEAD"
-          ? undefined
-          : request.body,
+      body: pageBody,
       redirect: "manual",
       cf: { cacheTtl: 0 },
     };

@@ -8,19 +8,19 @@ AWS_BASE_URL = "http://98.94.86.193:8000"
 RAILWAY_BASE_URL = "https://syntexa-backend-production.up.railway.app"
 AWS_DOWNLOAD_URL = "http://cdn.syntexabr.com.br/downloads"
 ENVIRONMENT = "production"
+ENABLE_STREAMING = "true"
+
+[observability.logs]
+enabled = true
 
 [env.production]
-routes = [
-  { pattern = "api.syntexabr.com.br/*", zone_name = "syntexabr.com.br" },
-  { pattern = "syntexa.syntexabr.com.br/*", zone_name = "syntexabr.com.br" },
-  { pattern = "syntexabr.com.br/download/*", zone_name = "syntexabr.com.br" }
-]
 
 [env.production.vars]
 AWS_BASE_URL = "http://98.94.86.193:8000"
 RAILWAY_BASE_URL = "https://syntexa-backend-production.up.railway.app"
 AWS_DOWNLOAD_URL = "http://cdn.syntexabr.com.br/downloads"
 ENVIRONMENT = "production"
+ENABLE_STREAMING = "true"
 
 # Secrets (configurar via wrangler secret put)
 # VEREDA_SECRET_KEY
