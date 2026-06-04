@@ -366,27 +366,37 @@ export default function ChatPage() {
   }
 
   async function finishMicRecording(blob) {
+    var sttUrl = "https://api.syntexabr.com.br/api/stt";
+    console.log("STT URL:", sttUrl);
+    console.log("AUDIO SIZE:", blob.size);
+    console.log("MIME:", blob.type);
     setVoiceTranscribing(true);
     setVoiceError("");
     setVoiceProgress("A transcrever…");
     try {
-      // Usa backend API para STT (não precisa baixar modelo no browser)
       var fd = new FormData();
       fd.append("file", blob, "audio.webm");
-      var resp = await fetch("https://api.syntexabr.com.br/v1/voice/stt", {
+      var resp = await fetch(sttUrl, {
         method: "POST",
         body: fd,
       });
-      if (!resp.ok) throw new Error("STT failed: " + resp.status);
+      if (!resp.ok) {
+        var errText = await resp.text();
+        console.error("STT ERROR:", resp.status, errText);
+        throw new Error("STT " + resp.status);
+      }
       var data = await resp.json();
+      console.log("STT SUCCESS:", data);
       var text = data.text || data.transcript || "";
-      if (!text) throw new Error("Transcrição vazia");
+      if (!text || !String(text).trim()) throw new Error("Transcrição vazia");
       setVoiceProgress("");
-      setInput(text);
+      var cleanText = String(text).trim();
+      setInput(cleanText);
       setTimeout(function () { autoGrowTextarea(); }, 0);
       setVoiceTranscribing(false);
-      await sendMessage(text);
+      await sendMessage(cleanText);
     } catch (e) {
+      console.error("TRANSCRIPTION FAILED:", e);
       setVoiceProgress("");
       setVoiceError("Erro na transcrição. Tente novamente.");
       setVoiceTranscribing(false);
@@ -426,9 +436,9 @@ export default function ChatPage() {
 
   async function sendMessage(overrideContent) {
     var content =
-      overrideContent != null && String(overrideContent).trim()
+      overrideContent != null && typeof overrideContent === "string" && String(overrideContent).trim()
         ? String(overrideContent).trim()
-        : input.trim();
+        : (typeof input === "string" ? input : "").trim();
     if (!content || loading || voiceTranscribing) return;
     var token = null;
     try {
@@ -995,6 +1005,10 @@ export default function ChatPage() {
           return;
         }
         
+        var sttUrl = "https://api.syntexabr.com.br/api/stt";
+        console.log("STT URL:", sttUrl);
+        console.log("AUDIO SIZE:", blob.size);
+        console.log("MIME:", blob.type);
         setVoiceTranscribing(true);
         setVoiceProgress("Transcrevendo…");
         
@@ -1002,23 +1016,31 @@ export default function ChatPage() {
           var fd = new FormData();
           fd.append("file", blob, "audio.webm");
           
-          var resp = await fetch("https://api.syntexabr.com.br/v1/voice/stt", {
+          var resp = await fetch(sttUrl, {
             method: "POST",
             body: fd,
           });
           
-          if (!resp.ok) throw new Error("STT " + resp.status);
+          if (!resp.ok) {
+            var errText = await resp.text();
+            console.error("STT ERROR:", resp.status, errText);
+            throw new Error("STT " + resp.status);
+          }
           
           var data = await resp.json();
+          console.log("STT SUCCESS:", data);
           var text = data.text || data.transcript || "";
           
-          if (!text) throw new Error("Transcrição vazia");
+          if (!text || !String(text).trim()) throw new Error("Transcrição vazia");
           
-          setInput(text);
+          var cleanText = String(text).trim();
+          setInput(cleanText);
           setVoiceProgress("");
           setVoiceTranscribing(false);
           autoGrowTextarea();
+          await sendMessage(cleanText);
         } catch (err) {
+          console.error("TRANSCRIPTION FAILED:", err);
           setVoiceTranscribing(false);
           setVoiceProgress("");
           setVoiceError("Falha na transcrição: " + (err.message || "erro"));
@@ -1277,7 +1299,7 @@ export default function ChatPage() {
                       transition: { duration: 0.35, delay: 0.15 + idx * 0.06, ease: [0.22, 1, 0.36, 1] },
                       whileHover: { y: -2 },
                       whileTap: { scale: 0.98 },
-                      onClick: function () { setInput(t(it.k, locale)); try { textareaRef.current && textareaRef.current.focus(); } catch (_) {} },
+                      onClick: function () { var suggestedText = String(t(it.k, locale) || "").trim(); if (suggestedText) setInput(suggestedText); try { textareaRef.current && textareaRef.current.focus(); } catch (_) {} },
                       className: "group flex items-center gap-3 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white/70 px-4 py-3 text-left text-[13px] text-[#334155] transition-colors hover:border-[rgba(15,23,42,0.12)] hover:bg-white",
                     },
                     React.createElement(
@@ -1481,7 +1503,7 @@ export default function ChatPage() {
               ),
               React.createElement(
                 Button,
-                { onClick: sendMessage, className: "shrink-0 self-end inline-flex items-center gap-2", disabled: loading },
+                { onClick: function() { var clean = typeof input === "string" ? input.trim() : ""; if (clean) void sendMessage(clean); }, className: "shrink-0 self-end inline-flex items-center gap-2", disabled: loading },
                 loading
                   ? React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true })
                   : React.createElement(IconSend, null),

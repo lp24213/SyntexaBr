@@ -7,6 +7,7 @@
 
 const API_PREFIXES = [
   "/v1/",
+  "/api/",
   "/public-chat",
   "/health",
   "/docs",

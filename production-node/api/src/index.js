@@ -184,6 +184,54 @@ app.get("/api/stt/status/:jobId", async (req, res) => {
   return res.json(JSON.parse(raw));
 });
 
+// ✅ POST /api/stt - Transcrição SÍNCRONA (chama worker-stt diretamente)
+app.post("/api/stt", upload.any(), async (req, res) => {
+  try {
+    const files = Array.isArray(req.files) ? req.files : [];
+    const audioFile = files.find((f) => f && (f.fieldname === "file" || f.fieldname === "audio")) || files[0];
+    
+    if (!audioFile) {
+      return res.status(400).json({ ok: false, error: "audio_file_required" });
+    }
+
+    logger.info({ filename: audioFile.originalname, size: audioFile.size }, "STT request received");
+
+    // Chama worker-stt diretamente
+    const sttServiceUrl = process.env.STT_SERVICE_URL || "http://stt-service:8001";
+    const sttFormData = new FormData();
+    sttFormData.append("audio", await fs.promises.readFile(audioFile.path), audioFile.originalname);
+    sttFormData.append("language", req.body?.language || "pt");
+
+    const sttResponse = await fetch(`${sttServiceUrl}/transcribe`, {
+      method: "POST",
+      body: sttFormData,
+    });
+
+    if (!sttResponse.ok) {
+      const errText = await sttResponse.text();
+      logger.error({ status: sttResponse.status, error: errText }, "STT service failed");
+      return res.status(502).json({ ok: false, error: "stt_service_unavailable", detail: errText });
+    }
+
+    const transcription = await sttResponse.json();
+    logger.info({ text: transcription.text }, "STT success");
+
+    // Limpar arquivo temporário
+    try { await fs.promises.unlink(audioFile.path); } catch (e) {}
+
+    return res.json({
+      ok: true,
+      text: transcription.text || "",
+      segments: transcription.segments || [],
+      language: transcription.language || "pt",
+      duration_sec: transcription.duration_sec,
+    });
+  } catch (err) {
+    logger.error({ err }, "Error in /api/stt");
+    return res.status(500).json({ ok: false, error: "internal_error", detail: err.message });
+  }
+});
+
 server.listen(port, () => {
   logger.info({ port }, "syntexa api started");
 });
