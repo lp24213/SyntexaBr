@@ -79,6 +79,30 @@ function cleanAssistantText(input) {
   return s.trim();
 }
 
+/**
+ * BLOQUEIO TOTAL DE OBJETOS — Garante que QUALQUER valor é convertido para string pura.
+ * Usado para prevenir [object Object] em Safari mobile (que envia InputEvent/SyntheticEvent).
+ */
+function ensureString(value) {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value?.target?.value) {
+    return String(value.target.value);
+  }
+
+  if (value?.content) {
+    return String(value.content);
+  }
+
+  if (value?.message) {
+    return String(value.message);
+  }
+
+  return "";
+}
+
 /** Detecta pedido de mídia em PT-BR (crie/gere imagem, vídeo, áudio — não só "gere uma imagem"). */
 function detectMediaIntent(text) {
   var w = (text || "").toLowerCase();
@@ -358,7 +382,7 @@ export default function ChatPage() {
       var text = data.text || data.transcript || "";
       if (!text) throw new Error("Transcrição vazia");
       setVoiceProgress("");
-      setInput(text);
+      setInput(ensureString(text));
       setTimeout(function () { autoGrowTextarea(); }, 0);
       setVoiceTranscribing(false);
       await sendMessage(text);
@@ -401,10 +425,8 @@ export default function ChatPage() {
   }, []);
 
   async function sendMessage(overrideContent) {
-    var content =
-      overrideContent != null && String(overrideContent).trim()
-        ? String(overrideContent).trim()
-        : input.trim();
+    var finalInput = ensureString(overrideContent != null ? overrideContent : input);
+    var content = finalInput.trim();
     if (!content || loading || voiceTranscribing) return;
     var token = null;
     try {
@@ -990,7 +1012,7 @@ export default function ChatPage() {
           
           if (!text) throw new Error("Transcrição vazia");
           
-          setInput(text);
+          setInput(ensureString(text));
           setVoiceProgress("");
           setVoiceTranscribing(false);
           autoGrowTextarea();
@@ -1253,7 +1275,7 @@ export default function ChatPage() {
                       transition: { duration: 0.35, delay: 0.15 + idx * 0.06, ease: [0.22, 1, 0.36, 1] },
                       whileHover: { y: -2 },
                       whileTap: { scale: 0.98 },
-                      onClick: function () { setInput(t(it.k, locale)); try { textareaRef.current && textareaRef.current.focus(); } catch (_) {} },
+                      onClick: function () { setInput(ensureString(t(it.k, locale))); try { textareaRef.current && textareaRef.current.focus(); } catch (_) {} },
                       className: "group flex items-center gap-3 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white/70 px-4 py-3 text-left text-[13px] text-[#334155] transition-colors hover:border-[rgba(15,23,42,0.12)] hover:bg-white",
                     },
                     React.createElement(
@@ -1418,8 +1440,8 @@ export default function ChatPage() {
               ),
               React.createElement("textarea", {
                 ref: textareaRef,
-                value: input,
-                onChange: function (e) { setInput(e.target.value); autoGrowTextarea(); },
+                value: typeof input === "string" ? input : "",
+                onChange: function (e) { var value = typeof e?.target?.value === "string" ? e.target.value : ""; setInput(value); autoGrowTextarea(); },
                 onKeyDown: handleKeyDown,
                 rows: 1,
                 placeholder: t("chatPlaceholder", locale),
