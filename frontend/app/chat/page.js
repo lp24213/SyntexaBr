@@ -382,7 +382,7 @@ export default function ChatPage() {
       var text = data.text || data.transcript || "";
       if (!text) throw new Error("Transcrição vazia");
       setVoiceProgress("");
-      setInput(ensureString(text));
+      setInput(text);
       setTimeout(function () { autoGrowTextarea(); }, 0);
       setVoiceTranscribing(false);
       await sendMessage(text);
@@ -425,8 +425,10 @@ export default function ChatPage() {
   }, []);
 
   async function sendMessage(overrideContent) {
-    var finalInput = ensureString(overrideContent != null ? overrideContent : input);
-    var content = finalInput.trim();
+    var content =
+      overrideContent != null && String(overrideContent).trim()
+        ? String(overrideContent).trim()
+        : input.trim();
     if (!content || loading || voiceTranscribing) return;
     var token = null;
     try {
@@ -1012,7 +1014,7 @@ export default function ChatPage() {
           
           if (!text) throw new Error("Transcrição vazia");
           
-          setInput(ensureString(text));
+          setInput(text);
           setVoiceProgress("");
           setVoiceTranscribing(false);
           autoGrowTextarea();
@@ -1275,7 +1277,7 @@ export default function ChatPage() {
                       transition: { duration: 0.35, delay: 0.15 + idx * 0.06, ease: [0.22, 1, 0.36, 1] },
                       whileHover: { y: -2 },
                       whileTap: { scale: 0.98 },
-                      onClick: function () { setInput(ensureString(t(it.k, locale))); try { textareaRef.current && textareaRef.current.focus(); } catch (_) {} },
+                      onClick: function () { setInput(t(it.k, locale)); try { textareaRef.current && textareaRef.current.focus(); } catch (_) {} },
                       className: "group flex items-center gap-3 rounded-2xl border border-[rgba(15,23,42,0.06)] bg-white/70 px-4 py-3 text-left text-[13px] text-[#334155] transition-colors hover:border-[rgba(15,23,42,0.12)] hover:bg-white",
                     },
                     React.createElement(
