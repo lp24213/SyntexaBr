@@ -775,10 +775,8 @@ export function FileExportMenu({
   const { locale } = useLanguage();
   const [busy, setBusy] = useState(false);
   const [exportError, setExportError] = useState("");
-  const [pdfOpen, setPdfOpen] = useState(false);
 
   async function run(kind) {
-    setPdfOpen(false);
     setBusy(true);
     setExportError("");
     try {
@@ -803,44 +801,10 @@ export function FileExportMenu({
       )}
       <div className="flex min-h-[2.25rem] w-full min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none]">
         {busy && <span className="syntexa-spinner shrink-0" aria-hidden="true" />}
-        <div className="relative inline-flex items-center">
-          <button type="button" disabled={busy} className={btn + " rounded-r-none border-r-0"} onClick={() => void run("pdf-styled")}>
-            <ToolbarIcon path="M7 3h7l5 5v13H7zM14 3v5h5M9 15h8M9 18h6" />
-            {t('exportPdf', locale)}
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className={btn + " rounded-l-none px-2"}
-            onClick={() => setPdfOpen((v) => !v)}
-            aria-haspopup="true"
-            aria-expanded={pdfOpen}
-          >
-            <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" aria-hidden="true">
-              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          {pdfOpen && (
-            <div className="absolute left-0 top-[calc(100%+4px)] z-30 min-w-[10rem] rounded-lg border border-[#e2e8f0] bg-white shadow-lg overflow-hidden">
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-[#475569] hover:bg-[#f1f5f9]"
-                onClick={() => { setPdfOpen(false); run("pdf-styled"); }}
-              >
-                <span className="inline-block h-2 w-2 rounded-full bg-[#3b82f6]" />
-                {t('exportPdfStyled', locale)}
-              </button>
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-[#475569] hover:bg-[#f1f5f9]"
-                onClick={() => { setPdfOpen(false); run("pdf-simple"); }}
-              >
-                <span className="inline-block h-2 w-2 rounded-full bg-[#94a3b8]" />
-                {t('exportPdfSimple', locale)}
-              </button>
-            </div>
-          )}
-        </div>
+        <button type="button" disabled={busy} className={btn} onClick={() => void run("pdf-styled")}>
+          <ToolbarIcon path="M7 3h7l5 5v13H7zM14 3v5h5M9 15h8M9 18h6" />
+          {t('exportPdf', locale)}
+        </button>
         <button type="button" disabled={busy} className={btn} onClick={() => void run("xlsx")}>
           <ToolbarIcon path="M4 5h16v14H4zM4 10h16M9 5v14" />
           {t('exportExcel', locale)}

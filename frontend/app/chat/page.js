@@ -28,6 +28,7 @@ import {
 import { t } from "../../lib/i18n";
 import { useLanguage } from "../../components/language-provider";
 import { sanitizeOutput, sanitizeStreamChunk } from "../../lib/sanitizeOutput";
+import { normalizeContent, normalizeStreamChunk } from "../../lib/normalizeContent";
 import { setXenovaSttProgressCallback } from "../../lib/xenova-stt";
 import { MarkdownMessage } from "../../components/MarkdownMessage";
 
@@ -1084,21 +1085,22 @@ export default function ChatPage() {
           visible.map((m, idx) => {
             var cn = m.role === "user" ? "syntexa-bubble-user ml-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed break-words" : "syntexa-bubble-assistant mr-auto max-w-[85%] sm:max-w-[80%] px-4 py-3 sm:px-5 sm:py-4 text-sm leading-relaxed text-[var(--text-primary)] break-words";
             var msgTime = m.timestamp ? new Date(m.timestamp).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+            var safeContent = typeof m.content === "string" ? m.content : normalizeContent(m.content);
             return React.createElement(motion.div, { key: idx, initial: false, animate: { opacity: 1, y: 0 }, transition: { duration: 0.25 }, className: cn },
               React.createElement("div", { className: "mb-1.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8]" },
                 React.createElement("span", null, m.role === "user" ? t("you", locale) : t("syntexa", locale)),
                 React.createElement("span", { className: "text-[10px] font-normal normal-case tracking-normal text-[#cbd5e1]" }, msgTime)
               ),
-              (m.role === "assistant" && new RegExp("^" + t("generating", locale) + "\\s", "i").test(String(m.content || "")))
+              (m.role === "assistant" && new RegExp("^" + t("generating", locale) + "\\s", "i").test(String(safeContent || "")))
                 ? React.createElement(
                     "div",
                     { className: "flex items-center gap-2 whitespace-pre-wrap" },
                     React.createElement("span", { className: "syntexa-spinner", "aria-hidden": true }),
-                    React.createElement("span", null, m.content)
+                    React.createElement("span", null, safeContent)
                   )
                 : m.role === "assistant"
-                  ? React.createElement(MarkdownMessage, { content: m.content })
-                  : React.createElement("p", { className: "whitespace-pre-wrap" }, m.content),
+                  ? React.createElement(MarkdownMessage, { content: safeContent })
+                  : React.createElement("p", { className: "whitespace-pre-wrap" }, safeContent),
               m.media && m.media.type === "image" &&
                 React.createElement(ChatImage, {
                   src: m.media.url,
