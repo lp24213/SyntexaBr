@@ -306,7 +306,7 @@ export default function ContatoPage() {
               <h2 className="text-3xl font-medium">Outras Formas de Contato</h2>
             </motion.div>
 
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-4">
               {[
                 {
                   title: "Email",
@@ -319,6 +319,19 @@ export default function ContatoPage() {
                     >
                       <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                       <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                    </svg>
+                  ),
+                },
+                {
+                  title: "Parcerias",
+                  value: "parceiros@syntexabr.com.br",
+                  icon: (
+                    <svg
+                      className="w-6 h-6"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                     </svg>
                   ),
                 },
@@ -336,19 +349,16 @@ export default function ContatoPage() {
                   ),
                 },
                 {
-                  title: "Endereço",
-                  value: "Sinop-MT, Brasil",
+                  title: "Agendar",
+                  value: "Abrir Calendly",
+                  link: "https://calendly.com/syntexabr",
                   icon: (
                     <svg
                       className="w-6 h-6"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                        clipRule="evenodd"
-                      />
+                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v2h16V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM4 8h16v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8zm2 3a1 1 0 100 2h1a1 1 0 100-2H6zm4-1a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" clipRule="evenodd" />
                     </svg>
                   ),
                 },
@@ -360,15 +370,29 @@ export default function ContatoPage() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
                 >
-                  <GlassPanel
-                    icon={() => (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(5,150,105,0.08)] text-[#059669]">
-                        {item.icon}
-                      </div>
-                    )}
-                    title={item.title}
-                    subtitle={item.value}
-                  />
+                  {item.link ? (
+                    <a href={item.link} target="_blank" rel="noopener noreferrer" className="block h-full">
+                      <GlassPanel
+                        icon={() => (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(5,150,105,0.08)] text-[#059669]">
+                            {item.icon}
+                          </div>
+                        )}
+                        title={item.title}
+                        subtitle={item.value}
+                      />
+                    </a>
+                  ) : (
+                    <GlassPanel
+                      icon={() => (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(5,150,105,0.08)] text-[#059669]">
+                          {item.icon}
+                        </div>
+                      )}
+                      title={item.title}
+                      subtitle={item.value}
+                    />
+                  )}
                 </motion.div>
               ))}
             </div>

@@ -283,10 +283,10 @@ export default function PartnershipsPage() {
             >
               <div className="flex flex-col gap-3 sm:flex-row justify-center">
                 <a
-                  href="mailto:partners@syntexabr.com"
+                  href="mailto:parceiros@syntexabr.com.br"
                   className="rounded-lg bg-[#059669] px-6 py-3 font-medium text-white hover:bg-[#047857] transition-colors"
                 >
-                  partners@syntexabr.com
+                  parceiros@syntexabr.com.br
                 </a>
                 <a
                   href="https://calendly.com/syntexabr"
