@@ -35,6 +35,8 @@ const DICT = {
     taxes: "Impostos / Receita",
     whatsappSales: "Vendas WhatsApp",
     integrations: "Integrações",
+    contact: "Fale Conosco",
+    partnerships: "Parcerias",
     offlineSystem: "Sistema Offline",
     apiTokens: "API Tokens",
 

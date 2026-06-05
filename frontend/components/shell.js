@@ -196,6 +196,24 @@ function IconGlobe() {
   );
 }
 
+function IconMail() {
+  return React.createElement(
+    "svg",
+    { className: "h-[15px] w-[15px] text-[#5a5c5e]", viewBox: "0 0 24 24", fill: "none" },
+    React.createElement("rect", { x: "2", y: "4", width: "20", height: "16", rx: "2", stroke: "currentColor", strokeWidth: "1.5" }),
+    React.createElement("path", { d: "M2 6l10 7 10-7", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })
+  );
+}
+
+function IconHandshake() {
+  return React.createElement(
+    "svg",
+    { className: "h-[15px] w-[15px] text-[#5a5c5e]", viewBox: "0 0 24 24", fill: "none" },
+    React.createElement("path", { d: "M13 2l-2 4m-3-4l2 4m8 6l-4 5h-6l-4-5", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }),
+    React.createElement("path", { d: "M2 16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-3H2v3z", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })
+  );
+}
+
 function IconChart() {
   return React.createElement(
     "svg",
@@ -402,6 +420,8 @@ export function AppShell(props) {
     { path: `/i18n/${locale}/plans`, labelKey: "plans", icon: IconChart },
     { path: `/i18n/${locale}/chat`, labelKey: "chat", icon: IconChat },
     { path: `/i18n/${locale}/integrations`, labelKey: "integrations", icon: IconWhatsApp },
+    { path: `/fale-conosco`, labelKey: "contact", icon: IconMail },
+    { path: `/parcerias`, labelKey: "partnerships", icon: IconHandshake },
   ];
 
   return React.createElement(

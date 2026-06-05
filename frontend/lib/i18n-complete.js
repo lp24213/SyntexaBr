@@ -35,6 +35,8 @@ const DICT = {
     taxes: "Impostos / Receita",
     whatsappSales: "Vendas WhatsApp",
     integrations: "Integrações",
+    contact: "Fale Conosco",
+    partnerships: "Parcerias",
     offlineSystem: "Sistema Offline",
     apiTokens: "API Tokens",
 
@@ -467,6 +469,8 @@ const DICT = {
     taxes: "Taxes / Revenue",
     whatsappSales: "WhatsApp Sales",
     integrations: "Integrations",
+    contact: "Contact Us",
+    partnerships: "Partnerships",
     offlineSystem: "Offline System",
     apiTokens: "API Tokens",
 
@@ -899,6 +903,8 @@ const DICT = {
     taxes: "Impuestos / Renta",
     whatsappSales: "Ventas WhatsApp",
     integrations: "Integraciones",
+    contact: "Contáctanos",
+    partnerships: "Asociaciones",
     offlineSystem: "Sistema Offline",
     apiTokens: "Tokens de API",
 
@@ -1331,6 +1337,8 @@ const DICT = {
     taxes: "税收/收入",
     whatsappSales: "WhatsApp 销售",
     integrations: "集成",
+    contact: "联系我们",
+    partnerships: "合作伙伴关系",
     offlineSystem: "离线系统",
     apiTokens: "API 令牌",
 
