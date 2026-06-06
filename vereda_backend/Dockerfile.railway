@@ -10,7 +10,7 @@ ENV BUILD_TIMESTAMP=$BUILD_TIMESTAMP
 WORKDIR /app
 
 # ===== System Dependencies =====
-RUN apt-get update && apt-get install -y \
+RUN echo "Build timestamp: $(date)" && apt-get update && apt-get install -y \
     postgresql-client \
     libpq-dev \
     build-essential \
@@ -33,4 +33,4 @@ HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=2 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${PORT:-8000}/health').read()" || exit 1
 
 # ===== Start Command =====
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --proxy-headers --forwarded-allow-ips '*'
+CMD ["uvicorn", "vereda_backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--proxy-headers", "--forwarded-allow-ips", "*"]
