@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { AppShell } from "../../components/shell";
 import {
@@ -12,6 +12,7 @@ import {
 /**
  * PÁGINA /fale-conosco — Formulário de Contato Premium
  * Integrado com API para envio de email e banco de dados
+ * + Widget Calendly para agendamento de reuniões
  */
 
 export default function ContatoPage() {
@@ -28,6 +29,24 @@ export default function ContatoPage() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
   const [error, setError] = useState(null);
+
+  // ✅ Carregar script do Calendly
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://assets.calendly.com/assets/external/widget.js";
+    script.async = true;
+    document.head.appendChild(script);
+    
+    const link = document.createElement("link");
+    link.href = "https://assets.calendly.com/assets/external/widget.css";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+    
+    return () => {
+      if (script.parentNode) script.parentNode.removeChild(script);
+      if (link.parentNode) link.parentNode.removeChild(link);
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -74,6 +93,20 @@ export default function ContatoPage() {
       setTimeout(() => setError(null), 5000);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ Abrir widget Calendly
+  const openCalendlyWidget = (e) => {
+    e.preventDefault();
+    if (window.Calendly) {
+      window.Calendly.initPopupWidget({
+        url: "https://calendly.com/syntexabr/30min",
+      });
+      return false;
+    } else {
+      // Fallback se widget não carregar
+      window.open("https://calendly.com/syntexabr/30min", "_blank");
     }
   };
 
@@ -370,7 +403,22 @@ export default function ContatoPage() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
                 >
-                  {item.link ? (
+                  {item.title === "Agendar" ? (
+                    <button
+                      onClick={openCalendlyWidget}
+                      className="block w-full h-full text-left hover:opacity-90 transition-opacity"
+                    >
+                      <GlassPanel
+                        icon={() => (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(5,150,105,0.08)] text-[#059669]">
+                            {item.icon}
+                          </div>
+                        )}
+                        title={item.title}
+                        subtitle={item.value}
+                      />
+                    </button>
+                  ) : item.link ? (
                     <a href={item.link} target="_blank" rel="noopener noreferrer" className="block h-full">
                       <GlassPanel
                         icon={() => (
