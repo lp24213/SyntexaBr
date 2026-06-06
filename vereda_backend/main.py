@@ -140,6 +140,27 @@ def _migrate_db() -> None:
 
 
 def create_app() -> FastAPI:
+    # ── CONFIGURE LOGGING: Reduzir verbosidade para Railway ──
+    import warnings
+    import logging.config
+    
+    # Desabilitar warnings desnecessários
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=ResourceWarning)
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+    
+    # Reduzir logging de bibliotecas heavy
+    logging.getLogger("sqlalchemy").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("anyio").setLevel(logging.WARNING)
+    logging.getLogger("starlette").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn").setLevel(logging.WARNING)
+    logging.getLogger("vereda_backend").setLevel(logging.INFO)
+    
+    # Desabilitar tracemalloc warnings
+    logging.captureWarnings(False)
+    
     app_kw = dict(
         title=settings.project_name,
         version="0.1.0",
@@ -169,21 +190,24 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         dt_ms = (time.perf_counter() - t0) * 1000.0
         response.headers["X-Process-Time-Ms"] = f"{dt_ms:.1f}"
-        try:
-            log.info(
-                json.dumps(
-                    {
-                        "event": "http_request",
-                        "method": request.method,
-                        "path": request.url.path,
-                        "status": response.status_code,
-                        "latency_ms": round(dt_ms, 2),
-                    },
-                    ensure_ascii=False,
+        # NÃO logar TODAS as requisições — reduzir rate limit
+        # Apenas logar erros 5xx
+        if response.status_code >= 500:
+            try:
+                log.error(
+                    json.dumps(
+                        {
+                            "event": "http_error",
+                            "method": request.method,
+                            "path": request.url.path,
+                            "status": response.status_code,
+                            "latency_ms": round(dt_ms, 2),
+                        },
+                        ensure_ascii=False,
+                    )
                 )
-            )
-        except Exception:
-            pass
+            except Exception:
+                pass
         return response
 
     @app.middleware("http")
