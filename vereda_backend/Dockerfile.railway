@@ -1,7 +1,11 @@
 # syntax=docker/dockerfile:1
 # Syntexa Railway Production API — FastAPI backend for Vereda
-# Rebuild forced: 2026-06-06T15:10:00Z - cache invalidation for serve_index removal
+# Rebuild forced: 2026-06-06T16:55:00Z - cache invalidation for serve_index removal
 FROM python:3.11-slim
+
+# Force cache invalidation with unique build timestamp
+ARG BUILD_TIMESTAMP=2026-06-06T16:55:00Z
+ENV BUILD_TIMESTAMP=$BUILD_TIMESTAMP
 
 WORKDIR /app
 
