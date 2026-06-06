@@ -16,6 +16,7 @@ from vereda_backend.api.v1.endpoints import (
     subscription,
     webhooks,
     webhooks_billing,
+    whatsapp_integration,
 )
 from vereda_backend.api import public
 from vereda_backend.core.config import settings
@@ -57,6 +58,7 @@ def register(app: FastAPI) -> None:
     api_v1_router.include_router(public.router_v1, tags=["public"])
     api_v1_router.include_router(auth.router, tags=["auth"])
     api_v1_router.include_router(calendly.router, tags=["calendly"])
+    api_v1_router.include_router(whatsapp_integration.router, tags=["whatsapp"])
     api_v1_router.include_router(desktop_downloads.router, tags=["desktop"])
     api_v1_router.include_router(payments.router, tags=["payments"])
     api_v1_router.include_router(subscription.router, tags=["subscription"])

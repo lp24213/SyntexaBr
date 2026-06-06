@@ -10,6 +10,7 @@ export default function IntegrationsClient() {
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("whatsapp");
+  const [connectingWhatsApp, setConnectingWhatsApp] = useState(false);
 
   useEffect(() => {
     checkConnection();
@@ -18,19 +19,75 @@ export default function IntegrationsClient() {
   async function checkConnection() {
     try {
       const token = localStorage.getItem("syntexa_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_WHATSAPP_API}/companies`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_WHATSAPP_API}/status`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
-        setConnected(data.length > 0);
+        setConnected(data.configured || false);
       }
     } catch (e) {
-      console.error(e);
+      console.error("Failed to check WhatsApp connection:", e);
     } finally {
       setLoading(false);
     }
   }
+
+  // ✅ Handler para conectar ao WhatsApp
+  const handleConnectWhatsApp = (e) => {
+    e.preventDefault();
+    setConnectingWhatsApp(true);
+
+    const clientId = "1739539750737158";
+    const redirectUri = `${window.location.origin}/whatsapp/callback`;
+    const scope = "whatsapp_business_management,business_management";
+    const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code`;
+
+    const popup = window.open(authUrl, "whatsapp_oauth", "width=600,height=700");
+
+    const handleMessage = async (event) => {
+      if (event.data?.type === "META_OAUTH_SUCCESS") {
+        window.removeEventListener("message", handleMessage);
+        const { code } = event.data;
+
+        try {
+          // Enviar código para backend trocar por token
+          const token = localStorage.getItem("syntexa_token");
+          const response = await fetch(`${process.env.NEXT_PUBLIC_WHATSAPP_API}/oauth/callback`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({ code, locale }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+              setConnected(true);
+              alert(`✅ WhatsApp conectado! Número: ${data.display_number}`);
+              // Recarregar status
+              await checkConnection();
+            }
+          } else {
+            throw new Error("Falha ao conectar");
+          }
+        } catch (err) {
+          alert(`❌ Erro ao conectar: ${err.message}`);
+          console.error("WhatsApp connection error:", err);
+        } finally {
+          setConnectingWhatsApp(false);
+        }
+      } else if (event.data?.type === "META_OAUTH_ERROR") {
+        window.removeEventListener("message", handleMessage);
+        setConnectingWhatsApp(false);
+        alert("❌ Autorização negada ou cancelada");
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+  };
 
   if (loading) {
     return (
@@ -93,8 +150,19 @@ export default function IntegrationsClient() {
                   </p>
                 </div>
               ) : (
-                <button className="bg-[#25D366] text-white px-6 py-2 rounded-lg hover:bg-[#20ba58] transition-colors">
-                  {t('connectWhatsApp', locale)}
+                <button 
+                  onClick={handleConnectWhatsApp}
+                  disabled={connectingWhatsApp}
+                  className="bg-[#25D366] text-white px-6 py-2 rounded-lg hover:bg-[#20ba58] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {connectingWhatsApp ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      {t('metaConnecting', locale)}
+                    </>
+                  ) : (
+                    t('connectWhatsApp', locale)
+                  )}
                 </button>
               )}
             </div>
