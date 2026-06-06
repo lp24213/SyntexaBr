@@ -324,13 +324,6 @@ def create_app() -> FastAPI:
 
     api_routes.register(app)
 
-    # ── Frontend agora está em Cloudflare Pages, não precisa servir de aqui ──
-    # @app.get("/", response_class=HTMLResponse)
-    # def serve_index() -> str:
-    #     """Serve o frontend estático principal do backend."""
-    #     index_path = Path(__file__).parent / "static" / "index.html"
-    #     return index_path.read_text(encoding="utf-8")
-
     @app.on_event("startup")
     async def on_startup() -> None:
         import asyncio
