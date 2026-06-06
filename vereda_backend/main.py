@@ -1,7 +1,17 @@
 import logging
+import os
+import sys
 import time
 from pathlib import Path
 import json
+
+# Se o deploy ou o comando de start estão sendo executados dentro da pasta vereda_backend,
+# precisamos garantir que o diretório pai esteja no PYTHONPATH para que imports absolutos
+# como `from vereda_backend.core.config import settings` continuem funcionando.
+PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(PACKAGE_ROOT)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
