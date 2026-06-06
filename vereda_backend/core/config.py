@@ -650,6 +650,38 @@ class Settings(BaseSettings):
         description="Diretório para ficheiros .ods gerados (default: <temp>/syntexa_generated).",
     )
 
+    # ── WhatsApp Integration Settings ──────────────────────────────────
+    WHATSAPP_META_APP_ID: str | None = Field(
+        default=None,
+        validation_alias="WHATSAPP_META_APP_ID",
+        description="Meta App ID para OAuth de WhatsApp",
+    )
+    WHATSAPP_META_APP_SECRET: str | None = Field(
+        default=None,
+        validation_alias="WHATSAPP_META_APP_SECRET",
+        description="Meta App Secret para WhatsApp OAuth",
+    )
+    WHATSAPP_WEBHOOK_VERIFY_TOKEN: str = Field(
+        default="syntexa_whatsapp_webhook_token_v1",
+        validation_alias="WHATSAPP_WEBHOOK_VERIFY_TOKEN",
+        description="Token para verificar webhooks do WhatsApp",
+    )
+    WHATSAPP_ACCESS_TOKEN: str | None = Field(
+        default=None,
+        validation_alias="WHATSAPP_ACCESS_TOKEN",
+        description="Access token Meta obtido após OAuth",
+    )
+    WHATSAPP_BUSINESS_ACCOUNT_ID: str | None = Field(
+        default=None,
+        validation_alias="WHATSAPP_BUSINESS_ACCOUNT_ID",
+        description="WABA ID armazenado após OAuth",
+    )
+    WHATSAPP_PHONE_NUMBER_ID: str | None = Field(
+        default=None,
+        validation_alias="WHATSAPP_PHONE_NUMBER_ID",
+        description="Phone Number ID armazenado após OAuth",
+    )
+
     @computed_field
     @property
     def frontend_origins(self) -> List[str]:
