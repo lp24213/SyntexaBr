@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { AppShell } from "../../components/shell";
@@ -26,6 +26,37 @@ import {
  */
 
 export default function PartnershipsPage() {
+  // ✅ Carregar script do Calendly
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://assets.calendly.com/assets/external/widget.js";
+    script.async = true;
+    document.head.appendChild(script);
+    
+    const link = document.createElement("link");
+    link.href = "https://assets.calendly.com/assets/external/widget.css";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+    
+    return () => {
+      if (script.parentNode) script.parentNode.removeChild(script);
+      if (link.parentNode) link.parentNode.removeChild(link);
+    };
+  }, []);
+
+  // ✅ Abrir widget Calendly
+  const openCalendlyWidget = (e) => {
+    e.preventDefault();
+    if (window.Calendly) {
+      window.Calendly.initPopupWidget({
+        url: "https://calendly.com/syntexabr/30min",
+      });
+      return false;
+    } else {
+      window.open("https://calendly.com/syntexabr/30min", "_blank");
+    }
+  };
+
   return (
     <AppShell>
       <main className="relative w-full overflow-x-hidden bg-white text-[#0f172a]">
@@ -288,12 +319,12 @@ export default function PartnershipsPage() {
                 >
                   parceiros@syntexabr.com.br
                 </a>
-                <a
-                  href="https://calendly.com/syntexabr"
+                <button
+                  onClick={openCalendlyWidget}
                   className="rounded-lg border border-[rgba(15,23,42,0.1)] px-6 py-3 font-medium hover:bg-[rgba(15,23,42,0.03)] transition-colors"
                 >
                   Agendar Reunião
-                </a>
+                </button>
               </div>
             </GradientBorderCard>
           </div>
