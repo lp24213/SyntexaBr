@@ -1,0 +1,548 @@
+{
+  "project_name": "SyntexaBR - Sovereign Quantum AI Platform",
+  "backend_overview": "HYBRID BACKEND: FastAPI (Python) + Express (Node.js) + Specialized LLM modules",
+  "timestamp": "2026-06-05",
+
+  "python_backend": {
+    "MAIN_ENGINE": {
+      "vereda_backend": {
+        "location": "root/vereda_backend",
+        "type": "FastAPI Application - PRIMARY BACKEND",
+        "entry_point": "main.py",
+        "description": "Core backend application serving all chat, intelligence, and subscription features",
+        
+        "api_routes": {
+          "location": "vereda_backend/api/v1/endpoints",
+          "routes": [
+            "auth.py - Autenticação e JWT",
+            "chat.py - Endpoint de chat principal",
+            "public.py - Chat público sem autenticação",
+            "health.py - Health checks",
+            "documents.py - Gerenciamento de documentos",
+            "export_api.py - Exportação de dados",
+            "subscription.py - Gerenciamento de planos",
+            "payments.py - Integração com pagamentos",
+            "webhooks.py - Webhooks gerais",
+            "webhooks_billing.py - Webhooks de billing",
+            "admin.py - Endpoints administrativos",
+            "agents.py - Agentes autônomos",
+            "autonomy.py - Executores autônomos",
+            "voice.py - API de voz",
+            "vision.py - API de visão",
+            "multimodal_api.py - API multimodal",
+            "media.py - Gerenciamento de mídia",
+            "files_api.py - API de arquivos",
+            "intel.py - Inteligência e análise",
+            "research.py - Research endpoints",
+            "education.py - Endpoints educacionais",
+            "institutional.py - Endpoints institucionais",
+            "integrations.py - Integrações externas",
+            "tools.py - Ferramentas (math, image analysis)",
+            "feedback.py - Feedback dos usuários",
+            "desktop_downloads.py - Downloads para desktop",
+            "modular_chat.py - Chat modular",
+            "execution.py - Execução de tarefas",
+            "science.py - Endpoints científicos",
+            "document.py - Gerenciamento individual de doc"
+          ]
+        },
+
+        "core_services": {
+          "location": "vereda_backend/services",
+          "critical_files": [
+            "chat_engine.py - Motor principal de chat (orquestra tudo)",
+            "ai_router.py - Router de IA (decide qual modelo usar)",
+            "agent_orchestrator_v2.py - Orquestrador de agentes",
+            "autonomy_manager.py - Gerenciador de autonomia",
+            "autonomous_evolution.py - Evolução autônoma de agentes",
+            "conversation_store.py - Armazenamento de conversas",
+            "llm_client.py - Cliente LLM (chamadas a modelos)",
+            "media_engine.py - Motor de mídia e processamento",
+            "search_architecture.py - Arquitetura de busca",
+            "events.py - Orquestrador de eventos",
+            "dashscope_image.py - Integração com Dashscope (image gen)",
+            "tools.py - Ferramentas utilitárias",
+            "file_generators/*.py - Geradores de arquivos (ODS, etc)"
+          ]
+        },
+
+        "core_configuration": {
+          "location": "vereda_backend/core",
+          "critical_files": [
+            "config.py - Configurações gerais",
+            "security.py - Segurança e JWT",
+            "security_config.py - Configuração de segurança",
+            "chat_policy.py - Política de chat",
+            "subscription.py - Lógica de subscriptions",
+            "syntexa_identity.py - Identidade da IA",
+            "syntexa_modes.py - Modos de operação",
+            "syntexa_intel.py - Inteligência específica",
+            "ai_proxy_client.py - Proxy para chamadas IA",
+            "answer_engine.py - Motor de resposta",
+            "context_budget.py - Gestão de contexto",
+            "rate_limit.py - Rate limiting",
+            "circuit_breaker.py - Circuit breaker pattern",
+            "load_monitor.py - Monitoramento de carga",
+            "confidence_score.py - Scoring de confiança",
+            "cache_redis.py - Cache Redis",
+            "redis_app.py - App Redis",
+            "quantum_orchestrator.py - Orquestrador quantum",
+            "cognitive_layer.py - Camada cognitiva",
+            "concurrency_control.py - Controle de concorrência",
+            "priority.py - Sistema de prioridades",
+            "access_control.py - Controle de acesso",
+            "admin_allowed_ips.py - IPs permitidos admin",
+            "chat_context.py - Contexto de chat",
+            "deep_run.py - Execução profunda",
+            "job_queue.py - Fila de jobs",
+            "lazy_loader.py - Lazy loading",
+            "llm_message_adapter.py - Adaptador de mensagens",
+            "llm_router_v2.py - Router LLM v2",
+            "memory.py - Gerenciamento de memória",
+            "plan_limits.py - Limites de plano",
+            "prom_metrics.py - Métricas Prometheus",
+            "public_messages.py - Mensagens públicas",
+            "runtime_watchdog.py - Watchdog de runtime",
+            "sovereign_integration.py - Integração sovereign",
+            "text_polish.py - Polimento de texto",
+            "text_sanitize.py - Sanitização de texto",
+            "turnstile.py - Integração Turnstile (captcha)",
+            "vector_store_pg.py - Vector store PostgreSQL",
+            "file_validator.py - Validação de arquivos"
+          ]
+        },
+
+        "database": {
+          "location": "vereda_backend/db",
+          "files": [
+            "models.py - Modelos SQLAlchemy (Users, Conversations, Subscriptions, etc)",
+            "session.py - Sessão de database"
+          ],
+          "engines": ["SQLite (dev)", "PostgreSQL (prod)"]
+        },
+
+        "workers_and_queues": {
+          "workers_location": "vereda_backend/workers",
+          "files": [
+            "tasks.py - Celery tasks",
+            "media_worker.py - Worker de processamento de mídia",
+            "settings.py - Configurações do worker"
+          ],
+          "queues_location": "vereda_backend/queues",
+          "files": ["media_jobs.py - Gerenciador de jobs de mídia"]
+        },
+
+        "autonomy_system": {
+          "location": "vereda_backend/autonomy",
+          "description": "Sistema autônomo - agentes que trabalham sozinhos",
+          "files": [
+            "agents.py - Definição de agentes",
+            "executor.py - Executor de tarefas dos agentes",
+            "tasks.py - Tarefas do sistema autônomo",
+            "rag.py - Retrieval-Augmented Generation",
+            "ingest.py - Ingestão de dados",
+            "recovery.py - Recuperação de falhas",
+            "crawler.py - Web crawler",
+            "healthcheck.py - Health checks"
+          ]
+        },
+
+        "cache_and_middleware": {
+          "cache_location": "vereda_backend/cache",
+          "files": ["media_cache.py - Cache de mídia"],
+          "middleware_location": "vereda_backend/middleware",
+          "files": [
+            "rate_limit.py - Rate limiting middleware",
+            "subscription.py - Subscription middleware"
+          ]
+        },
+
+        "tests": {
+          "location": "vereda_backend/tests",
+          "test_files": [
+            "test_health_public.py - Testes de health",
+            "test_syntexa_identity_prompt.py",
+            "test_smart_export_unit.py",
+            "test_query_profile_unit.py",
+            "test_ods_generator.py",
+            "test_modular_pentest_admin_unit.py",
+            "test_llm_engine_defaults.py",
+            "test_executor_autonomy_unit.py",
+            "test_desktop_downloads.py",
+            "multimodal_test.py"
+          ]
+        },
+
+        "extras": {
+          "files": [
+            "ai_runtime.py - Runtime de IA",
+            "api_contacts.py - API de contatos"
+          ]
+        }
+      }
+    },
+
+    "SPECIALIZED_LLM_MODULES": {
+      "description": "Módulos especializados que formam o pipeline de IA",
+      "modules": {
+        "llm-core": {
+          "location": "root/llm-core",
+          "description": "Motor core de LLM",
+          "files": [
+            "engine.py - Engine principal",
+            "tokenizer.py - Tokenização",
+            "router.py - Roteador de modelos",
+            "scheduler.py - Scheduler de requisições",
+            "context.py - Gerenciamento de contexto",
+            "prompt_optimizer.py - Otimizador de prompts",
+            "model_registry.py - Registro de modelos",
+            "memory_compressor.py - Compressor de memória",
+            "kv_cache.py - KV Cache",
+            "streamer.py - Streaming de respostas",
+            "batching.py - Batching de requisições"
+          ]
+        },
+
+        "llm-reasoning": {
+          "location": "root/llm-reasoning",
+          "description": "Sistema de raciocínio e lógica",
+          "files": [
+            "reasoning_pipeline.py - Pipeline de raciocínio",
+            "chain_of_thought.py - Chain of Thought",
+            "reflection.py - Reflexão sobre respostas",
+            "verifier.py - Verificador de respostas",
+            "planner.py - Planejador de ações",
+            "critic.py - Crítico de respostas"
+          ]
+        },
+
+        "llm-multimodal": {
+          "location": "root/llm-multimodal",
+          "description": "Processamento multimodal",
+          "files": [
+            "vision_engine.py - Visão computacional",
+            "ocr_engine.py - OCR (Optical Character Recognition)",
+            "audio_engine.py - Processamento de áudio",
+            "document_engine.py - Processamento de documentos",
+            "fusion_engine.py - Fusão de modalidades"
+          ]
+        },
+
+        "llm-kernel": {
+          "location": "root/llm-kernel",
+          "description": "Kernel neural core",
+          "files": [
+            "kernel_bootstrap.py - Bootstrap do kernel",
+            "run_neural_core.py - Executar núcleo neural",
+            "kernel.manifest.json/yaml - Configuração do kernel"
+          ]
+        },
+
+        "llm-quantum": {
+          "location": "root/llm-quantum",
+          "description": "Computação quântica híbrida",
+          "files": [
+            "quantum_orchestrator.py - Orquestrador quantum",
+            "quantum_optimizer.py - Otimizador quantum",
+            "quantum_scheduler.py - Scheduler quantum",
+            "hybrid_quantum_runtime.py - Runtime híbrido",
+            "hybrid_router.py - Router híbrido"
+          ]
+        },
+
+        "llm-security": {
+          "location": "root/llm-security",
+          "files": ["guardrails.py - Guardrails de segurança"]
+        },
+
+        "llm-inference": {
+          "location": "root/llm-inference",
+          "files": ["engine.py - Engine de inferência"]
+        },
+
+        "llm-router": {
+          "location": "root/llm-router",
+          "files": ["router.py - Router de modelos"]
+        },
+
+        "llm-runtime": {
+          "location": "root/llm-runtime",
+          "files": ["scheduler.py - Scheduler de runtime"]
+        },
+
+        "other_llm_modules": {
+          "modules": [
+            "llm-agents - Sistema de agentes",
+            "llm-autonomous - Sistemas autônomos",
+            "llm-context-engine - Engine de contexto",
+            "llm-embeddings - Embeddings",
+            "llm-memory - Gerenciamento de memória",
+            "llm-tokenizer - Tokenização avançada",
+            "llm-training - Treinamento",
+            "llm-vision - Visão especializada",
+            "llm-voice - Processamento de voz"
+          ]
+        }
+      }
+    }
+  },
+
+  "nodejs_backend": {
+    "PRODUCTION_NODE": {
+      "location": "root/production-node",
+      "type": "Express.js + BullMQ + Socket.IO",
+      "description": "Backend Node.js production com filas, real-time e processamento",
+
+      "api_server": {
+        "location": "production-node/api",
+        "entry_point": "src/index.js",
+        "framework": "Express.js",
+        "dependencies": [
+          "bullmq@^5.12.12 - Job queue",
+          "express@^4.21.2",
+          "socket.io@^4.8.0 - Real-time",
+          "ioredis@^5.4.1 - Redis client",
+          "pg@^8.15.0 - PostgreSQL",
+          "multer@^1.4.5 - File upload",
+          "cors@^2.8.5",
+          "express-rate-limit@^7.5.1",
+          "rate-limit-redis@^4.1.5",
+          "pino@^9.4.0 - Logging",
+          "uuid@^11.0.3"
+        ],
+        "structure": {
+          "src/index.js": "Entry point",
+          "src/middleware/": "Express middleware",
+          "src/routes/": "API routes",
+          "src/queue.js": "BullMQ configuration",
+          "src/rateLimit.js": "Rate limit config",
+          "src/logger.js": "Pino logger"
+        }
+      },
+
+      "queue_worker": {
+        "location": "production-node/queue-worker",
+        "type": "BullMQ Worker",
+        "description": "Background job processor",
+        "entry_point": "src/worker.js",
+        "purpose": "Processa jobs assíncronos de media, uploads, etc"
+      },
+
+      "gateway": {
+        "location": "production-node/own-model-gateway",
+        "type": "Model Gateway",
+        "entry_point": "server.js",
+        "description": "Gateway para roteamento de modelos próprios",
+        "dependencies": ["package.json"]
+      },
+
+      "stt_worker": {
+        "location": "production-node/worker-stt",
+        "description": "Speech-to-Text worker (não está implementado)",
+        "note": "Placeholder para futuro desenvolvimento"
+      }
+    }
+  },
+
+  "infrastructure_backends": {
+    "gateway_api": {
+      "location": "root/infrastructure/gateway-api",
+      "type": "FastAPI Gateway",
+      "entry_point": "main.py",
+      "description": "Gateway API para proxy de IA pública",
+      "structure": [
+        "main.py - App principal",
+        "core/config.py - Configurações",
+        "core/ai_proxy.py - Proxy de IA",
+        "core/public_messages.py - Mensagens públicas",
+        "api/ - Endpoints"
+      ]
+    },
+
+    "local_private_ai": {
+      "location": "root/infrastructure/local-private-ai",
+      "type": "FastAPI Local AI",
+      "entry_point": "main.py",
+      "description": "IA local privada com Ollama",
+      "structure": [
+        "main.py - App principal",
+        "core/ollama_client.py - Client Ollama",
+        "core/config.py - Configurações",
+        "api/routes.py - Routes",
+        "api/v1/endpoints/ - Endpoints (health, chat, embeddings)"
+      ]
+    },
+
+    "ai_worker": {
+      "location": "root/infrastructure/ai-worker",
+      "description": "Worker de IA distribuído"
+    },
+
+    "local_hybrid": {
+      "location": "root/infrastructure/local-hybrid",
+      "files": [
+        "main.py - App híbrido local",
+        "sync_agent.py - Agent sincronizado"
+      ]
+    },
+
+    "syntexa_native_worker": {
+      "location": "root/infrastructure/syntexa-native-worker",
+      "entry_point": "server.py",
+      "description": "Worker nativo de Syntexa"
+    }
+  },
+
+  "cloudflare_workers": {
+    "location": "root/cloudflare-workers",
+    "type": "Cloudflare Workers",
+    "entry_point": "src/index.js",
+    "description": "Edge computing workers na Cloudflare",
+    "dependencies": ["wrangler.toml", "package.json"]
+  },
+
+  "database_configuration": {
+    "primary_store": "PostgreSQL",
+    "cache_store": "Redis",
+    "location_migrations": "root/migrations",
+    "location_seed": "root/database/seed.sql",
+    "orm": "SQLAlchemy (Python FastAPI)",
+    "models_location": "vereda_backend/db/models.py",
+    "tables": [
+      "users - Usuários da plataforma",
+      "conversations - Histórico de chats",
+      "subscriptions - Planos de usuário",
+      "payments - Histórico de pagamentos",
+      "agents - Configuração de agentes autônomos",
+      "documents - Documentos uploaded",
+      "tokens - Cache de tokens JWT"
+    ]
+  },
+
+  "docker_deployment": {
+    "location": "root",
+    "configurations": [
+      "Dockerfile - Docker image principal",
+      "Dockerfile.railway - Docker para Railway",
+      "docker-compose.yml - Stack principal",
+      "docker-compose.own-model.yml - Stack com modelo próprio",
+      "docker-compose.own-model-full.yml - Stack completo",
+      "docker-compose.split.yml - Stack separado",
+      "docker-compose.redis.yml - Redis standalone",
+      "docker-entrypoint.sh - Script de inicialização"
+    ]
+  },
+
+  "configuration_files": {
+    "python": [
+      "pyproject.toml - Project metadata e dependencies",
+      "requirements.txt - Python dependencies",
+      "requirements.railway.txt - Railway dependencies"
+    ],
+    "nodejs": [
+      "cloudflare-workers/package.json",
+      "production-node/api/package.json",
+      "production-node/queue-worker/package.json"
+    ],
+    "infrastructure": [
+      "railway.json - Railway config",
+      "railway.toml - Railway TOML",
+      "wrangler.toml - Cloudflare Workers",
+      ".env - Environment variables",
+      ".env.example - Example env"
+    ],
+    "deployment": [
+      "deploy.sh - Script de deploy",
+      "Procfile - Heroku/Railway config"
+    ]
+  },
+
+  "analysis": {
+    "real_backend_structure": "MULTI-TIER HYBRID ARCHITECTURE",
+    "primary_layer": {
+      "component": "vereda_backend (FastAPI)",
+      "responsibility": "Chat, IA, subscriptions, all main features",
+      "criticality": "CRITICAL - This is THE main backend"
+    },
+    "specialized_layers": {
+      "llm_modules": {
+        "component": "llm-* modules",
+        "responsibility": "Specialized LLM processing, reasoning, multimodal",
+        "integration": "Imported by vereda_backend services",
+        "note": "These are libraries/modules, not standalone services"
+      },
+      "nodejs_layer": {
+        "component": "production-node (Express)",
+        "responsibility": "Job queues, real-time communication, high-concurrency tasks",
+        "integration": "Communicates with vereda_backend via Redis/Postgres"
+      },
+      "edge_layer": {
+        "component": "cloudflare-workers",
+        "responsibility": "CDN, caching, edge routing",
+        "integration": "Routes traffic to main backends"
+      }
+    },
+
+    "data_flow": {
+      "user_request": "Browser/Client → Cloudflare Workers → Express API (production-node) or FastAPI (vereda_backend)",
+      "ai_processing": "FastAPI receives request → Routes via ai_router → Calls llm-* modules → Returns response",
+      "background_jobs": "Job created in FastAPI → BullMQ queue (Redis) → Node.js worker processes → Updates DB",
+      "real_time": "Socket.IO in Express → Broadcasts via Redis Pub/Sub → WebSocket to client"
+    },
+
+    "what_is_duplicated": {
+      "findings": [
+        "MAJOR DUPLICATION: Both FastAPI and Express have chat endpoints - consolidation needed",
+        "Router logic exists in multiple places (llm-router, ai_router.py, Express routes)",
+        "Config scattered across vereda_backend/core, infrastructure/*, and .env files",
+        "Authentication duplicated in FastAPI + Express + possibly Cloudflare",
+        "Rate limiting implemented in multiple places (FastAPI + Express middleware)"
+      ],
+      "recommendation": "Consider merging Express into FastAPI or creating clear responsibility boundaries"
+    },
+
+    "what_needs_consolidation": [
+      "Chat endpoints - Consolidate into single authoritative endpoint",
+      "Authentication - Move to shared layer (middleware or gateway)",
+      "Rate limiting - Centralize in single middleware",
+      "Configuration - Move all to centralized config service",
+      "Model routing - Single source of truth for model selection",
+      "Database queries - Some logic might be duplicated between FastAPI and queries"
+    ],
+
+    "critical_integration_points": [
+      "vereda_backend.services.chat_engine ← Receives all chat requests",
+      "vereda_backend.core.ai_router ← Routes to correct model",
+      "vereda_backend.db.models ← All data persists here",
+      "Redis cache ← Shared between FastAPI and Express",
+      "BullMQ queues ← FastAPI submits jobs, Express workers process",
+      "PostgreSQL ← Primary data store for all services"
+    ],
+
+    "backend_deployment_notes": {
+      "current_state": "Multi-process deployment",
+      "components_running": [
+        "FastAPI app (main backend)",
+        "Express app (queues + real-time)",
+        "BullMQ workers (background jobs)",
+        "Celery workers (if configured)",
+        "Cloudflare Workers (edge)"
+      ],
+      "platform": "Railway.app (current production)"
+    }
+  },
+
+  "quick_reference": {
+    "if_you_need_to": {
+      "add_new_endpoint": "Edit vereda_backend/api/v1/endpoints/*.py",
+      "add_new_service": "Create file in vereda_backend/services/",
+      "change_database_schema": "Edit vereda_backend/db/models.py + create migration",
+      "modify_chat_logic": "Edit vereda_backend/services/chat_engine.py",
+      "modify_model_routing": "Edit vereda_backend/core/ai_router.py",
+      "add_background_job": "Create task in vereda_backend/workers/tasks.py + add to BullMQ queue",
+      "change_security": "Edit vereda_backend/core/security*.py",
+      "debug_ai_response": "Check llm-core and llm-reasoning modules",
+      "optimize_inference": "Check llm-kernel and llm-core/batching.py"
+    }
+  }
+}

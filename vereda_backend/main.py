@@ -17,6 +17,8 @@ from sqlalchemy import inspect, text
 
 from vereda_backend.core.config import settings
 from vereda_backend.core.public_messages import MSG_BAD_REQUEST_PT, MSG_TRY_AGAIN_PT
+from vereda_backend.core.security_config import ALLOWED_ORIGINS
+from vereda_backend.middleware.rate_limit import rate_limiter
 from vereda_backend.api import routes as api_routes
 from vereda_backend.db.session import Base, engine
 from vereda_backend.db import models
@@ -154,7 +156,8 @@ def create_app() -> FastAPI:
     def health_instant() -> dict:
         return {"status": "ok"}
 
-    origins = settings.frontend_origins or ["*"]
+    # ── CORS Configuration (Cloudflare + Frontend) ──
+    origins = ALLOWED_ORIGINS or settings.frontend_origins or ["*"]
     allow_any_origin = "*" in origins
     allow_credentials = not allow_any_origin
 
@@ -248,6 +251,18 @@ def create_app() -> FastAPI:
             "Authorization, Content-Type, X-Requested-With, Accept",
         )
         return response
+
+    # ── Rate Limiting Middleware (Redis-backed, distribuído) ──
+    @app.middleware("http")
+    async def rate_limit_middleware(request, call_next):
+        """Rate limit por IP do cliente (respeitando X-Forwarded-For)"""
+        # Whitelist caminhos que NÃO devem ter rate limit
+        bypass_paths = {"/health", "/docs", "/openapi.json", "/redoc"}
+        if request.url.path in bypass_paths:
+            return await call_next(request)
+        
+        await rate_limiter.middleware(request)
+        return await call_next(request)
 
     app.add_middleware(
         CORSMiddleware,
