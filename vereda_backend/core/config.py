@@ -682,6 +682,38 @@ class Settings(BaseSettings):
         description="Phone Number ID armazenado após OAuth",
     )
 
+    # ── TikTok Integration Settings ───────────────────────────────────
+    TIKTOK_CLIENT_ID: str | None = Field(
+        default=None,
+        validation_alias="TIKTOK_CLIENT_ID",
+        description="TikTok Client ID para OAuth",
+    )
+    TIKTOK_CLIENT_SECRET: str | None = Field(
+        default=None,
+        validation_alias="TIKTOK_CLIENT_SECRET",
+        description="TikTok Client Secret para OAuth",
+    )
+    TIKTOK_REDIRECT_URI: str = Field(
+        default="https://syntexabr.com.br/i18n/pt-BR/integrations/tiktok/callback",
+        validation_alias="TIKTOK_REDIRECT_URI",
+        description="TikTok OAuth redirect URI",
+    )
+    TIKTOK_ACCESS_TOKEN: str | None = Field(
+        default=None,
+        validation_alias="TIKTOK_ACCESS_TOKEN",
+        description="TikTok access token obtido após OAuth",
+    )
+    TIKTOK_OPEN_ID: str | None = Field(
+        default=None,
+        validation_alias="TIKTOK_OPEN_ID",
+        description="TikTok Open ID do usuário",
+    )
+    TIKTOK_REFRESH_TOKEN: str | None = Field(
+        default=None,
+        validation_alias="TIKTOK_REFRESH_TOKEN",
+        description="TikTok refresh token para renovação",
+    )
+
     @computed_field
     @property
     def frontend_origins(self) -> List[str]:

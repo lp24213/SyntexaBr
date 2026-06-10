@@ -29,8 +29,74 @@ import { t } from "../../lib/i18n";
 import { useLanguage } from "../../components/language-provider";
 import { sanitizeOutput, sanitizeStreamChunk } from "../../lib/sanitizeOutput";
 import { normalizeContent, normalizeStreamChunk } from "../../lib/normalizeContent";
-import { setXenovaSttProgressCallback } from "../../lib/xenova-stt";
+import { setXenovaSttProgressCallback, transcribeWithXenova } from "../../lib/xenova-stt";
 import { MarkdownMessage } from "../../components/MarkdownMessage";
+
+/** Mapeia o locale da UI para o nome de idioma esperado pelo Whisper/Xenova. */
+function whisperLanguageForLocale(locale) {
+  var base = String(locale || "pt").slice(0, 2).toLowerCase();
+  var map = {
+    pt: "portuguese",
+    en: "english",
+    es: "spanish",
+    fr: "french",
+    de: "german",
+    it: "italian",
+  };
+  return map[base] || "portuguese";
+}
+
+/** Mapeia o locale da UI para o BCP-47 usado pela Web Speech API. */
+function speechLangForLocale(locale) {
+  var base = String(locale || "pt").slice(0, 2).toLowerCase();
+  var map = {
+    pt: "pt-BR",
+    en: "en-US",
+    es: "es-ES",
+    fr: "fr-FR",
+    de: "de-DE",
+    it: "it-IT",
+  };
+  return map[base] || "pt-BR";
+}
+
+/** Fallback de transcrição via Web Speech API do navegador (quando Xenova falha). */
+function transcribeWithWebSpeech(locale) {
+  return new Promise(function (resolve, reject) {
+    if (typeof window === "undefined") {
+      reject(new Error("Sem janela do navegador"));
+      return;
+    }
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      reject(new Error("Nenhum motor de reconhecimento de voz disponível"));
+      return;
+    }
+    var rec = new SR();
+    rec.lang = speechLangForLocale(locale);
+    rec.continuous = false;
+    rec.interimResults = false;
+    var finalTranscript = "";
+    rec.onresult = function (event) {
+      for (var i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        }
+      }
+    };
+    rec.onerror = function (event) {
+      reject(new Error("Erro de reconhecimento de voz: " + event.error));
+    };
+    rec.onend = function () {
+      resolve(finalTranscript);
+    };
+    try {
+      rec.start();
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
 
 /**
  * V46 — Limpa marcações de Markdown que ficam visíveis como caracteres
@@ -1005,34 +1071,25 @@ export default function ChatPage() {
           return;
         }
         
-        var sttUrl = "https://api.syntexabr.com.br/api/stt";
-        console.log("STT URL:", sttUrl);
-        console.log("AUDIO SIZE:", blob.size);
-        console.log("MIME:", blob.type);
         setVoiceTranscribing(true);
         setVoiceProgress("Transcrevendo…");
-        
+
         try {
-          var fd = new FormData();
-          fd.append("file", blob, "audio.webm");
-          
-          var resp = await fetch(sttUrl, {
-            method: "POST",
-            body: fd,
-          });
-          
-          if (!resp.ok) {
-            var errText = await resp.text();
-            console.error("STT ERROR:", resp.status, errText);
-            throw new Error("STT " + resp.status);
+          var text = "";
+          try {
+            // Principal: Whisper/Xenova 100% no navegador (sem backend/GPU).
+            text = await transcribeWithXenova(blob, {
+              language: whisperLanguageForLocale(locale),
+              maxRetries: 2,
+            });
+          } catch (xenovaErr) {
+            console.warn("[STT] Xenova falhou, tentando Web Speech:", xenovaErr);
+            // Fallback: Web Speech API do navegador (se disponível).
+            text = await transcribeWithWebSpeech(locale);
           }
-          
-          var data = await resp.json();
-          console.log("STT SUCCESS:", data);
-          var text = data.text || data.transcript || "";
-          
+
           if (!text || !String(text).trim()) throw new Error("Transcrição vazia");
-          
+
           var cleanText = String(text).trim();
           setInput(cleanText);
           setVoiceProgress("");
