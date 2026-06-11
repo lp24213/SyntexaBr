@@ -84,27 +84,44 @@ class PostgreSQLVectorStore(VectorDB):
             models.MemoryItem.namespace == namespace
         ).first()
         
+        # A coluna pgvector tem dimensão fixa (EMBEDDING_VECTOR_DIM). Embeddings de
+        # outro tamanho (ex.: 384 do fallback) vão só em embedding_json para não quebrar o INSERT.
+        vec_dim_ok = bool(embedding) and len(embedding) == models.EMBEDDING_VECTOR_DIM
+
         if existing:
             # Atualizar
             existing.value = text
+            existing.metadata_json = metadata or {}
             existing.meta = json.dumps(metadata or {})
-            if embedding:
-                existing.embedding_vector = embedding
+            if embedding and hasattr(existing, "embedding_json"):
+                existing.embedding_json = embedding
+            if hasattr(existing, "embedding_vector"):
+                existing.embedding_vector = embedding if vec_dim_ok else None
             existing.updated_at = datetime.utcnow()
         else:
             # Criar novo
-            item = models.MemoryItem(
-                key=doc_id,
-                namespace=namespace,
-                value=text,
-                meta=json.dumps(metadata or {}),
-                embedding_vector=embedding,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
-            )
+            item_kwargs = {
+                "key": doc_id,
+                "namespace": namespace,
+                "value": text,
+                "metadata_json": metadata or {},
+                "meta": json.dumps(metadata or {}),
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            }
+            if hasattr(models.MemoryItem, "embedding_json"):
+                item_kwargs["embedding_json"] = embedding
+            if hasattr(models.MemoryItem, "embedding_vector"):
+                item_kwargs["embedding_vector"] = embedding if vec_dim_ok else None
+            item = models.MemoryItem(**item_kwargs)
             db.add(item)
-        
-        db.commit()
+
+        try:
+            db.commit()
+        except Exception:
+            # Persistência de memória é auxiliar: nunca deve derrubar o chat.
+            db.rollback()
+            return
         
         # Atualizar cache
         if namespace not in self._cache:
@@ -169,11 +186,16 @@ class PostgreSQLVectorStore(VectorDB):
         # Retornar top_k
         results: List[Dict[str, Any]] = []
         for score, item in scored[:top_k]:
-            meta = {}
-            if item.meta:
+            meta = item.metadata_json or {}
+            if not meta and item.meta:
                 try:
                     meta = json.loads(item.meta)
-                except:
+                except Exception:
+                    meta = {}
+            elif isinstance(meta, str):
+                try:
+                    meta = json.loads(meta)
+                except Exception:
                     meta = {}
             
             results.append({
@@ -214,11 +236,16 @@ class PostgreSQLVectorStore(VectorDB):
         
         results = []
         for item in items:
-            meta = {}
-            if item.meta:
+            meta = item.metadata_json or {}
+            if not meta and item.meta:
                 try:
                     meta = json.loads(item.meta)
-                except:
+                except Exception:
+                    meta = {}
+            elif isinstance(meta, str):
+                try:
+                    meta = json.loads(meta)
+                except Exception:
                     meta = {}
             
             results.append({

@@ -3,14 +3,23 @@
 from vereda_ai.syntexa_core.hybrid_engine import generate_reply, native_embed
 from vereda_ai.syntexa_core.model_registry import get_registry
 
-# Foundation Model exports
-from vereda_ai.syntexa_core.foundation_model import (
-    SyntexaFoundationModel,
-    SyntexaFoundationConfig,
-)
+# Foundation Model exports.
+# Imports que dependem de torch são opcionais: no gateway leve (Railway, sem torch)
+# a Foundation Model própria não carrega e a inferência segue via provedor HTTP (Ollama/proxy).
 from vereda_ai.syntexa_core.foundation_tokenizer import SyntexaFoundationTokenizer
-from vereda_ai.syntexa_core.foundation_inference import SyntexaInferenceEngine
-from vereda_ai.syntexa_core.foundation_trainer import SyntexaFoundationTrainer, TrainingConfig
+try:
+    from vereda_ai.syntexa_core.foundation_model import (
+        SyntexaFoundationModel,
+        SyntexaFoundationConfig,
+    )
+    from vereda_ai.syntexa_core.foundation_inference import SyntexaInferenceEngine
+    from vereda_ai.syntexa_core.foundation_trainer import SyntexaFoundationTrainer, TrainingConfig
+except ImportError:  # torch ausente no container leve
+    SyntexaFoundationModel = None
+    SyntexaFoundationConfig = None
+    SyntexaInferenceEngine = None
+    SyntexaFoundationTrainer = None
+    TrainingConfig = None
 from vereda_ai.syntexa_core.foundation_runtime import (
     SyntexaFoundationRuntime,
     get_foundation_runtime,

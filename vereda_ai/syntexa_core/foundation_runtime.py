@@ -14,9 +14,22 @@ import threading
 from pathlib import Path
 from typing import Any, Iterator, List, Optional
 
-from vereda_ai.syntexa_core.foundation_model import SyntexaFoundationModel, SyntexaFoundationConfig
 from vereda_ai.syntexa_core.foundation_tokenizer import SyntexaFoundationTokenizer
-from vereda_ai.syntexa_core.foundation_inference import SyntexaInferenceEngine
+
+# Imports que dependem de torch são opcionais: no gateway leve (Railway, sem torch)
+# o motor é servido via HTTP (Ollama/proxy), então a Foundation Model própria não carrega.
+# Mantém comportamento idêntico onde torch existe (AWS/treino).
+try:
+    from vereda_ai.syntexa_core.foundation_model import SyntexaFoundationModel, SyntexaFoundationConfig
+    from vereda_ai.syntexa_core.foundation_inference import SyntexaInferenceEngine
+except ImportError as _torch_exc:  # torch ausente no container leve
+    SyntexaFoundationModel = None  # type: ignore[assignment,misc]
+    SyntexaFoundationConfig = None  # type: ignore[assignment,misc]
+    SyntexaInferenceEngine = None  # type: ignore[assignment,misc]
+    logging.getLogger(__name__).warning(
+        "Foundation Model indisponível (torch ausente): %s. "
+        "Inferência seguirá via provedor HTTP configurado.", _torch_exc
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +44,11 @@ class SyntexaFoundationRuntime:
     """
 
     def __init__(self, checkpoint_dir: Optional[str] = None):
+        if SyntexaInferenceEngine is None:
+            raise RuntimeError(
+                "Foundation Model indisponível: torch não está instalado neste runtime. "
+                "Use um provedor HTTP (Ollama/proxy) para inferência."
+            )
         self.checkpoint_dir = Path(checkpoint_dir) if checkpoint_dir else Path("checkpoints/foundation")
         self.engine = SyntexaInferenceEngine()
         self._loaded = False

@@ -65,25 +65,30 @@ class SyntexaNativeLLMProvider:
     name: ProviderName = "syntexa_native"
 
     def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
-        # Chama a instância AWS com o modelo Syntexa próprio (34M params)
-        url = "http://54.210.101.255:8000/generate"
-        payload = {
-            "messages": messages,
-            "max_new_tokens": kwargs.get("max_tokens", 80),
-            "temperature": kwargs.get("temperature", 0.7),
-        }
         try:
-            resp = requests.post(url, json=payload, timeout=(5, 60))
-            resp.raise_for_status()
-            data = resp.json()
-            return data.get("response", "")
+            from vereda_ai.syntexa_core.hybrid_engine import generate_reply
+
+            return generate_reply(
+                messages,
+                max_new_tokens=kwargs.get("max_tokens", 256),
+                temperature=kwargs.get("temperature", 0.7),
+            )
         except Exception as exc:
-            logger.warning("AWS LLM falhou: %s", exc)
-            return f"[Erro: modelo não respondeu — {exc}]"
+            logger.warning("Syntexa native falhou: %s", exc)
+            raise RuntimeError(f"Syntexa native indisponível: {exc}") from exc
 
     def chat_stream(self, messages: list[dict[str, Any]], **kwargs: Any) -> Iterator[str]:
-        # Por enquanto entrega tudo de uma vez (servidor AWS não suporta stream ainda)
-        yield self.chat(messages, **kwargs)
+        try:
+            from vereda_ai.syntexa_core.hybrid_engine import generate_reply_stream
+
+            yield from generate_reply_stream(
+                messages,
+                max_new_tokens=kwargs.get("max_tokens", 256),
+                temperature=kwargs.get("temperature", 0.7),
+            )
+        except Exception as exc:
+            logger.warning("Syntexa native stream falhou: %s", exc)
+            raise RuntimeError(f"Syntexa native stream indisponível: {exc}") from exc
 
     def embed(self, texts: list[str], **kwargs: Any) -> list[list[float]]:
         from vereda_ai.syntexa_core.hybrid_engine import native_embed
@@ -291,6 +296,22 @@ class HTTPJSONLLMProvider:
             payload["max_tokens"] = kwargs["max_tokens"]
 
         yield from self._stream_openai_sse("/v1/chat/completions", payload)
+
+
+class LocalHTTPLLMProvider(HTTPJSONLLMProvider):
+    """Provedor HTTP local/OpenAI-compatible (ex.: TGI, vLLM, gateway próprio)."""
+
+    def __init__(self, base_url: str, model: str | None = None, api_key: str | None = None):
+        super().__init__(name="local_http", base_url=base_url, api_key=api_key)
+        self._model = (model or getattr(settings, "local_http_llm_model", "local")).strip()
+
+    def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
+        kwargs.setdefault("model", self._model)
+        return super().chat(messages, **kwargs)
+
+    def chat_stream(self, messages: list[dict[str, Any]], **kwargs: Any) -> Iterator[str]:
+        kwargs.setdefault("model", self._model)
+        yield from super().chat_stream(messages, **kwargs)
 
 
 class OllamaLLMProvider(HTTPJSONLLMProvider):
@@ -555,10 +576,33 @@ class LLMEngine:
         except Exception as _exc:
             logger.warning("Falha ao registrar OllamaLLMProvider: %s", _exc)
 
-        # Default: respeita DEFAULT_LLM se o provider foi registrado; senão, syntexa_native.
-        configured_default = (default_provider or settings.default_llm or "").strip().lower()
-        if configured_default in self._providers:
-            self._default = configured_default
+        try:
+            _local_ep = (getattr(settings, "local_llm_endpoint", None) or "").strip()
+            if _local_ep:
+                _local_model = (getattr(settings, "local_http_llm_model", None) or "local").strip()
+                _local_key = (getattr(settings, "local_ai_api_key", None) or "").strip() or None
+                self.register_provider(
+                    LocalHTTPLLMProvider(
+                        base_url=_local_ep,
+                        model=_local_model,
+                        api_key=_local_key,
+                    )
+                )
+        except Exception as _exc:
+            logger.warning("Falha ao registrar LocalHTTPLLMProvider: %s", _exc)
+
+        # Default: primeiro o endpoint real configurado; depois o DEFAULT_LLM explicitado;
+        # por último, syntexa_native como fallback soberano.
+        preferred = None
+        if (getattr(settings, "ollama_endpoint", None) or "").strip():
+            preferred = "ollama"
+        elif (getattr(settings, "local_llm_endpoint", None) or "").strip():
+            preferred = "local_http"
+        else:
+            preferred = (default_provider or getattr(settings, "default_llm", "") or "").strip().lower()
+
+        if preferred in self._providers:
+            self._default = preferred
         else:
             self._default = "syntexa_native"
 
@@ -664,13 +708,27 @@ class LLMEngine:
         sovereign_mode = bool(getattr(settings, "own_model_sovereign_mode", True))
         external_enabled = bool(getattr(settings, "external_providers_enabled", False))
 
-        # Modo soberano: apenas providers próprios
+        # Modo soberano: bloqueia apenas providers *externos* (cloud APIs).
+        # Providers locais (ollama, local_http, vllm, etc.) são SEMPRE permitidos.
+        # Se OLLAMA_ENDPOINT estiver configurado, sovereign_mode não bloqueia Ollama.
+        _ollama_configured = bool((getattr(settings, "ollama_endpoint", None) or "").strip())
+        _local_configured = bool((getattr(settings, "local_llm_endpoint", None) or "").strip())
+        _local_providers_set = {"syntexa_native", "future_syntexa", "ollama", "local_http", "exllama", "vllm", "azure_tgi"}
         if sovereign_mode:
-            if requested and self._is_sovereign_provider(requested):
+            if requested and requested in self._providers:
                 return [requested]
-            if self._default in self._providers and self._is_sovereign_provider(self._default):
-                return [self._default]
+            if self._default in self._providers and self._default in _local_providers_set:
+                # Default é local: retorna em ordem (default primeiro, depois outros locais)
+                others = [x for x in self._providers.keys() if x != self._default and x in _local_providers_set]
+                return [self._default, *others]
             sovereign = [x for x in self._providers.keys() if self._is_sovereign_provider(x)]
+            # Se há Ollama configurado, inclui na lista mesmo em sovereign_mode
+            if _ollama_configured and "ollama" in self._providers:
+                if "ollama" not in sovereign:
+                    sovereign = ["ollama"] + sovereign
+            if _local_configured and "local_http" in self._providers:
+                if "local_http" not in sovereign:
+                    sovereign = sovereign + ["local_http"]
             return sovereign or ["syntexa_native"]
 
         if requested:
